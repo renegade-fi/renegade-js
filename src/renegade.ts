@@ -1,10 +1,10 @@
+import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import Keychain from "./keychain";
 import { unimplemented } from "./utils";
-import Wallet from "./wallet";
 
 type Uuid = number;
-type WalletId = Uuid;
+type AccountId = Uuid;
 type CallbackId = Uuid;
 
 enum Exchange {
@@ -18,59 +18,59 @@ enum Exchange {
 
 interface Token {}
 
-// ---------------------
-// | Wallet Management |
-// ---------------------
+// ----------------------
+// | Account Management |
+// ----------------------
 
 /**
- * Interface for Wallet-related functions on the Renegade object.
+ * Interface for Account-related functions on the Renegade object.
  */
-interface IRenegadeWallet {
+interface IRenegadeAccount {
   /**
-   * Register a new wallet with the Renegade object.
+   * Register a new account with the Renegade object.
    *
-   * If the Wallet corresponding to this Keychain already exists in the network,
-   * the Wallet will be populated with the current balances, orders, fees, etc.
+   * If the Account corresponding to this Keychain already exists in the
+   * network, the Account will be populated with the current balances, orders,
+   * fees, etc.
    *
-   * If the Wallet corresponding to this Keychain does not exist in the network,
-   * the Wallet will be initialized with zeroes and sent to the relayer to
-   * create it on-chain.
+   * If the Account corresponding to this Keychain does not exist in the
+   * network, the Account will be initialized with zeroes and sent to the
+   * relayer to create it on-chain.
    *
-   * After the wallet has been registered, we begin streaming all corresponding
-   * wallet events from the relayer, so that the Wallet object updates in
-   * real-time.
+   * After the Account has been registered, we begin streaming all corresponding
+   * account events from the relayer, so that the Account updates in real-time.
    *
-   * @param keychain The Keychain of the wallet to register with the Renegade object.
-   * @returns The WalletId of the newly registered wallet.
+   * @param keychain The Keychain of the Account to register with the Renegade object.
+   * @returns The AccountId of the newly registered Account.
    *
-   * @throws {WalletAlreadyRegistered} If the Wallet corresponding to this Keychain is already registered with the Renegade object.
+   * @throws {AccountAlreadyRegistered} If the Account corresponding to this Keychain is already registered with the Renegade object.
    */
-  registerWallet(keychain: Keychain): Promise<WalletId>;
+  registerAccount(keychain: Keychain): Promise<AccountId>;
   /**
-   * Retreive a Wallet by its walletId.
+   * Retreive an Account by its AccountId.
    *
-   * @param walletId The WalletId of the wallet to look up.
-   * @returns The Wallet corresponding to the given WalletId.
+   * @param accountId The AccountId of the Account  to look up.
+   * @returns The Account corresponding to the given AccountId.
    *
-   * @throws {WalletNotRegistered} If the Wallet corresponding to this WalletId is not registered with the Renegade object.
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
    */
-  lookupWallet(walletId: WalletId): Wallet;
+  lookupAccount(accountId: AccountId): Account;
   /**
-   * Delegate a Wallet to the relayer for remote matching.
+   * Delegate an Account to the relayer for remote matching.
    *
-   * @param walletId The WalletId of the Wallet to delegate to the relayer.
+   * @param accountId The AccountId of the Account to delegate to the relayer.
    * @param sendRoot If true, send sk_root to the relayer as "super-relayer mode".
    */
-  delegateWallet(walletId: WalletId, sendRoot?: boolean): void;
+  delegateAccount(accountId: AccountId, sendRoot?: boolean): void;
   /**
-   * Unregister a previously-registered Wallet from the Renegade object, and
+   * Unregister a previously-registered Account from the Renegade object, and
    * stop streaming updates.
    *
-   * @param walletId The WalletId of the Wallet to unregister from the Renegade object.
+   * @param accountId The AccountId of the Account to unregister from the Renegade object.
    *
-   * @throws {WalletNotRegistered} If the Wallet corresponding to this WalletId is not registered with the Renegade object.
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
    */
-  unregisterWallet(walletId: WalletId): void;
+  unregisterAccount(accountId: AccountId): void;
 }
 
 // --------------------
@@ -123,16 +123,16 @@ interface IRenegadeStreaming {
    */
   registerMpcCallback(callback: (message: string) => void): CallbackId;
   /**
-   * Register a callback to be invoked when a new wallet event is received.
+   * Register a callback to be invoked when a new account event is received.
    *
-   * @param callback The callback to invoke when a new wallet event is received.
-   * @param walletId The WalletId of the Wallet to register the callback for.
+   * @param callback The callback to invoke when a new account event is received.
+   * @param accountId The AccountId of the Account to register the callback for.
    *
-   * @throws {WalletNotRegistered} If the Wallet corresponding to this WalletId is not registered with the Renegade object.
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
    */
-  registerWalletCallback(
+  registerAccountCallback(
     callback: (message: string) => void,
-    walletId: WalletId,
+    accountId: AccountId,
   ): CallbackId;
   /**
    * Release a previously-registered callback. If no other callback is
@@ -165,7 +165,7 @@ export interface RenegadeConfig {
  * relayer.
  */
 export default class Renegade
-  implements IRenegadeWallet, IRenegadePolling, IRenegadeStreaming
+  implements IRenegadeAccount, IRenegadePolling, IRenegadeStreaming
 {
   // For each topic, contains a list of callbackIds to send messages to.
   private topicListeners: { [topic: string]: CallbackId[] };
@@ -247,28 +247,25 @@ export default class Renegade
   private expiringSignature(request: any, validUntil: number): number {
     unimplemented();
   }
-  private validateWallet(wallet: Wallet): void {
+
+  /*** IRenegadeAccount Implementation ***/
+
+  async registerAccount(keychain: Keychain): Promise<AccountId> {
+    // Creat a new Account and populate values from the relayer.
+    // Create callbacks for this Account.
     unimplemented();
   }
 
-  /*** IRenegadeWallet Implementation ***/
-
-  async registerWallet(keychain: Keychain): Promise<WalletId> {
-    // Creat a new Wallet and populate values from the relayer.
-    // Create callbacks for this wallet.
+  lookupAccount(accountId: AccountId): Account {
     unimplemented();
   }
 
-  lookupWallet(walletId: WalletId): Wallet {
+  delegateAccount(accountId: AccountId, sendRoot?: boolean): void {
     unimplemented();
   }
 
-  delegateWallet(walletId: WalletId, sendRoot?: boolean): void {
-    unimplemented();
-  }
-
-  unregisterWallet(walletId: WalletId): void {
-    // Remove all callbacks for this wallet.
+  unregisterAccount(accountId: AccountId): void {
+    // Remove all callbacks for this Account.
     unimplemented();
   }
 
@@ -296,9 +293,9 @@ export default class Renegade
     unimplemented();
   }
 
-  registerWalletCallback(
+  registerAccountCallback(
     callback: (message: string) => void,
-    walletId?: WalletId,
+    accountId?: AccountId,
   ): CallbackId {
     unimplemented();
   }

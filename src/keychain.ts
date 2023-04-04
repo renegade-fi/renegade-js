@@ -66,7 +66,7 @@ class RenegadeKeypair {
 
 /**
  * The KeyHierarchy contains the root, match, settle, and view keypairs for a
- * Renegade wallet.
+ * Renegade Account.
  */
 interface KeyHierarchy {
   root: RenegadeKeypair;
@@ -88,10 +88,10 @@ interface KeychainOptions {
 }
 
 /**
- * The Keychain stores the entire KeyHierarchy for a Renegade wallet.
+ * The Keychain stores the entire KeyHierarchy for a Renegade Account.
  */
 export default class Keychain {
-  static CREATE_SK_ROOT_MESSAGE = "Unlock your Renegade wallet.\nTestnet v0";
+  static CREATE_SK_ROOT_MESSAGE = "Unlock your Renegade account.\nTestnet v0";
   static CREATE_SK_MATCH_MESSAGE =
     "Unlock your Renegade match key.\nTestnet v0";
   static CREATE_SK_SETTLE_MESSAGE =
