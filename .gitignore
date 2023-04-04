@@ -1,0 +1,4 @@
+/node_modules
+*.sw[a-p]
+/yarn-error.log
+/temp-test
