@@ -1,33 +1,29 @@
+import axios, { AxiosResponse } from "axios";
+
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import Keychain from "./keychain";
+import {
+  AccountId,
+  CallbackId,
+  Exchange,
+  Order,
+  OrderId,
+  Token,
+} from "./types";
 import { unimplemented } from "./utils";
-
-type Uuid = number;
-type AccountId = Uuid;
-type CallbackId = Uuid;
-
-enum Exchange {
-  Median = 0,
-  Binance,
-  Coinbase,
-  Kraken,
-  Okx,
-  Uniswapv3,
-}
-
-interface Token {}
 
 // ----------------------
 // | Account Management |
 // ----------------------
 
 /**
- * Interface for Account-related functions on the Renegade object.
+ * Interface for Account-related functions (registration, relayer delegation,
+ * etc.) on the Renegade object.
  */
 interface IRenegadeAccount {
   /**
-   * Register a new account with the Renegade object.
+   * Register a new Account with the Renegade object.
    *
    * If the Account corresponding to this Keychain already exists in the
    * network, the Account will be populated with the current balances, orders,
@@ -78,9 +74,36 @@ interface IRenegadeAccount {
 // --------------------
 
 /**
- * Interface for one-off queries for the Renegade object.
+ * Interface for manipulation of Accounts (placing orders, depositing, etc.).
  */
-interface IRenegadePolling {}
+interface IRenegadePolling {
+  /**
+   * Submit an order to the relayer.
+   *
+   * @param accountId The accountId of the Account to submit the order with.
+   * @param order The new order to submit.
+   */
+  submitOrder(accountId: AccountId, order: Order): Promise<void>;
+  /**
+   * Replace an order with a new order.
+   *
+   * @param accountId The accountId of the Account containing the order to replace.
+   * @param oldOrderId The orderId of the order to replace.
+   * @param newOrder The new order to submit.
+   */
+  replaceOrder(
+    accountId: AccountId,
+    oldOrderId: OrderId,
+    newOrder: Order,
+  ): Promise<void>;
+  /**
+   * Cancel an order.
+   *
+   * @param accountId The accountId of the Account containing the order to cancel.
+   * @param orderId
+   */
+  cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void>;
+}
 
 // ---------------------
 // | Websocket Streams |
@@ -149,8 +172,8 @@ interface IRenegadeStreaming {
  * Configuration parameters for initial Renegade object creation.
  */
 export interface RenegadeConfig {
-  // The domain name of the relayer to connect to.
-  relayerDomainName: string;
+  // The hostname of the relayer to connect to.
+  relayerHostname: string;
   // The port of the relayer HTTP API.
   relayerHttpPort?: number;
   // The port of the relayer WebSocket API.
@@ -167,91 +190,137 @@ export interface RenegadeConfig {
 export default class Renegade
   implements IRenegadeAccount, IRenegadePolling, IRenegadeStreaming
 {
+  // Fully-qualified URL of the relayer HTTP API.
+  private relayerHttpUrl: string;
+  // Fully-qualified URL of the relayer WebSocket API.
+  private relayerWsUrl: string;
+  // All Accounts that have been registered with the Renegade object.
+  private registeredAccounts: { [accountId: string]: Account };
   // For each topic, contains a list of callbackIds to send messages to.
   private topicListeners: { [topic: string]: CallbackId[] };
   // Lookup from callbackId to actual callback function.
   private topicCallbacks: {
     [callbackId: CallbackId]: (message: string) => void;
   };
-  // Fully-qualified URL of the relayer HTTP API.
-  private relayerHttpUrl: string;
-  // Fully-qualified URL of the relayer WebSocket API.
-  private relayerWsUrl: string;
 
   /**
    * Construct a new Renegade object.
    *
    * @param config Configuration parameters for the Renegade object.
    *
-   * @throws {InvalidDomainName} If the domain name is not a valid domain name.
+   * @throws {InvalidHostname} If the hostname is not a valid hostname.
    * @throws {InvalidPort} If the port is not a valid port.
    */
   constructor(config: RenegadeConfig) {
-    this.topicListeners = {};
-    this.topicCallbacks = {};
     // Set defaults, if not provided.
-    config.relayerHttpPort = config.relayerHttpPort || 3000;
-    config.relayerWsPort = config.relayerWsPort || 4000;
+    config.relayerHttpPort =
+      config.relayerHttpPort !== undefined ? config.relayerHttpPort : 3000;
+    config.relayerWsPort =
+      config.relayerWsPort !== undefined ? config.relayerWsPort : 4000;
     config.useInsecureTransport = config.useInsecureTransport || false;
     // Construct the URLs and save them.
+    if (config.relayerHostname === "localhost") {
+      config.relayerHostname = "127.0.0.1";
+    }
     this.relayerHttpUrl = this.constructUrl(
       "http",
-      config.relayerDomainName,
+      config.relayerHostname,
       config.relayerHttpPort,
       config.useInsecureTransport,
     );
     this.relayerWsUrl = this.constructUrl(
-      "http",
-      config.relayerDomainName,
+      "ws",
+      config.relayerHostname,
       config.relayerWsPort,
       config.useInsecureTransport,
     );
+    // Set empty accounts, topic listeners, and topic callbacks.
+    this.registeredAccounts = {};
+    this.topicListeners = {};
+    this.topicCallbacks = {};
   }
 
   /**
    * Construct a URL from the given parameters.
    *
    * @param protocol Either "http" or "ws".
-   * @param domainName The domain name of the URL to construct.
+   * @param hostname The hostname of the URL to construct.
    * @param port The port of the URL to construct.
    * @param useInsecureTransport If true, use http:// or ws:// instead of https:// or wss://.
    * @returns The constructed URL.
    *
-   * @throws {InvalidDomainName} If the domain name is not a valid domain name.
+   * @throws {InvalidHostname} If the hostname is not a valid hostname.
    * @throws {InvalidPort} If the port is not a valid port.
    */
   private constructUrl(
     protocol: "http" | "ws",
-    domainName: string,
+    hostname: string,
     port: number,
     useInsecureTransport: boolean,
   ): string {
-    const domainRegex =
-      /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
-    if (!domainRegex.test(domainName)) {
-      throw new RenegadeError(RenegadeErrorType.InvalidDomainName);
+    const hostnameRegex =
+      /^(?!:\/\/)((([a-zA-Z0-9-]{1,63}\.?)+[a-zA-Z]{2,63})|(?:\d{1,3}\.){3}\d{1,3})$/;
+    if (!hostnameRegex.test(hostname)) {
+      throw new RenegadeError(
+        RenegadeErrorType.InvalidHostname,
+        "Invalid hostname: " + hostname,
+      );
     }
     if (port < 1 || port > 65535 || !Number.isInteger(port)) {
-      throw new RenegadeError(RenegadeErrorType.InvalidPort);
+      throw new RenegadeError(
+        RenegadeErrorType.InvalidPort,
+        "Invalid port: " + port,
+      );
     }
     return (
       protocol +
       (useInsecureTransport ? "" : "s") +
       "://" +
-      domainName +
+      hostname +
       ":" +
       port
     );
   }
 
+  /**
+   * Ping the relayer to check if it is reachable.
+   */
+  async ping() {
+    let response: AxiosResponse;
+    try {
+      response = await axios.get(this.relayerHttpUrl + "/v0/ping", {
+        data: {},
+      });
+    } catch (e) {
+      throw new RenegadeError(
+        RenegadeErrorType.RelayerUnreachable,
+        this.relayerHttpUrl,
+      );
+    }
+    if (response.status !== 200 || !response.data.timestamp) {
+      throw new RenegadeError(
+        RenegadeErrorType.RelayerUnreachable,
+        this.relayerHttpUrl,
+      );
+    }
+  }
+
+  // TODO
+  private assertInitialized() {}
+
   private expiringSignature(request: any, validUntil: number): number {
     unimplemented();
   }
 
-  /*** IRenegadeAccount Implementation ***/
+  // -----------------------------------
+  // | IRenegadeAccount Implementation |
+  // -----------------------------------
 
   async registerAccount(keychain: Keychain): Promise<AccountId> {
-    // Creat a new Account and populate values from the relayer.
+    console.log(keychain);
+    const account = await new Account(keychain);
+    return account.accountId;
+    // Create a new Account and populate values from the relayer.
     // Create callbacks for this Account.
     unimplemented();
   }
@@ -269,9 +338,30 @@ export default class Renegade
     unimplemented();
   }
 
-  /*** IRenegadePolling Implementation ***/
+  // -----------------------------------
+  // | IRenegadePolling Implementation |
+  // -----------------------------------
 
-  /*** IRenegadeStreaming Implementation ***/
+  submitOrder(accountId: string, order: Order): Promise<void> {
+    unimplemented();
+  }
+
+  replaceOrder(
+    accountId: string,
+    oldOrderId: string,
+    newOrder: Order,
+  ): Promise<void> {
+    unimplemented();
+  }
+
+  cancelOrder(accountId: string, orderId: string): Promise<void> {
+    unimplemented();
+  }
+
+  // -------------------------------------
+  // | IRenegadeStreaming Implementation |
+  // -------------------------------------
+
   registerPriceReportCallback(
     callback: (message: string) => void,
     exchange: Exchange,

@@ -1,12 +1,13 @@
 import { Renegade, RenegadeConfig, Keychain } from "../src";
+import RenegadeError, { RenegadeErrorType } from "../src/errors";
 import * as path from "path";
 import * as fs from "fs";
 
 const renegadeConfig: RenegadeConfig = {
-  relayerDomainName: "stage.testnet.renegade.fi",
+  relayerHostname: "localhost",
   relayerHttpPort: 3000,
   relayerWsPort: 4000,
-  useInsecureTransport: false,
+  useInsecureTransport: true,
 }
 
 const RENEGADE_TEST_DIR = "./temp-test";
@@ -38,7 +39,7 @@ function executeTestWithCleanup(test: () => void) {
   fs.rmdirSync(RENEGADE_TEST_DIR, { recursive: true });
 }
 
-describe("Keychains", () => {
+describe("Keychain Creation", () => {
   test("Creating two random Keychains should be different with high probability", () => {
     const keychain1 = new Keychain();
     const keychain2 = new Keychain();
@@ -67,3 +68,58 @@ describe("Keychains", () => {
     })
   });
 });
+
+describe("Renegade Object Parameters", () => {
+  test("An invalid relayer hostname should throw an error.", () => {
+    const brokenRenegadeConfig: RenegadeConfig = {
+      relayerHostname: "https://not-a-valid-hostname.com",
+    };
+    expect(() => new Renegade(brokenRenegadeConfig)).toThrowError(RenegadeError);
+  });
+
+  test("An invalid relayer port should throw an error.", () => {
+    const brokenRenegadeConfig1: RenegadeConfig = {
+      relayerHostname: "localhost",
+      relayerHttpPort: 0,
+    };
+    const brokenRenegadeConfig2: RenegadeConfig = {
+      relayerHostname: "localhost",
+      relayerHttpPort: 65536,
+    };
+    const brokenRenegadeConfig3: RenegadeConfig = {
+      relayerHostname: "localhost",
+      relayerHttpPort: 0.5,
+    };
+    expect(() => new Renegade(brokenRenegadeConfig1)).toThrowError(RenegadeError);
+    expect(() => new Renegade(brokenRenegadeConfig2)).toThrowError(RenegadeError);
+    expect(() => new Renegade(brokenRenegadeConfig3)).toThrowError(RenegadeError);
+  });
+
+  test("Can properly connect to a valid relayer URL.", async () => {
+    const renegade = new Renegade(renegadeConfig);
+    await renegade.ping();
+  });
+
+  test("Cannot connect to an invalid relayer URL", async () => {
+    const brokenRenegadeConfig: RenegadeConfig = { relayerHostname: "no-relayer-here.com" };
+    const renegade = new Renegade(brokenRenegadeConfig);
+    try {
+      await renegade.ping();
+      fail("Should have thrown an error.");
+    } catch (error) {
+      expect(error).toBeInstanceOf(RenegadeError);
+    }
+  });
+});
+
+describe("Populating Accounts", () => {
+  test("Creating and initializing an Account should result in an Account with all zeroes and accountId = pk_view", async () => {
+    // const renegade = new Renegade(renegadeConfig);
+    // const keychain = new Keychain();
+    // const accountId = await renegade.registerAccount(keychain);
+    // expect(accountId).toEqual(keychain.keyHierarchy.view.publicKey.toString("hex"));
+    // const account = renegade.lookupAccount(accountId);
+    // TODO: Check that the account is initialized and has all zeroes.
+  });
+});
+
