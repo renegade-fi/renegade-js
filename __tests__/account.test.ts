@@ -2,6 +2,8 @@ import { Renegade, RenegadeConfig, Keychain } from "../src";
 import RenegadeError, { RenegadeErrorType } from "../src/errors";
 import * as path from "path";
 import * as fs from "fs";
+import * as uuid from "uuid";
+import keccak256 from "keccak256";
 
 const renegadeConfig: RenegadeConfig = {
   relayerHostname: "localhost",
@@ -113,13 +115,29 @@ describe("Renegade Object Parameters", () => {
 });
 
 describe("Populating Accounts", () => {
-  test("Creating and initializing an Account should result in an Account with all zeroes and accountId = pk_view", async () => {
-    // const renegade = new Renegade(renegadeConfig);
-    // const keychain = new Keychain();
-    // const accountId = await renegade.registerAccount(keychain);
-    // expect(accountId).toEqual(keychain.keyHierarchy.view.publicKey.toString("hex"));
-    // const account = renegade.lookupAccount(accountId);
-    // TODO: Check that the account is initialized and has all zeroes.
+  test("Creating two Accounts with the same Keychain should have the same AccountIds", async () => {
+    const renegade = new Renegade(renegadeConfig);
+    const keychain = new Keychain();
+    const accountId1 = await renegade.registerAccount(keychain, true);
+    await renegade.unregisterAccount(accountId1);
+    const accountId2 = await renegade.registerAccount(keychain, true);
+    expect(accountId1).toEqual(accountId2);
+  });
+
+  test("Creating and initializing a new Account should result in an Account with the correct accountId and no balances, orders, or fees", async () => {
+    const renegade = new Renegade(renegadeConfig);
+    const keychain = new Keychain();
+    const accountId = await renegade.registerAccount(keychain);
+
+    // Assert that accountId = uuidV4(keccak256(pk_view)[-16:])
+    const publicKeyHash = new Uint8Array(keccak256(keychain.keyHierarchy.view.publicKey.toBuffer()));
+    expect(accountId).toEqual(uuid.v4({ random: publicKeyHash.slice(-16) }));
+
+    // Assert that this account has no balances, orders, or fees.
+    const account = renegade.lookupAccount(accountId);
+    expect(account.balances).toEqual([]);
+    expect(account.orders).toEqual([]);
+    expect(account.fees).toEqual([]);
+    await renegade.unregisterAccount(accountId);
   });
 });
-

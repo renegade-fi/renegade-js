@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "lib": [
+      "es2020"
+    ],
+    "target": "es2020",
     "module": "es6",
     "esModuleInterop": true,
     "moduleResolution": "node"

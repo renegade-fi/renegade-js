@@ -208,4 +208,21 @@ export default class Keychain {
       this.keyHierarchy[key] = parseAsKeypair(this.keyHierarchy[key].secretKey);
     }
   }
+
+  serialize(): {} {
+    return `{
+      "public_keys": {
+        "pk_root": "${this.keyHierarchy.root.publicKey.toString("hex")}",
+        "pk_match": "${this.keyHierarchy.match.publicKey.toString("hex")}",
+        "pk_settle": "${this.keyHierarchy.settle.publicKey.toString("hex")}",
+        "pk_view": "${this.keyHierarchy.view.publicKey.toString("hex")}"
+      },
+      "secret_keys": {
+        "sk_root": "${this.keyHierarchy.root.secretKey.toString("hex")}",
+        "sk_match": "${this.keyHierarchy.match.secretKey.toString("hex")}",
+        "sk_settle": "${this.keyHierarchy.settle.secretKey.toString("hex")}",
+        "sk_view": "${this.keyHierarchy.view.secretKey.toString("hex")}"
+      }
+    }`.replace(/[\s\n]/g, "");
+  }
 }

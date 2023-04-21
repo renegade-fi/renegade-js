@@ -1,1 +1,22 @@
-export * from "./account";
+type Uuid = string;
+
+export type WalletId = Uuid;
+export type BalanceId = Uuid;
+export type OrderId = Uuid;
+export type FeeId = Uuid;
+
+export type AccountId = Uuid;
+export type CallbackId = Uuid;
+
+export class Token {
+  constructor(public readonly address: string, public readonly name?: string) {}
+}
+
+export enum Exchange {
+  Median = 0,
+  Binance,
+  Coinbase,
+  Kraken,
+  Okx,
+  Uniswapv3,
+}

@@ -3,15 +3,9 @@ import axios, { AxiosResponse } from "axios";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import Keychain from "./keychain";
-import {
-  AccountId,
-  CallbackId,
-  Exchange,
-  Order,
-  OrderId,
-  Token,
-} from "./types";
+import { AccountId, CallbackId, Exchange, OrderId, Token } from "./types";
 import { unimplemented } from "./utils";
+import { Order } from "./wallet";
 
 // ----------------------
 // | Account Management |
@@ -191,15 +185,15 @@ export default class Renegade
   implements IRenegadeAccount, IRenegadePolling, IRenegadeStreaming
 {
   // Fully-qualified URL of the relayer HTTP API.
-  private relayerHttpUrl: string;
+  private _relayerHttpUrl: string;
   // Fully-qualified URL of the relayer WebSocket API.
-  private relayerWsUrl: string;
+  private _relayerWsUrl: string;
   // All Accounts that have been registered with the Renegade object.
-  private registeredAccounts: { [accountId: string]: Account };
+  private _registeredAccounts: { [accountId: AccountId]: Account };
   // For each topic, contains a list of callbackIds to send messages to.
-  private topicListeners: { [topic: string]: CallbackId[] };
+  private _topicListeners: { [topic: string]: CallbackId[] };
   // Lookup from callbackId to actual callback function.
-  private topicCallbacks: {
+  private _topicCallbacks: {
     [callbackId: CallbackId]: (message: string) => void;
   };
 
@@ -222,22 +216,22 @@ export default class Renegade
     if (config.relayerHostname === "localhost") {
       config.relayerHostname = "127.0.0.1";
     }
-    this.relayerHttpUrl = this.constructUrl(
+    this._relayerHttpUrl = this._constructUrl(
       "http",
       config.relayerHostname,
       config.relayerHttpPort,
       config.useInsecureTransport,
     );
-    this.relayerWsUrl = this.constructUrl(
+    this._relayerWsUrl = this._constructUrl(
       "ws",
       config.relayerHostname,
       config.relayerWsPort,
       config.useInsecureTransport,
     );
     // Set empty accounts, topic listeners, and topic callbacks.
-    this.registeredAccounts = {};
-    this.topicListeners = {};
-    this.topicCallbacks = {};
+    this._registeredAccounts = {};
+    this._topicListeners = {};
+    this._topicCallbacks = {};
   }
 
   /**
@@ -252,7 +246,7 @@ export default class Renegade
    * @throws {InvalidHostname} If the hostname is not a valid hostname.
    * @throws {InvalidPort} If the port is not a valid port.
    */
-  private constructUrl(
+  private _constructUrl(
     protocol: "http" | "ws",
     hostname: string,
     port: number,
@@ -288,27 +282,24 @@ export default class Renegade
   async ping() {
     let response: AxiosResponse;
     try {
-      response = await axios.get(this.relayerHttpUrl + "/v0/ping", {
+      response = await axios.get(this._relayerHttpUrl + "/v0/ping", {
         data: {},
       });
     } catch (e) {
       throw new RenegadeError(
         RenegadeErrorType.RelayerUnreachable,
-        this.relayerHttpUrl,
+        this._relayerHttpUrl,
       );
     }
     if (response.status !== 200 || !response.data.timestamp) {
       throw new RenegadeError(
         RenegadeErrorType.RelayerUnreachable,
-        this.relayerHttpUrl,
+        this._relayerHttpUrl,
       );
     }
   }
 
-  // TODO
-  private assertInitialized() {}
-
-  private expiringSignature(request: any, validUntil: number): number {
+  private _expiringSignature(request: any, validUntil: number): number {
     unimplemented();
   }
 
@@ -316,45 +307,67 @@ export default class Renegade
   // | IRenegadeAccount Implementation |
   // -----------------------------------
 
-  async registerAccount(keychain: Keychain): Promise<AccountId> {
-    console.log(keychain);
-    const account = await new Account(keychain);
-    return account.accountId;
-    // Create a new Account and populate values from the relayer.
-    // Create callbacks for this Account.
-    unimplemented();
+  async registerAccount(
+    keychain: Keychain,
+    skipInitialization?: boolean,
+  ): Promise<AccountId> {
+    if (skipInitialization === undefined) {
+      skipInitialization = false;
+    }
+    const account = await new Account(
+      keychain,
+      this._relayerHttpUrl,
+      this._relayerWsUrl,
+    );
+    const accountId = account.accountId;
+    if (this._registeredAccounts[accountId]) {
+      throw new RenegadeError(RenegadeErrorType.AccountAlreadyRegistered);
+    }
+    if (!skipInitialization) {
+      await account.initialize();
+    }
+    this._registeredAccounts[accountId] = account;
+    return accountId;
   }
 
   lookupAccount(accountId: AccountId): Account {
-    unimplemented();
+    const account = this._registeredAccounts[accountId];
+    if (!account) {
+      throw new RenegadeError(
+        RenegadeErrorType.AccountNotRegistered,
+        "Account not registered: " + accountId,
+      );
+    }
+    return account;
   }
 
   delegateAccount(accountId: AccountId, sendRoot?: boolean): void {
     unimplemented();
   }
 
-  unregisterAccount(accountId: AccountId): void {
-    // Remove all callbacks for this Account.
-    unimplemented();
+  async unregisterAccount(accountId: AccountId): Promise<void> {
+    const account = this.lookupAccount(accountId);
+    await account.teardown();
+    delete this._registeredAccounts[accountId];
   }
 
   // -----------------------------------
   // | IRenegadePolling Implementation |
   // -----------------------------------
 
-  submitOrder(accountId: string, order: Order): Promise<void> {
+  submitOrder(accountId: AccountId, order: Order): Promise<void> {
     unimplemented();
   }
 
   replaceOrder(
-    accountId: string,
-    oldOrderId: string,
+    accountId: AccountId,
+    oldOrderId: OrderId,
     newOrder: Order,
   ): Promise<void> {
     unimplemented();
   }
 
-  cancelOrder(accountId: string, orderId: string): Promise<void> {
+  cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void> {
     unimplemented();
   }
 
