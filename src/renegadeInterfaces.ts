@@ -1,0 +1,275 @@
+import { Balance, Fee, Keychain, Order, Token } from "./state";
+import {
+  AccountId,
+  BalanceId,
+  CallbackId,
+  Exchange,
+  FeeId,
+  OrderId,
+} from "./types";
+
+// ----------------------
+// | Account Management |
+// ----------------------
+
+/**
+ * Interface for Account-related functions (registration, relayer delegation,
+ * etc.) on the Renegade object.
+ */
+export interface IRenegadeAccount {
+  /**
+   * Register a new Account with the Renegade object.
+   *
+   * If the Account corresponding to this Keychain already exists in the
+   * network, the Account will be populated with the current balances, orders,
+   * fees, etc.
+   *
+   * If the Account corresponding to this Keychain does not exist in the
+   * network, the Account will be initialized with zeroes and sent to the
+   * relayer to create it on-chain.
+   *
+   * After the Account has been registered, we begin streaming all corresponding
+   * account events from the relayer, so that the Account updates in real-time.
+   *
+   * @param keychain The Keychain of the Account to register with the Renegade object.
+   * @param skipInitialization If true, skip the initial Account sync. This is not recommended for production use.
+   * @returns The AccountId of the newly registered Account.
+   *
+   * @throws {AccountAlreadyRegistered} If the Account corresponding to this Keychain is already registered with the Renegade object.
+   */
+  registerAccount(
+    keychain: Keychain,
+    skipInitialization?: boolean,
+  ): Promise<AccountId>;
+  /**
+   * Unregister a previously-registered Account from the Renegade object, and
+   * stop streaming updates.
+   *
+   * @param accountId The AccountId of the Account to unregister from the Renegade object.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  unregisterAccount(accountId: AccountId): Promise<void>;
+  /**
+   * Delegate an Account to the relayer for remote matching.
+   *
+   * @param accountId The AccountId of the Account to delegate to the relayer.
+   * @param sendRoot If true, send sk_root to the relayer as "super-relayer mode".
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  delegateAccount(accountId: AccountId, sendRoot?: boolean): Promise<void>;
+}
+
+// -----------------------
+// | Account Information |
+// -----------------------
+
+/**
+ * Interface for viewing Account details.
+ */
+export interface IRenegadeInformation {
+  /**
+   * Get the current balances for an Account. Note that this is an immediate
+   * snapshot; we do not await any pending tasks.
+   *
+   * @param accountId The AccountId of the Account to get balances for.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  getBalances(accountId: AccountId): { [balanceId: BalanceId]: Balance };
+  /**
+   * Get the current orders for an Account. Note that this is an immediate
+   * snapshot; we do not await any pending tasks.
+   *
+   * @param accountId The AccountId of the Account to get orders for.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  getOrders(accountId: AccountId): { [orderId: OrderId]: Order };
+  /**
+   * Get the current fees for an Account. Note that this is an immediate
+   * snapshot; we do not await any pending tasks.
+   *
+   * @param accountId The AccountId of the Account to get fees for.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  getFees(accountId: AccountId): { [feeId: FeeId]: Fee };
+}
+
+// ---------------------
+// | Balance Managment |
+// ---------------------
+
+export interface IRenegadeBalance {
+  /**
+   * Deposit an asset into an Account, triggering a L1 inbox transaction.
+   *
+   * @param accountId The AccountId of the Account to deposit into.
+   * @param mint The Token to deposit.
+   * @param amount The amount of the Token to deposit.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  deposit(accountId: AccountId, mint: Token, amount: bigint): Promise<void>;
+  /**
+   * Withdraw an asset from an Account, triggering a L1 outbox transaction.
+   *
+   * @param accountId The AccountId of the Account to withdraw from.
+   * @param mint The Token to withdraw.
+   * @param amount The amount of the Token to withdraw.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  withdraw(
+    accountId: AccountId,
+    mint: Token,
+    amount: bigint,
+    l1Address: string,
+  ): Promise<void>;
+}
+
+// ---------------------
+// | Trading Functions |
+// ---------------------
+
+/**
+ * Interface for manipulation of Accounts (placing orders, depositing, etc.).
+ */
+export interface IRenegadeTrading {
+  /**
+   * Submit an order to the relayer.
+   *
+   * @param accountId The accountId of the Account to submit the order with.
+   * @param order The new order to submit.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  placeOrder(accountId: AccountId, order: Order): Promise<void>;
+  /**
+   * Replace an order with a new order.
+   *
+   * @param accountId The accountId of the Account containing the order to replace.
+   * @param oldOrderId The orderId of the order to replace.
+   * @param newOrder The new order to submit.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  modifyOrder(
+    accountId: AccountId,
+    oldOrderId: OrderId,
+    newOrder: Order,
+  ): Promise<void>;
+  /**
+   * Cancel an order.
+   *
+   * @param accountId The accountId of the Account containing the order to cancel.
+   * @param orderId The orderId of the order to cancel.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void>;
+}
+
+// ---------------------
+// | Fee Configuration |
+// ---------------------
+
+export interface IRenegadeFees {
+  /**
+   * Query the relayer for its desired fee.
+   */
+  queryDesiredFee(): Promise<Fee>;
+  /**
+   * Approve a fee for an Account.
+   *
+   * @param accountId The AccountId of the Account for which to approve the fee.
+   * @param fee The fee to approve.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  approveFee(accountId: AccountId, fee: Fee): Promise<void>;
+  /**
+   * Modify a fee for an Account.
+   *
+   * @param accountId The AccountId of the Account for which to modify the fee.
+   * @param oldFeeId The id of the old fee to modify.
+   * @param newFee The new fee to approve.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  modifyFee(accountId: AccountId, oldFeeId: FeeId, newFee: Fee): Promise<void>;
+  /**
+   * Revoke a fee for an Account.
+   *
+   * @param accountId The AccountId of the Account for which to revoke the fee.
+   * @param feeId The id of the fee to revoke.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  revokeFee(accountId: AccountId, feeId: FeeId): Promise<void>;
+}
+
+// ---------------------
+// | Websocket Streams |
+// ---------------------
+
+/**
+ * Interface for all Websocket streaming data from the relayer.
+ */
+export interface IRenegadeStreaming {
+  /**
+   * Register a callback to be invoked when a new price report is received.
+   *
+   * @param callback The callback to invoke when a new price report is received.
+   * @param exchange The Exchange to get price reports from.
+   * @param baseToken The base Token to get price reports for.
+   * @param quoteToken The quote Token to get price reports for.
+   */
+  registerPriceReportCallback(
+    callback: (message: string) => void,
+    exchange: Exchange,
+    baseToken: Token,
+    quoteToken: Token,
+  ): CallbackId;
+  /**
+   * Register a callback to be invoked when a new order book update is received.
+   *
+   * @param callback The callback to invoke when a new order book update is received.
+   */
+  registerOrderBookCallback(callback: (message: string) => void): CallbackId;
+  /**
+   * Register a callback to be invoked when a new network event is received.
+   *
+   * @param callback The callback to invoke when a new network event is received.
+   */
+  registerNetworkCallback(callback: (message: string) => void): CallbackId;
+  /**
+   * Register a callback to be invoked when a new MPC event is received.
+   *
+   * @param callback The callback to invoke when a new MPC event is received.
+   */
+  registerMpcCallback(callback: (message: string) => void): CallbackId;
+  /**
+   * Register a callback to be invoked when a new account event is received.
+   *
+   * @param callback The callback to invoke when a new account event is received.
+   * @param accountId The AccountId of the Account to register the callback for.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  registerAccountCallback(
+    callback: (message: string) => void,
+    accountId: AccountId,
+  ): CallbackId;
+  /**
+   * Release a previously-registered callback. If no other callback is
+   * registered for the same topic, the topic will be unsubscribed from.
+   *
+   * @param callbackId The CallbackId of the callback to release.
+   *
+   * @throws {CallbackNotRegistered} If the CallbackId is not registered with the Renegade object.
+   */
+  releaseCallback(callbackId: CallbackId): void;
+}

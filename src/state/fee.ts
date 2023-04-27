@@ -1,3 +1,5 @@
+import * as uuid from "uuid";
+
 import { FeeId } from "../types";
 import Token from "./token";
 
@@ -9,6 +11,24 @@ export default class Fee {
     public readonly gasAmount: bigint,
     public readonly percentFee: number,
   ) {
-    // this.feeId = generateId()
+    this.feeId = uuid.v4();
+  }
+
+  serialize(): string {
+    return `{
+      "pk_settle": ${this.pkSettle},
+      "gas_mint": "${this.gasMint.serialize()}",
+      "gas_amount": ${this.gasAmount},
+      "percent_fee": ${this.percentFee}
+    }`.replace(/[\s\n]/g, "");
+  }
+
+  static deserialize(serializedFee: any): Fee {
+    return new Fee(
+      BigInt(serializedFee.pk_settle),
+      Token.deserialize(serializedFee.gas_mint),
+      BigInt(serializedFee.gas_amount),
+      serializedFee.percent_fee,
+    );
   }
 }

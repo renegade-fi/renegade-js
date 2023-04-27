@@ -5,6 +5,7 @@ import WebSocket from "ws";
 
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Wallet } from "./state";
+import { AccountId, BalanceId, FeeId, OrderId } from "./types";
 
 const RENEGADE_AUTH_HEADER = "renegade-auth";
 const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
@@ -63,7 +64,7 @@ export default class Account {
     return randomness % BASEPOINT_ORDER;
   }
 
-  async initialize() {
+  async initialize(): Promise<void> {
     // Query the relayer to see if this Account is already registered in relayer state.
     const relayerWallet = await this._queryRelayerForWallet();
     if (relayerWallet) {
@@ -147,6 +148,8 @@ export default class Account {
    * @param taskId The UUID of the task to await.
    */
   private async _awaitTaskCompletion(taskId: Uuid): Promise<void> {
+    // TODO: Query the relayer for one-time task state, so that this function
+    // immediately resolves if the task is already completed.
     await this._awaitWsOpen();
     const topic = `/v0/tasks/${taskId}`;
     this._ws.send(
@@ -228,6 +231,19 @@ export default class Account {
     await this._awaitTaskCompletion(response.data.task_id);
   }
 
+  async placeOrder(order: Order): Promise<void> {
+    this._assertInitialized();
+    const request: AxiosRequestConfig = {
+      method: "POST",
+      url: `${this._relayerHttpUrl}/v0/wallet/${this._wallet.walletId}/orders`,
+      data: `{"public_var_auth":[],"order":${order.serialize()}}`,
+      validateStatus: () => true,
+    };
+    const response = await this._transmitHttpRequest(request, true);
+    console.log("resp:", response);
+    await this._awaitTaskCompletion(response.data.task_id);
+  }
+
   /**
    * Assert that the Account has been initialized, meaning that the Wallet is
    * now managed by the relayer and wallet update events are actively streaming
@@ -235,7 +251,7 @@ export default class Account {
    *
    * @throws {AccountNotInitialized} If the Account has not yet been initialized.
    */
-  private _assertInitialized() {
+  private _assertInitialized(): void {
     if (!this._isInitialized) {
       throw new RenegadeError(RenegadeErrorType.AccountNotInitialized);
     }
@@ -246,9 +262,12 @@ export default class Account {
    *
    * @throws {AccountNotInitialized} If the Account has not yet been initialized.
    */
-  get balances() {
+  get balances(): { [balanceId: BalanceId]: Balance } {
     this._assertInitialized();
-    return this._wallet.balances;
+    return this._wallet.balances.reduce((acc, balance) => {
+      acc[balance.balanceId] = balance;
+      return acc;
+    }, {});
   }
 
   /**
@@ -256,9 +275,12 @@ export default class Account {
    *
    * @throws {AccountNotInitialized} If the Account has not yet been initialized.
    */
-  get orders() {
+  get orders(): { [orderId: OrderId]: Order } {
     this._assertInitialized();
-    return this._wallet.orders;
+    return this._wallet.orders.reduce((acc, order) => {
+      acc[order.orderId] = order;
+      return acc;
+    }, {});
   }
 
   /**
@@ -266,22 +288,25 @@ export default class Account {
    *
    * @throws {AccountNotInitialized} If the Account has not yet been initialized.
    */
-  get fees() {
+  get fees(): { [feeId: FeeId]: Fee } {
     this._assertInitialized();
-    return this._wallet.fees;
+    return this._wallet.fees.reduce((acc, fee) => {
+      acc[fee.feeId] = fee;
+      return acc;
+    }, {});
   }
 
   /**
    * Getter for the Keychain.
    */
-  get keychain() {
+  get keychain(): Keychain {
     return this._wallet.keychain;
   }
 
   /**
    * Getter for the AccountId.
    */
-  get accountId() {
+  get accountId(): AccountId {
     return this._wallet.walletId;
   }
 }

@@ -2,164 +2,24 @@ import axios, { AxiosResponse } from "axios";
 
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
-import { Keychain, Order, Token } from "./state";
-import { AccountId, CallbackId, Exchange, OrderId } from "./types";
+import {
+  IRenegadeAccount,
+  IRenegadeBalance,
+  IRenegadeFees,
+  IRenegadeInformation,
+  IRenegadeStreaming,
+  IRenegadeTrading,
+} from "./renegadeInterfaces";
+import { Balance, Fee, Keychain, Order, Token } from "./state";
+import {
+  AccountId,
+  BalanceId,
+  CallbackId,
+  Exchange,
+  FeeId,
+  OrderId,
+} from "./types";
 import { unimplemented } from "./utils";
-
-// ----------------------
-// | Account Management |
-// ----------------------
-
-/**
- * Interface for Account-related functions (registration, relayer delegation,
- * etc.) on the Renegade object.
- */
-interface IRenegadeAccount {
-  /**
-   * Register a new Account with the Renegade object.
-   *
-   * If the Account corresponding to this Keychain already exists in the
-   * network, the Account will be populated with the current balances, orders,
-   * fees, etc.
-   *
-   * If the Account corresponding to this Keychain does not exist in the
-   * network, the Account will be initialized with zeroes and sent to the
-   * relayer to create it on-chain.
-   *
-   * After the Account has been registered, we begin streaming all corresponding
-   * account events from the relayer, so that the Account updates in real-time.
-   *
-   * @param keychain The Keychain of the Account to register with the Renegade object.
-   * @returns The AccountId of the newly registered Account.
-   *
-   * @throws {AccountAlreadyRegistered} If the Account corresponding to this Keychain is already registered with the Renegade object.
-   */
-  registerAccount(keychain: Keychain): Promise<AccountId>;
-  /**
-   * Retreive an Account by its AccountId.
-   *
-   * @param accountId The AccountId of the Account  to look up.
-   * @returns The Account corresponding to the given AccountId.
-   *
-   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
-   */
-  lookupAccount(accountId: AccountId): Account;
-  /**
-   * Delegate an Account to the relayer for remote matching.
-   *
-   * @param accountId The AccountId of the Account to delegate to the relayer.
-   * @param sendRoot If true, send sk_root to the relayer as "super-relayer mode".
-   */
-  delegateAccount(accountId: AccountId, sendRoot?: boolean): void;
-  /**
-   * Unregister a previously-registered Account from the Renegade object, and
-   * stop streaming updates.
-   *
-   * @param accountId The AccountId of the Account to unregister from the Renegade object.
-   *
-   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
-   */
-  unregisterAccount(accountId: AccountId): void;
-}
-
-// --------------------
-// | Polling Requests |
-// --------------------
-
-/**
- * Interface for manipulation of Accounts (placing orders, depositing, etc.).
- */
-interface IRenegadePolling {
-  /**
-   * Submit an order to the relayer.
-   *
-   * @param accountId The accountId of the Account to submit the order with.
-   * @param order The new order to submit.
-   */
-  submitOrder(accountId: AccountId, order: Order): Promise<void>;
-  /**
-   * Replace an order with a new order.
-   *
-   * @param accountId The accountId of the Account containing the order to replace.
-   * @param oldOrderId The orderId of the order to replace.
-   * @param newOrder The new order to submit.
-   */
-  replaceOrder(
-    accountId: AccountId,
-    oldOrderId: OrderId,
-    newOrder: Order,
-  ): Promise<void>;
-  /**
-   * Cancel an order.
-   *
-   * @param accountId The accountId of the Account containing the order to cancel.
-   * @param orderId
-   */
-  cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void>;
-}
-
-// ---------------------
-// | Websocket Streams |
-// ---------------------
-
-/**
- * Interface for all Websocket streaming data from the relayer.
- */
-interface IRenegadeStreaming {
-  /**
-   * Register a callback to be invoked when a new price report is received.
-   *
-   * @param callback The callback to invoke when a new price report is received.
-   * @param exchange The Exchange to get price reports from.
-   * @param baseToken The base Token to get price reports for.
-   * @param quoteToken The quote Token to get price reports for.
-   */
-  registerPriceReportCallback(
-    callback: (message: string) => void,
-    exchange: Exchange,
-    baseToken: Token,
-    quoteToken: Token,
-  ): CallbackId;
-  /**
-   * Register a callback to be invoked when a new order book update is received.
-   *
-   * @param callback The callback to invoke when a new order book update is received.
-   */
-  registerOrderBookCallback(callback: (message: string) => void): CallbackId;
-  /**
-   * Register a callback to be invoked when a new network event is received.
-   *
-   * @param callback The callback to invoke when a new network event is received.
-   */
-  registerNetworkCallback(callback: (message: string) => void): CallbackId;
-  /**
-   * Register a callback to be invoked when a new MPC event is received.
-   *
-   * @param callback The callback to invoke when a new MPC event is received.
-   */
-  registerMpcCallback(callback: (message: string) => void): CallbackId;
-  /**
-   * Register a callback to be invoked when a new account event is received.
-   *
-   * @param callback The callback to invoke when a new account event is received.
-   * @param accountId The AccountId of the Account to register the callback for.
-   *
-   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
-   */
-  registerAccountCallback(
-    callback: (message: string) => void,
-    accountId: AccountId,
-  ): CallbackId;
-  /**
-   * Release a previously-registered callback. If no other callback is
-   * registered for the same topic, the topic will be unsubscribed from.
-   *
-   * @param callbackId The CallbackId of the callback to release.
-   *
-   * @throws {CallbackNotRegistered} If the CallbackId is not registered with the Renegade object.
-   */
-  releaseCallback(callbackId: CallbackId): void;
-}
 
 /**
  * Configuration parameters for initial Renegade object creation.
@@ -181,8 +41,18 @@ export interface RenegadeConfig {
  * relayer.
  */
 export default class Renegade
-  implements IRenegadeAccount, IRenegadePolling, IRenegadeStreaming
+  implements
+    IRenegadeAccount,
+    IRenegadeInformation,
+    IRenegadeBalance,
+    IRenegadeTrading,
+    IRenegadeFees,
+    IRenegadeStreaming
 {
+  // --------------------------
+  // | State and Constructors |
+  // --------------------------
+
   // Fully-qualified URL of the relayer HTTP API.
   public readonly relayerHttpUrl: string;
   // Fully-qualified URL of the relayer WebSocket API.
@@ -275,6 +145,10 @@ export default class Renegade
     );
   }
 
+  // -------------
+  // | Utilities |
+  // -------------
+
   /**
    * Ping the relayer to check if it is reachable.
    */
@@ -296,6 +170,24 @@ export default class Renegade
         this.relayerHttpUrl,
       );
     }
+  }
+
+  /**
+   * Get the semver of the relayer.
+   */
+  async getVersion(): Promise<string> {
+    unimplemented();
+  }
+
+  private _lookupAccount(accountId: AccountId): Account {
+    const account = this._registeredAccounts[accountId];
+    if (!account) {
+      throw new RenegadeError(
+        RenegadeErrorType.AccountNotRegistered,
+        "Account not registered: " + accountId,
+      );
+    }
+    return account;
   }
 
   // -----------------------------------
@@ -325,36 +217,68 @@ export default class Renegade
     return accountId;
   }
 
-  lookupAccount(accountId: AccountId): Account {
-    const account = this._registeredAccounts[accountId];
-    if (!account) {
-      throw new RenegadeError(
-        RenegadeErrorType.AccountNotRegistered,
-        "Account not registered: " + accountId,
-      );
-    }
-    return account;
-  }
-
-  delegateAccount(accountId: AccountId, sendRoot?: boolean): void {
-    unimplemented();
-  }
-
   async unregisterAccount(accountId: AccountId): Promise<void> {
-    const account = this.lookupAccount(accountId);
+    const account = this._lookupAccount(accountId);
     await account.teardown();
     delete this._registeredAccounts[accountId];
   }
 
-  // -----------------------------------
-  // | IRenegadePolling Implementation |
-  // -----------------------------------
-
-  submitOrder(accountId: AccountId, order: Order): Promise<void> {
+  async delegateAccount(
+    accountId: AccountId,
+    sendRoot?: boolean,
+  ): Promise<void> {
     unimplemented();
   }
 
-  replaceOrder(
+  // ---------------------------------------
+  // | IRenegadeInformation Implementation |
+  // ---------------------------------------
+
+  getBalances(accountId: AccountId): { [balanceId: BalanceId]: Balance } {
+    const account = this._lookupAccount(accountId);
+    return account.balances;
+  }
+
+  getOrders(accountId: AccountId): { [orderId: OrderId]: Order } {
+    const account = this._lookupAccount(accountId);
+    return account.orders;
+  }
+
+  getFees(accountId: AccountId): { [feeId: FeeId]: Fee } {
+    const account = this._lookupAccount(accountId);
+    return account.fees;
+  }
+
+  // ---------------------------------------
+  // | IRenegadeBalance Implementation |
+  // ---------------------------------------
+
+  async deposit(
+    accountId: AccountId,
+    mint: Token,
+    amount: bigint,
+  ): Promise<void> {
+    unimplemented();
+  }
+
+  async withdraw(
+    accountId: AccountId,
+    mint: Token,
+    amount: bigint,
+  ): Promise<void> {
+    unimplemented();
+  }
+
+  // -----------------------------------
+  // | IRenegadeTrading Implementation |
+  // -----------------------------------
+
+  async placeOrder(accountId: AccountId, order: Order): Promise<void> {
+    const account = this._lookupAccount(accountId);
+    await account.placeOrder(order);
+  }
+
+  async modifyOrder(
     accountId: AccountId,
     oldOrderId: OrderId,
     newOrder: Order,
@@ -362,7 +286,31 @@ export default class Renegade
     unimplemented();
   }
 
-  cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void> {
+  async cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void> {
+    unimplemented();
+  }
+
+  // --------------------------------
+  // | IRenegadeFees Implementation |
+  // --------------------------------
+
+  async queryDesiredFee(): Promise<Fee> {
+    unimplemented();
+  }
+
+  async approveFee(accountId: AccountId, fee: Fee): Promise<void> {
+    unimplemented();
+  }
+
+  async modifyFee(
+    accountId: AccountId,
+    oldFeeId: FeeId,
+    newFee: Fee,
+  ): Promise<void> {
+    unimplemented();
+  }
+
+  async revokeFee(accountId: AccountId, feeId: FeeId): Promise<void> {
     unimplemented();
   }
 
