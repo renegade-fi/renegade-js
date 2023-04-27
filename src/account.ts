@@ -1,11 +1,18 @@
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import crypto from "crypto";
 import Uuid from "uuid";
 import WebSocket from "ws";
 
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import Keychain from "./keychain";
-import { AccountId, BalanceId, FeeId, OrderId } from "./types";
 import { Balance, Fee, Order, Wallet } from "./wallet";
+
+const RENEGADE_AUTH_HEADER = "renegade-auth";
+const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
+const SIG_VALIDITY_WINDOW_MS = 10_000;
+// https://doc.dalek.rs/curve25519_dalek/constants/constant.BASEPOINT_ORDER.html
+const BASEPOINT_ORDER =
+  BigInt(2) ** BigInt(252) + BigInt("0x14def9dea2f79cd65812631a5cf5d3ed");
 
 /**
  * A Renegade Account, which is a thin wrapper over the Wallet abstraction. The
@@ -36,8 +43,25 @@ export default class Account {
     this._relayerHttpUrl = relayerHttpUrl;
     this._relayerWsUrl = relayerWsUrl;
     this._ws = new WebSocket(this._relayerWsUrl);
-    this._wallet = new Wallet([], [], [], keychain, 0n);
+    this._wallet = new Wallet([], [], [], keychain, this._generateRandomness());
     this._isInitialized = false;
+  }
+
+  /**
+   * Generate blinding randomness, used to populate initial empty wallet state.
+   *
+   * @returns The generated randomness.
+   */
+  _generateRandomness(): bigint {
+    const sampleLimb = () => BigInt(crypto.randomInt(2 ** 32));
+    const randomness =
+      sampleLimb() +
+      sampleLimb() * 2n ** 32n +
+      sampleLimb() * 2n ** 64n +
+      sampleLimb() * 2n ** 96n;
+    // Note that sampling in this manner slightly biases the randomness; should
+    // not be a big issue since the bias is extremely small.
+    return randomness % BASEPOINT_ORDER;
   }
 
   async initialize() {
@@ -65,8 +89,41 @@ export default class Account {
    * relayer.
    */
   async teardown(): Promise<void> {
+    this._isInitialized = false;
     await this._awaitWsOpen();
     this._ws.close();
+  }
+
+  private _expiringSignature(
+    request: AxiosRequestConfig,
+    validUntil: number,
+  ): Uint8Array {
+    const validUntilBuffer = Buffer.alloc(8);
+    validUntilBuffer.writeBigUInt64LE(BigInt(validUntil));
+    const signatureMessage = Buffer.concat([
+      Buffer.from(request.data.toString(), "ascii"),
+      validUntilBuffer,
+    ]);
+    const sig =
+      this._wallet.keychain.keyHierarchy.root.signMessage(signatureMessage);
+    return sig;
+  }
+
+  private async _transmitHttpRequest(
+    request: AxiosRequestConfig,
+    isAuthenticated: boolean,
+  ): Promise<AxiosResponse> {
+    if (isAuthenticated) {
+      request.headers = request.headers || {};
+      // const validUntil = Date.now() + SIG_VALIDITY_WINDOW_MS;
+      const validUntil = 1692318847714 + SIG_VALIDITY_WINDOW_MS;
+      request.headers[RENEGADE_AUTH_HEADER] =
+        "[" +
+        Array.from(this._expiringSignature(request, validUntil)).toString() +
+        "]";
+      request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = validUntil;
+    }
+    return await axios.request(request);
   }
 
   /**
@@ -130,15 +187,19 @@ export default class Account {
    * if it does not.
    */
   private async _queryRelayerForWallet(): Promise<Wallet | undefined> {
-    const response = await axios.get(
-      `${this._relayerHttpUrl}/v0/wallet/${this._wallet.walletId}`,
-      { data: {}, validateStatus: () => true },
-    );
-    if (response.status === 404 && response.data === "wallet not found") {
+    const request: AxiosRequestConfig = {
+      method: "GET",
+      url: `${this._relayerHttpUrl}/v0/wallet/${this._wallet.walletId}`,
+      data: "{}",
+      validateStatus: () => true,
+    };
+    const response = await this._transmitHttpRequest(request, true);
+    if (response.status === 200) {
+      return Wallet.deserialize(response.data.wallet);
+    } else {
       console.log("Could not find wallet in relayer local state.");
       return undefined;
     }
-    return undefined; // TODO: Parse the actual Wallet here.
   }
 
   /**
@@ -158,13 +219,14 @@ export default class Account {
    */
   private async _createNewWallet(): Promise<void> {
     // Query the relayer to create a new Wallet.
-    const responseCreate = await axios.post(
-      `${this._relayerHttpUrl}/v0/wallet`,
-      `{"wallet":${this._wallet.serialize()}}`,
-      { validateStatus: () => true },
-    );
-    const taskId = responseCreate.data.task_id;
-    await this._awaitTaskCompletion(taskId);
+    const request: AxiosRequestConfig = {
+      method: "POST",
+      url: `${this._relayerHttpUrl}/v0/wallet`,
+      data: `{"wallet":${this._wallet.serialize(true)}}`,
+      validateStatus: () => true,
+    };
+    const response = await this._transmitHttpRequest(request, false);
+    await this._awaitTaskCompletion(response.data.task_id);
   }
 
   /**

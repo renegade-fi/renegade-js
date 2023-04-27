@@ -185,9 +185,9 @@ export default class Renegade
   implements IRenegadeAccount, IRenegadePolling, IRenegadeStreaming
 {
   // Fully-qualified URL of the relayer HTTP API.
-  private _relayerHttpUrl: string;
+  public readonly relayerHttpUrl: string;
   // Fully-qualified URL of the relayer WebSocket API.
-  private _relayerWsUrl: string;
+  public readonly relayerWsUrl: string;
   // All Accounts that have been registered with the Renegade object.
   private _registeredAccounts: { [accountId: AccountId]: Account };
   // For each topic, contains a list of callbackIds to send messages to.
@@ -216,13 +216,13 @@ export default class Renegade
     if (config.relayerHostname === "localhost") {
       config.relayerHostname = "127.0.0.1";
     }
-    this._relayerHttpUrl = this._constructUrl(
+    this.relayerHttpUrl = this._constructUrl(
       "http",
       config.relayerHostname,
       config.relayerHttpPort,
       config.useInsecureTransport,
     );
-    this._relayerWsUrl = this._constructUrl(
+    this.relayerWsUrl = this._constructUrl(
       "ws",
       config.relayerHostname,
       config.relayerWsPort,
@@ -282,25 +282,21 @@ export default class Renegade
   async ping() {
     let response: AxiosResponse;
     try {
-      response = await axios.get(this._relayerHttpUrl + "/v0/ping", {
+      response = await axios.get(this.relayerHttpUrl + "/v0/ping", {
         data: {},
       });
     } catch (e) {
       throw new RenegadeError(
         RenegadeErrorType.RelayerUnreachable,
-        this._relayerHttpUrl,
+        this.relayerHttpUrl,
       );
     }
     if (response.status !== 200 || !response.data.timestamp) {
       throw new RenegadeError(
         RenegadeErrorType.RelayerUnreachable,
-        this._relayerHttpUrl,
+        this.relayerHttpUrl,
       );
     }
-  }
-
-  private _expiringSignature(request: any, validUntil: number): number {
-    unimplemented();
   }
 
   // -----------------------------------
@@ -316,8 +312,8 @@ export default class Renegade
     }
     const account = await new Account(
       keychain,
-      this._relayerHttpUrl,
-      this._relayerWsUrl,
+      this.relayerHttpUrl,
+      this.relayerWsUrl,
     );
     const accountId = account.accountId;
     if (this._registeredAccounts[accountId]) {
