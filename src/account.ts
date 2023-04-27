@@ -4,8 +4,7 @@ import Uuid from "uuid";
 import WebSocket from "ws";
 
 import RenegadeError, { RenegadeErrorType } from "./errors";
-import Keychain from "./keychain";
-import { Balance, Fee, Order, Wallet } from "./wallet";
+import { Balance, Fee, Keychain, Order, Wallet } from "./state";
 
 const RENEGADE_AUTH_HEADER = "renegade-auth";
 const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";

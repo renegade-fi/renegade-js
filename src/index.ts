@@ -1,4 +1,4 @@
-import Keychain from "./keychain";
 import Renegade, { RenegadeConfig } from "./renegade";
+import { Balance, Fee, Keychain, Order, Token } from "./state";
 
-export { Renegade, RenegadeConfig, Keychain };
+export { Renegade, RenegadeConfig, Balance, Fee, Keychain, Order, Token };

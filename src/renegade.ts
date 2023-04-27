@@ -2,10 +2,9 @@ import axios, { AxiosResponse } from "axios";
 
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
-import Keychain from "./keychain";
-import { AccountId, CallbackId, Exchange, OrderId, Token } from "./types";
+import { Keychain, Order, Token } from "./state";
+import { AccountId, CallbackId, Exchange, OrderId } from "./types";
 import { unimplemented } from "./utils";
-import { Order } from "./wallet";
 
 // ----------------------
 // | Account Management |
