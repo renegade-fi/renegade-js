@@ -1,13 +1,42 @@
-type Uuid = string;
+import * as uuid from "uuid";
 
-export type WalletId = Uuid;
-export type BalanceId = Uuid;
-export type OrderId = Uuid;
-export type FeeId = Uuid;
+type Uuid = uuid.UUID;
 
-export type AccountId = Uuid;
-export type TaskId = Uuid;
-export type CallbackId = Uuid;
+/**
+ * Brands and types for Wallet-related IDs.
+ */
+enum WalletIdBrand {
+  _ = "",
+}
+export type WalletId = WalletIdBrand & Uuid;
+enum BalanceIdBrand {
+  _ = "",
+}
+export type BalanceId = BalanceIdBrand & Uuid;
+enum OrderIdBrand {
+  _ = "",
+}
+export type OrderId = OrderIdBrand & Uuid;
+enum FeeIdBrand {
+  _ = "",
+}
+export type FeeId = FeeIdBrand & Uuid;
+
+/**
+ * Brands and types for Renegade object related IDs.
+ */
+enum AccountIdBrand {
+  _ = "",
+}
+export type AccountId = AccountIdBrand & Uuid;
+enum TaskIdBrand {
+  _ = "",
+}
+export type TaskId = TaskIdBrand & Uuid;
+enum CallbackIdBrand {
+  _ = "",
+}
+export type CallbackId = CallbackIdBrand & Uuid;
 
 export enum Exchange {
   Median = 0,

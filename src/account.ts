@@ -213,7 +213,7 @@ export default class Account {
    *
    * @throws {AccountNotInitialized} If the Account has not yet been initialized.
    */
-  get balances(): { [balanceId: BalanceId]: Balance } {
+  get balances(): Record<BalanceId, Balance> {
     this._assertInitialized();
     return this._wallet.balances.reduce((acc, balance) => {
       acc[balance.balanceId] = balance;
@@ -226,7 +226,7 @@ export default class Account {
    *
    * @throws {AccountNotInitialized} If the Account has not yet been initialized.
    */
-  get orders(): { [orderId: OrderId]: Order } {
+  get orders(): Record<OrderId, Order> {
     this._assertInitialized();
     return this._wallet.orders.reduce((acc, order) => {
       acc[order.orderId] = order;
@@ -239,7 +239,7 @@ export default class Account {
    *
    * @throws {AccountNotInitialized} If the Account has not yet been initialized.
    */
-  get fees(): { [feeId: FeeId]: Fee } {
+  get fees(): Record<FeeId, Fee> {
     this._assertInitialized();
     return this._wallet.fees.reduce((acc, fee) => {
       acc[fee.feeId] = fee;

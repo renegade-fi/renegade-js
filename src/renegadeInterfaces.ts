@@ -80,7 +80,7 @@ export interface IRenegadeInformation {
    *
    * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
    */
-  getBalances(accountId: AccountId): { [balanceId: BalanceId]: Balance };
+  getBalances(accountId: AccountId): Record<BalanceId, Balance>;
   /**
    * Get the current orders for an Account. Note that this is an immediate
    * snapshot; we do not await any pending tasks.
@@ -89,7 +89,7 @@ export interface IRenegadeInformation {
    *
    * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
    */
-  getOrders(accountId: AccountId): { [orderId: OrderId]: Order };
+  getOrders(accountId: AccountId): Record<OrderId, Order>;
   /**
    * Get the current fees for an Account. Note that this is an immediate
    * snapshot; we do not await any pending tasks.
@@ -98,7 +98,7 @@ export interface IRenegadeInformation {
    *
    * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
    */
-  getFees(accountId: AccountId): { [feeId: FeeId]: Fee };
+  getFees(accountId: AccountId): Record<FeeId, Fee>;
 }
 
 // ---------------------

@@ -67,13 +67,11 @@ export default class Renegade
   // The WebSocket connection to the relayer.
   private _ws: RenegadeWs;
   // All Accounts that have been registered with the Renegade object.
-  private _registeredAccounts: { [accountId: AccountId]: Account };
+  private _registeredAccounts: Record<AccountId, Account>;
   // For each topic, contains a list of callbackIds to send messages to.
-  private _topicListeners: { [topic: string]: CallbackId[] };
+  private _topicListeners: Record<string, CallbackId[]>;
   // Lookup from callbackId to actual callback function.
-  private _topicCallbacks: {
-    [callbackId: CallbackId]: (message: string) => void;
-  };
+  private _topicCallbacks: Record<CallbackId, (message: string) => void>;
 
   /**
    * Construct a new Renegade object.
@@ -259,17 +257,17 @@ export default class Renegade
   // | IRenegadeInformation Implementation |
   // ---------------------------------------
 
-  getBalances(accountId: AccountId): { [balanceId: BalanceId]: Balance } {
+  getBalances(accountId: AccountId): Record<BalanceId, Balance> {
     const account = this._lookupAccount(accountId);
     return account.balances;
   }
 
-  getOrders(accountId: AccountId): { [orderId: OrderId]: Order } {
+  getOrders(accountId: AccountId): Record<OrderId, Order> {
     const account = this._lookupAccount(accountId);
     return account.orders;
   }
 
-  getFees(accountId: AccountId): { [feeId: FeeId]: Fee } {
+  getFees(accountId: AccountId): Record<FeeId, Fee> {
     const account = this._lookupAccount(accountId);
     return account.fees;
   }
