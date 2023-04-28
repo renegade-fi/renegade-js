@@ -13,34 +13,37 @@ import {
 // ----------------------
 
 /**
- * Interface for Account-related functions (registration, relayer delegation,
- * etc.) on the Renegade object.
+ * Interface for Account-related functions (registration, initialization,
+ * relayer delegation, etc.).
  */
 export interface IRenegadeAccount {
   /**
    * Register a new Account with the Renegade object.
    *
-   * If the Account corresponding to this Keychain already exists in the
-   * network, the Account will be populated with the current balances, orders,
-   * fees, etc.
-   *
-   * If the Account corresponding to this Keychain does not exist in the
-   * network, the Account will be initialized with zeroes and sent to the
-   * relayer to create it on-chain.
-   *
-   * After the Account has been registered, we begin streaming all corresponding
-   * account events from the relayer, so that the Account updates in real-time.
+   * This simply creates a new Account from the Keychain and stores it in the
+   * list of Renegade's managed accounts. The Acccount is not yet initialized,
+   * and all read or write calls that affect the Account will fail until
+   * Renegade::initializeAccount() is called.
    *
    * @param keychain The Keychain of the Account to register with the Renegade object.
-   * @param skipInitialization If true, skip the initial Account sync. This is not recommended for production use.
    * @returns The AccountId of the newly registered Account.
    *
    * @throws {AccountAlreadyRegistered} If the Account corresponding to this Keychain is already registered with the Renegade object.
    */
-  registerAccount(
-    keychain: Keychain,
-    skipInitialization?: boolean,
-  ): Promise<AccountId>;
+  registerAccount(keychain: Keychain): AccountId;
+  /**
+   * Initialize an Account that has already been registered with the Renegade object.
+   *
+   * If this Account already exists in the network, the Account will be
+   * populated with the current balances, orders, fees, etc.
+   *
+   * If the Account does not exist in the network, the Account will be
+   * initialized with zeroes and sent to the relayer to create it on-chain.
+   *
+   * After the Account has been registered, we begin streaming all corresponding
+   * account events from the relayer, so that the Account updates in real-time.
+   */
+  initializeAccount(accountId: AccountId): Promise<void>;
   /**
    * Unregister a previously-registered Account from the Renegade object, and
    * stop streaming updates.
@@ -102,6 +105,9 @@ export interface IRenegadeInformation {
 // | Balance Managment |
 // ---------------------
 
+/**
+ * Interface for manipulation of Account balances (depositing, withdrawing).
+ */
 export interface IRenegadeBalance {
   /**
    * Deposit an asset into an Account, triggering a L1 inbox transaction.
@@ -176,6 +182,9 @@ export interface IRenegadeTrading {
 // | Fee Configuration |
 // ---------------------
 
+/**
+ * Interface for manipulation of fee approvals.
+ */
 export interface IRenegadeFees {
   /**
    * Query the relayer for its desired fee.

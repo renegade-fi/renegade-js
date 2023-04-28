@@ -6,6 +6,7 @@ export type OrderId = Uuid;
 export type FeeId = Uuid;
 
 export type AccountId = Uuid;
+export type TaskId = Uuid;
 export type CallbackId = Uuid;
 
 export enum Exchange {

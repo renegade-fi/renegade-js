@@ -18,8 +18,11 @@ import {
   Exchange,
   FeeId,
   OrderId,
+  TaskId,
 } from "./types";
-import { unimplemented } from "./utils";
+import { RenegadeWs, unimplemented } from "./utils";
+
+type TaskJob<R> = Promise<[TaskId, Promise<R>]>;
 
 /**
  * Configuration parameters for initial Renegade object creation.
@@ -34,6 +37,8 @@ export interface RenegadeConfig {
   // Whether to use an insecure transport (HTTP/WS) for the relayer API. This is
   // helpful for local debugging, and should not be used in production systems.
   useInsecureTransport?: boolean;
+  // Whether to print verbose output to the console.
+  verbose?: boolean;
 }
 
 /**
@@ -57,6 +62,10 @@ export default class Renegade
   public readonly relayerHttpUrl: string;
   // Fully-qualified URL of the relayer WebSocket API.
   public readonly relayerWsUrl: string;
+  // Print verbose output.
+  private _verbose: boolean;
+  // The WebSocket connection to the relayer.
+  private _ws: RenegadeWs;
   // All Accounts that have been registered with the Renegade object.
   private _registeredAccounts: { [accountId: AccountId]: Account };
   // For each topic, contains a list of callbackIds to send messages to.
@@ -81,6 +90,7 @@ export default class Renegade
     config.relayerWsPort =
       config.relayerWsPort !== undefined ? config.relayerWsPort : 4000;
     config.useInsecureTransport = config.useInsecureTransport || false;
+    this._verbose = config.verbose || false;
     // Construct the URLs and save them.
     if (config.relayerHostname === "localhost") {
       config.relayerHostname = "127.0.0.1";
@@ -97,6 +107,8 @@ export default class Renegade
       config.relayerWsPort,
       config.useInsecureTransport,
     );
+    // Open a WebSocket connection to the relayer.
+    this._ws = new RenegadeWs(this.relayerWsUrl);
     // Set empty accounts, topic listeners, and topic callbacks.
     this._registeredAccounts = {};
     this._topicListeners = {};
@@ -152,7 +164,7 @@ export default class Renegade
   /**
    * Ping the relayer to check if it is reachable.
    */
-  async ping() {
+  async ping(): Promise<void> {
     let response: AxiosResponse;
     try {
       response = await axios.get(this.relayerHttpUrl + "/v0/ping", {
@@ -190,18 +202,23 @@ export default class Renegade
     return account;
   }
 
+  async awaitTaskCompletion(taskId: TaskId): Promise<void> {
+    if (taskId === "DONE") {
+      return;
+    }
+    await this._ws.awaitTaskCompletion(taskId, this._verbose);
+  }
+
+  async teardown(): Promise<void> {
+    await this._ws.teardown();
+  }
+
   // -----------------------------------
   // | IRenegadeAccount Implementation |
   // -----------------------------------
 
-  async registerAccount(
-    keychain: Keychain,
-    skipInitialization?: boolean,
-  ): Promise<AccountId> {
-    if (skipInitialization === undefined) {
-      skipInitialization = false;
-    }
-    const account = await new Account(
+  registerAccount(keychain: Keychain): AccountId {
+    const account = new Account(
       keychain,
       this.relayerHttpUrl,
       this.relayerWsUrl,
@@ -210,11 +227,19 @@ export default class Renegade
     if (this._registeredAccounts[accountId]) {
       throw new RenegadeError(RenegadeErrorType.AccountAlreadyRegistered);
     }
-    if (!skipInitialization) {
-      await account.initialize();
-    }
     this._registeredAccounts[accountId] = account;
     return accountId;
+  }
+
+  async initializeAccount(accountId: string): Promise<void> {
+    const [, taskJob] = await this._initializeAccountTaskJob(accountId);
+    return await taskJob;
+  }
+
+  private async _initializeAccountTaskJob(accountId: AccountId): TaskJob<void> {
+    const account = this._lookupAccount(accountId);
+    const taskId = await account.startInitialization();
+    return [taskId, this.awaitTaskCompletion(taskId)];
   }
 
   async unregisterAccount(accountId: AccountId): Promise<void> {
@@ -249,9 +274,9 @@ export default class Renegade
     return account.fees;
   }
 
-  // ---------------------------------------
+  // -----------------------------------
   // | IRenegadeBalance Implementation |
-  // ---------------------------------------
+  // -----------------------------------
 
   async deposit(
     accountId: AccountId,
@@ -274,8 +299,17 @@ export default class Renegade
   // -----------------------------------
 
   async placeOrder(accountId: AccountId, order: Order): Promise<void> {
+    const [, taskJob] = await this._placeOrderTaskJob(accountId, order);
+    return await taskJob;
+  }
+
+  private async _placeOrderTaskJob(
+    accountId: AccountId,
+    order: Order,
+  ): TaskJob<void> {
     const account = this._lookupAccount(accountId);
-    await account.placeOrder(order);
+    const taskId = await account.placeOrder(order);
+    return [taskId, this.awaitTaskCompletion(taskId)];
   }
 
   async modifyOrder(
@@ -331,11 +365,11 @@ export default class Renegade
     unimplemented();
   }
 
-  registerNetworkCallback(callbacK: (message: string) => void): CallbackId {
+  registerNetworkCallback(callback: (message: string) => void): CallbackId {
     unimplemented();
   }
 
-  registerMpcCallback(callbacK: (message: string) => void): CallbackId {
+  registerMpcCallback(callback: (message: string) => void): CallbackId {
     unimplemented();
   }
 
@@ -349,4 +383,48 @@ export default class Renegade
   releaseCallback(callbackId: CallbackId): void {
     unimplemented();
   }
+
+  // ---------------------------------
+  // | Task-Based API Implementation |
+  // ---------------------------------
+
+  /**
+   * The `task` object contains a subset of the Renegade API that contain
+   * long-running tasks to be performed by the relayer. Instead of awaiting
+   * entire task completion, these alternative implementations allow the caller
+   * to directly receive the TaskId, and later await the task as appropriate.
+   *
+   * This is useful for user-focused integrations, where we want to expose
+   * taskIds directly to the frontend, and allow the frontend to stream task
+   * events.
+   */
+  task = {
+    initializeAccount: async (
+      ...args: Parameters<typeof this.initializeAccount>
+    ) => (await this._initializeAccountTaskJob(...args))[0],
+    // deposit: (
+    //   ...args: Parameters<typeof this._depositTaskJob>
+    // ) => this._depositTaskJob(...args)[0],
+    // withdraw: (
+    //   ...args: Parameters<typeof this._withdrawTaskJob>
+    // ) => this._withdrawTaskJob(...args)[0],
+    // placeOrder: (
+    //   ...args: Parameters<typeof this._placeOrderTaskJob>
+    // ) => this._placeOrderTaskJob(...args)[0],
+    // modifyOrder: (
+    //   ...args: Parameters<typeof this._modifyOrderTaskJob>
+    // ) => this._modifyOrderTaskJob(...args)[0],
+    // cancelOrder: (
+    //   ...args: Parameters<typeof this._cancelOrderTaskJob>
+    // ) => this._cancelOrderTaskJob(...args)[0],
+    // approveFee: (
+    //   ...args: Parameters<typeof this._approveFeeTaskJob>
+    // ) => this._approveFeeTaskJob(...args)[0],
+    // modifyFee: (
+    //   ...args: Parameters<typeof this._modifyFeeTaskJob>
+    // ) => this._modifyFeeTaskJob(...args)[0],
+    // revokeFee: (
+    //   ...args: Parameters<typeof this._revokeFeeTaskJob>
+    // ) => this._revokeFeeTaskJob(...args)[0],
+  };
 }

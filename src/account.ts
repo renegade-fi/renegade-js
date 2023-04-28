@@ -1,11 +1,10 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import crypto from "crypto";
-import Uuid from "uuid";
-import WebSocket from "ws";
 
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Wallet } from "./state";
-import { AccountId, BalanceId, FeeId, OrderId } from "./types";
+import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
+import { RenegadeWs } from "./utils";
 
 const RENEGADE_AUTH_HEADER = "renegade-auth";
 const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
@@ -29,7 +28,7 @@ export default class Account {
   // Fully-qualified URL of the relayer WebSocket API.
   private _relayerWsUrl: string;
   // The WebSocket connection to the relayer.
-  private _ws: WebSocket;
+  private _ws: RenegadeWs;
   // The current Wallet state.
   private _wallet: Wallet;
   // Has this Account been initialized?
@@ -42,7 +41,7 @@ export default class Account {
   ) {
     this._relayerHttpUrl = relayerHttpUrl;
     this._relayerWsUrl = relayerWsUrl;
-    this._ws = new WebSocket(this._relayerWsUrl);
+    this._ws = new RenegadeWs(this._relayerWsUrl);
     this._wallet = new Wallet([], [], [], keychain, this._generateRandomness());
     this._isInitialized = false;
   }
@@ -52,7 +51,7 @@ export default class Account {
    *
    * @returns The generated randomness.
    */
-  _generateRandomness(): bigint {
+  private _generateRandomness(): bigint {
     const sampleLimb = () => BigInt(crypto.randomInt(2 ** 32));
     const randomness =
       sampleLimb() +
@@ -64,24 +63,25 @@ export default class Account {
     return randomness % BASEPOINT_ORDER;
   }
 
-  async initialize(): Promise<void> {
+  async startInitialization(): Promise<TaskId> {
     // Query the relayer to see if this Account is already registered in relayer state.
     const relayerWallet = await this._queryRelayerForWallet();
     if (relayerWallet) {
       // TODO: Assign these actual Wallet values to the Account.
       this._isInitialized = true;
-      return;
+      return "DONE";
     }
     // Query the relayer to see if this Account is present in on-chain state.
     const onchainWallet = await this._queryChainForWallet();
     if (onchainWallet) {
       // TODO: Assign these actual Wallet values to the Account.
       this._isInitialized = true;
-      return;
+      return "DONE";
     }
     // The Wallet is not present in on-chain state, so we need to create it.
-    await this._createNewWallet();
-    this._isInitialized = true;
+    const taskId = await this._createNewWallet();
+    this._isInitialized = true; // TODO: We shouldn't actually set _isInitialized until the Wallet is created.
+    return taskId;
   }
 
   /**
@@ -90,8 +90,7 @@ export default class Account {
    */
   async teardown(): Promise<void> {
     this._isInitialized = false;
-    await this._awaitWsOpen();
-    this._ws.close();
+    await this._ws.teardown();
   }
 
   private _expiringSignature(
@@ -124,60 +123,6 @@ export default class Account {
       request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = validUntil;
     }
     return await axios.request(request);
-  }
-
-  /**
-   * Await until the WebSocket connection to the relayer is open.
-   */
-  private async _awaitWsOpen(): Promise<void> {
-    return new Promise((resolve) => {
-      if (this._ws.readyState === WebSocket.OPEN) {
-        resolve();
-      } else {
-        this._ws.on("open", () => {
-          resolve();
-        });
-      }
-    });
-  }
-
-  /**
-   * For a given taskId, await the relayer until the task transitions to the
-   * "Completed" state.
-   *
-   * @param taskId The UUID of the task to await.
-   */
-  private async _awaitTaskCompletion(taskId: Uuid): Promise<void> {
-    // TODO: Query the relayer for one-time task state, so that this function
-    // immediately resolves if the task is already completed.
-    await this._awaitWsOpen();
-    const topic = `/v0/tasks/${taskId}`;
-    this._ws.send(
-      JSON.stringify({
-        headers: {},
-        body: {
-          method: "subscribe",
-          topic: topic,
-        },
-      }),
-    );
-    return new Promise((resolve) => {
-      this._ws.on("message", (data) => {
-        const message = JSON.parse(data.toString());
-        if (
-          message.topic !== topic ||
-          message.event.type !== "TaskStatusUpdate"
-        ) {
-          return;
-        }
-        console.log(
-          `New task state for ${taskId}: ${message.event.state.state}`,
-        );
-        if (message.event.state.state === "Completed") {
-          resolve();
-        }
-      });
-    });
   }
 
   /**
@@ -219,7 +164,7 @@ export default class Account {
   /**
    * Create a new Wallet on-chain. Awaits full task completion.
    */
-  private async _createNewWallet(): Promise<void> {
+  private async _createNewWallet(): Promise<TaskId> {
     // Query the relayer to create a new Wallet.
     const request: AxiosRequestConfig = {
       method: "POST",
@@ -228,10 +173,13 @@ export default class Account {
       validateStatus: () => true,
     };
     const response = await this._transmitHttpRequest(request, false);
-    await this._awaitTaskCompletion(response.data.task_id);
+    if (response.status !== 200) {
+      throw new Error("Failed to create new wallet.");
+    }
+    return response.data.task_id;
   }
 
-  async placeOrder(order: Order): Promise<void> {
+  async placeOrder(order: Order): Promise<TaskId> {
     this._assertInitialized();
     const request: AxiosRequestConfig = {
       method: "POST",
@@ -240,8 +188,11 @@ export default class Account {
       validateStatus: () => true,
     };
     const response = await this._transmitHttpRequest(request, true);
+    if (response.status !== 200) {
+      throw new Error("Failed to create new order.");
+    }
     console.log("resp:", response);
-    await this._awaitTaskCompletion(response.data.task_id);
+    return response.data.task_id;
   }
 
   /**
