@@ -67,21 +67,24 @@ export default class Token {
    * @param address The ERC-20 ETH mainnet address of the token.
    * @param ticker The ticker symbol of the token.
    */
-  constructor(address?: string, ticker?: string) {
-    if ((address && ticker) || (!address && !ticker)) {
+  constructor(params: { address?: string; ticker?: string }) {
+    if (
+      (params.address && params.ticker) ||
+      (!params.address && !params.ticker)
+    ) {
       throw new Error("Exactly one of address or ticker must be specified.");
     }
-    if (ticker) {
-      ticker = ticker.toUpperCase();
-      if (ticker in TICKER_TO_ADDR) {
-        address = TICKER_TO_ADDR[ticker];
+    if (params.ticker) {
+      params.ticker = params.ticker.toUpperCase();
+      if (params.ticker in TICKER_TO_ADDR) {
+        params.address = TICKER_TO_ADDR[params.ticker];
       } else {
         throw new Error(
-          `Unknown ticker: ${ticker}. Try using the address instead.`,
+          `Unknown ticker: ${params.ticker}. Try using the params.address instead.`,
         );
       }
     }
-    this.address = address.toLowerCase().replace("0x", "");
+    this.address = params.address.toLowerCase().replace("0x", "");
   }
 
   serialize(): string {
@@ -89,6 +92,6 @@ export default class Token {
   }
 
   static deserialize(serializedToken: string): Token {
-    return new Token(serializedToken);
+    return new Token({ address: serializedToken });
   }
 }

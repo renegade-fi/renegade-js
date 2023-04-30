@@ -68,10 +68,6 @@ export default class Renegade
   private _ws: RenegadeWs;
   // All Accounts that have been registered with the Renegade object.
   private _registeredAccounts: Record<AccountId, Account>;
-  // For each topic, contains a list of callbackIds to send messages to.
-  private _topicListeners: Record<string, CallbackId[]>;
-  // Lookup from callbackId to actual callback function.
-  private _topicCallbacks: Record<CallbackId, (message: string) => void>;
 
   /**
    * Construct a new Renegade object.
@@ -106,11 +102,9 @@ export default class Renegade
       config.useInsecureTransport,
     );
     // Open a WebSocket connection to the relayer.
-    this._ws = new RenegadeWs(this.relayerWsUrl);
-    // Set empty accounts, topic listeners, and topic callbacks.
-    this._registeredAccounts = {};
-    this._topicListeners = {};
-    this._topicCallbacks = {};
+    this._ws = new RenegadeWs(this.relayerWsUrl, this._verbose);
+    // Set empty accounts.
+    this._registeredAccounts = {} as Record<AccountId, Account>;
   }
 
   /**
@@ -201,14 +195,11 @@ export default class Renegade
   }
 
   async awaitTaskCompletion(taskId: TaskId): Promise<void> {
-    if (taskId === "DONE") {
-      return;
-    }
-    await this._ws.awaitTaskCompletion(taskId, this._verbose);
+    await this._ws.awaitTaskCompletion(taskId);
   }
 
   async teardown(): Promise<void> {
-    await this._ws.teardown();
+    this._ws.teardown();
   }
 
   // -----------------------------------
@@ -220,6 +211,7 @@ export default class Renegade
       keychain,
       this.relayerHttpUrl,
       this.relayerWsUrl,
+      this._verbose,
     );
     const accountId = account.accountId;
     if (this._registeredAccounts[accountId]) {
@@ -229,7 +221,7 @@ export default class Renegade
     return accountId;
   }
 
-  async initializeAccount(accountId: string): Promise<void> {
+  async initializeAccount(accountId: AccountId): Promise<void> {
     const [, taskJob] = await this._initializeAccountTaskJob(accountId);
     return await taskJob;
   }
@@ -359,27 +351,38 @@ export default class Renegade
     unimplemented();
   }
 
-  registerOrderBookCallback(callback: (message: string) => void): CallbackId {
-    unimplemented();
-  }
-
-  registerNetworkCallback(callback: (message: string) => void): CallbackId {
-    unimplemented();
-  }
-
-  registerMpcCallback(callback: (message: string) => void): CallbackId {
-    unimplemented();
-  }
-
-  registerAccountCallback(
+  registerOrderBookCallback(
     callback: (message: string) => void,
-    accountId?: AccountId,
-  ): CallbackId {
+  ): Promise<CallbackId> {
     unimplemented();
   }
 
-  releaseCallback(callbackId: CallbackId): void {
+  registerNetworkCallback(
+    callback: (message: string) => void,
+  ): Promise<CallbackId> {
     unimplemented();
+  }
+
+  registerMpcCallback(
+    callback: (message: string) => void,
+  ): Promise<CallbackId> {
+    unimplemented();
+  }
+
+  async registerAccountCallback(
+    callback: (message: string) => void,
+    accountId: AccountId,
+  ): Promise<CallbackId> {
+    const account = this._lookupAccount(accountId);
+    return await this._ws.registerAccountCallback(
+      callback,
+      accountId,
+      account.keychain,
+    );
+  }
+
+  async releaseCallback(callbackId: CallbackId): Promise<void> {
+    await this._ws.releaseCallback(callbackId);
   }
 
   // ---------------------------------
@@ -406,9 +409,8 @@ export default class Renegade
     // withdraw: (
     //   ...args: Parameters<typeof this._withdrawTaskJob>
     // ) => this._withdrawTaskJob(...args)[0],
-    // placeOrder: (
-    //   ...args: Parameters<typeof this._placeOrderTaskJob>
-    // ) => this._placeOrderTaskJob(...args)[0],
+    placeOrder: (...args: Parameters<typeof this._placeOrderTaskJob>) =>
+      this._placeOrderTaskJob(...args)[0],
     // modifyOrder: (
     //   ...args: Parameters<typeof this._modifyOrderTaskJob>
     // ) => this._modifyOrderTaskJob(...args)[0],

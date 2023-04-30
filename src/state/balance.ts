@@ -5,8 +5,13 @@ import Token from "./token";
 
 export default class Balance {
   public readonly balanceId: BalanceId;
-  constructor(public readonly mint: Token, public readonly amount: bigint) {
-    this.balanceId = uuid.v4();
+  public readonly mint: Token;
+  public readonly amount: bigint;
+
+  constructor(params: { mint: Token; amount: bigint }) {
+    this.balanceId = uuid.v4() as BalanceId;
+    this.mint = params.mint;
+    this.amount = params.amount;
   }
 
   serialize(): string {
@@ -17,9 +22,9 @@ export default class Balance {
   }
 
   static deserialize(serializedBalance: any): Balance {
-    return new Balance(
-      Token.deserialize(serializedBalance.mint),
-      BigInt(serializedBalance.amount),
-    );
+    return new Balance({
+      mint: Token.deserialize(serializedBalance.mint),
+      amount: BigInt(serializedBalance.amount),
+    });
   }
 }

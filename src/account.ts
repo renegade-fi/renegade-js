@@ -3,12 +3,20 @@ import crypto from "crypto";
 
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Wallet } from "./state";
-import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
-import { RenegadeWs } from "./utils";
+import {
+  RENEGADE_AUTH_EXPIRATION_HEADER,
+  RENEGADE_AUTH_HEADER,
+} from "./state/utils";
+import {
+  AccountId,
+  BalanceId,
+  CallbackId,
+  FeeId,
+  OrderId,
+  TaskId,
+} from "./types";
+import { RenegadeWs, unimplemented } from "./utils";
 
-const RENEGADE_AUTH_HEADER = "renegade-auth";
-const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
-const SIG_VALIDITY_WINDOW_MS = 10_000;
 // https://doc.dalek.rs/curve25519_dalek/constants/constant.BASEPOINT_ORDER.html
 const BASEPOINT_ORDER =
   BigInt(2) ** BigInt(252) + BigInt("0x14def9dea2f79cd65812631a5cf5d3ed");
@@ -27,10 +35,14 @@ export default class Account {
   private _relayerHttpUrl: string;
   // Fully-qualified URL of the relayer WebSocket API.
   private _relayerWsUrl: string;
+  // Print verbose output.
+  private _verbose: boolean;
   // The WebSocket connection to the relayer.
   private _ws: RenegadeWs;
   // The current Wallet state.
   private _wallet: Wallet;
+  // The callbackId used to stream Wallet updates from the relayer.
+  private _walletCallbackId: CallbackId;
   // Has this Account been initialized?
   private _isInitialized: boolean;
 
@@ -38,11 +50,18 @@ export default class Account {
     keychain: Keychain,
     relayerHttpUrl: string,
     relayerWsUrl: string,
+    verbose?: boolean,
   ) {
     this._relayerHttpUrl = relayerHttpUrl;
     this._relayerWsUrl = relayerWsUrl;
-    this._ws = new RenegadeWs(this._relayerWsUrl);
-    this._wallet = new Wallet([], [], [], keychain, this._generateRandomness());
+    this._verbose = verbose || false;
+    this._wallet = new Wallet({
+      balances: [],
+      orders: [],
+      fees: [],
+      keychain,
+      randomness: this._generateRandomness(),
+    });
     this._isInitialized = false;
   }
 
@@ -63,66 +82,111 @@ export default class Account {
     return randomness % BASEPOINT_ORDER;
   }
 
-  async startInitialization(): Promise<TaskId> {
-    // Query the relayer to see if this Account is already registered in relayer state.
-    const relayerWallet = await this._queryRelayerForWallet();
-    if (relayerWallet) {
-      // TODO: Assign these actual Wallet values to the Account.
-      this._isInitialized = true;
-      return "DONE";
+  // -------------
+  // | Utilities |
+  // -------------
+
+  /**
+   * Assert that the Account has been initialized, meaning that the Wallet is
+   * now managed by the relayer and wallet update events are actively streaming
+   * to the Account.
+   *
+   * @throws {AccountNotInitialized} If the Account has not yet been initialized.
+   */
+  private _assertInitialized(): void {
+    if (!this._isInitialized) {
+      throw new RenegadeError(RenegadeErrorType.AccountNotInitialized);
     }
-    // Query the relayer to see if this Account is present in on-chain state.
-    const onchainWallet = await this._queryChainForWallet();
-    if (onchainWallet) {
-      // TODO: Assign these actual Wallet values to the Account.
-      this._isInitialized = true;
-      return "DONE";
+  }
+
+  /**
+   * Transmit an HTTP request to the relayer. If the request is authenticated,
+   * we will append two headers (renegade-auth and renegade-auth-expiration)
+   * with expiring signatures of the body before transmission.
+   *
+   * @param request The request to transmit.
+   * @param isAuthenticated If true, the request will be signed with an expiring signature.
+   * @returns
+   */
+  private async _transmitHttpRequest(
+    request: AxiosRequestConfig,
+    isAuthenticated: boolean,
+  ): Promise<AxiosResponse> {
+    if (isAuthenticated) {
+      const [renegadeAuth, renegadeAuthExpiration] =
+        this._wallet.keychain.generateExpiringSignature(
+          Buffer.from(request.data.toString(), "ascii"),
+        );
+      request.headers = request.headers || {};
+      request.headers[RENEGADE_AUTH_HEADER] = JSON.stringify(renegadeAuth);
+      request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
     }
-    // The Wallet is not present in on-chain state, so we need to create it.
-    const taskId = await this._createNewWallet();
-    this._isInitialized = true; // TODO: We shouldn't actually set _isInitialized until the Wallet is created.
-    return taskId;
+    return await axios.request(request);
   }
 
   /**
    * Tear down the Account, including closing the WebSocket connection to the
    * relayer.
    */
-  async teardown(): Promise<void> {
+  teardown(): void {
     this._isInitialized = false;
-    await this._ws.teardown();
+    this._ws?.teardown();
   }
 
-  private _expiringSignature(
-    request: AxiosRequestConfig,
-    validUntil: number,
-  ): Uint8Array {
-    const validUntilBuffer = Buffer.alloc(8);
-    validUntilBuffer.writeBigUInt64LE(BigInt(validUntil));
-    const signatureMessage = Buffer.concat([
-      Buffer.from(request.data.toString(), "ascii"),
-      validUntilBuffer,
-    ]);
-    const sig =
-      this._wallet.keychain.keyHierarchy.root.signMessage(signatureMessage);
-    return sig;
-  }
+  // -----------------------
+  // | Mutating Operations |
+  // -----------------------
 
-  private async _transmitHttpRequest(
-    request: AxiosRequestConfig,
-    isAuthenticated: boolean,
-  ): Promise<AxiosResponse> {
-    if (isAuthenticated) {
-      request.headers = request.headers || {};
-      // const validUntil = Date.now() + SIG_VALIDITY_WINDOW_MS;
-      const validUntil = 1692318847714 + SIG_VALIDITY_WINDOW_MS;
-      request.headers[RENEGADE_AUTH_HEADER] =
-        "[" +
-        Array.from(this._expiringSignature(request, validUntil)).toString() +
-        "]";
-      request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = validUntil;
+  /**
+   * Initialize the Account. We first query the relayer to see if the underlying
+   * Wallet is already managed; if so, simply assign the Wallet to the Account.
+   *
+   * If the Wallet is not managed by the relayer, we query the on-chain state to
+   * recover the Wallet from the StarkNet contract.
+   *
+   * Otherwise, we create a brand new Wallet on-chain.
+   *
+   * @returns A TaskId representing the task of creating a new Wallet.
+   */
+  async startInitialization(): Promise<TaskId> {
+    let wallet: Wallet | undefined;
+    let taskId: TaskId;
+    if ((wallet = await this._queryRelayerForWallet())) {
+      // Query the relayer to see if this Account is already registered in relayer state.
+      this._wallet = wallet;
+      taskId = "DONE" as TaskId;
+    } else if ((wallet = await this._queryChainForWallet())) {
+      // Query the relayer to see if this Account is present in on-chain state.
+      this._wallet = wallet;
+      taskId = "DONE" as TaskId;
+    } else {
+      // The Wallet is not present in on-chain state, so we need to create it.
+      taskId = await this._createNewWallet();
     }
-    return await axios.request(request);
+    // Set up the WebSocket and start streaming events.
+    await this._setupWebSocket();
+    this._isInitialized = true; // TODO: We shouldn't actually set _isInitialized until the Wallet is created.
+    return taskId;
+  }
+
+  /**
+   * Set up the WebSocket connect to the relayer, and start streaming Wallet
+   * update events.
+   */
+  private async _setupWebSocket() {
+    this._ws = new RenegadeWs(this._relayerWsUrl, this._verbose);
+    const callback = (message: string) => {
+      const parsedMessage = JSON.parse(message);
+      if (parsedMessage.type !== "WalletUpdate") {
+        return;
+      }
+      this._wallet = Wallet.deserialize(parsedMessage.wallet);
+    };
+    this._walletCallbackId = await this._ws.registerAccountCallback(
+      callback,
+      this.accountId,
+      this._wallet.keychain,
+    );
   }
 
   /**
@@ -136,15 +200,14 @@ export default class Account {
   private async _queryRelayerForWallet(): Promise<Wallet | undefined> {
     const request: AxiosRequestConfig = {
       method: "GET",
-      url: `${this._relayerHttpUrl}/v0/wallet/${this._wallet.walletId}`,
+      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`,
       data: "{}",
       validateStatus: () => true,
     };
     const response = await this._transmitHttpRequest(request, true);
     if (response.status === 200) {
-      return Wallet.deserialize(response.data.wallet);
+      return Wallet.deserialize(response.data.wallet, true);
     } else {
-      console.log("Could not find wallet in relayer local state.");
       return undefined;
     }
   }
@@ -162,9 +225,11 @@ export default class Account {
   }
 
   /**
-   * Create a new Wallet on-chain. Awaits full task completion.
+   * Given the currently-populated Wallet values, create this Wallet on-chain
+   * with a VALID WALLET CREATE proof.
    */
   private async _createNewWallet(): Promise<TaskId> {
+    // TODO: Assert that Balances and Orders are empty.
     // Query the relayer to create a new Wallet.
     const request: AxiosRequestConfig = {
       method: "POST",
@@ -179,34 +244,32 @@ export default class Account {
     return response.data.task_id;
   }
 
+  /**
+   * Place a new order.
+   *
+   * @param order The new order to place.
+   * @returns A TaskId that can be used to query the status of the order.
+   *
+   * @throws {AccountNotInitialized} If the Account has not yet been initialized.
+   */
   async placeOrder(order: Order): Promise<TaskId> {
     this._assertInitialized();
     const request: AxiosRequestConfig = {
       method: "POST",
-      url: `${this._relayerHttpUrl}/v0/wallet/${this._wallet.walletId}/orders`,
-      data: `{"public_var_auth":[],"order":${order.serialize()}}`,
+      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders`,
+      data: `{"public_var_sig":[],"order":${order.serialize()}}`,
       validateStatus: () => true,
     };
     const response = await this._transmitHttpRequest(request, true);
     if (response.status !== 200) {
       throw new Error("Failed to create new order.");
     }
-    console.log("resp:", response);
     return response.data.task_id;
   }
 
-  /**
-   * Assert that the Account has been initialized, meaning that the Wallet is
-   * now managed by the relayer and wallet update events are actively streaming
-   * to the Account.
-   *
-   * @throws {AccountNotInitialized} If the Account has not yet been initialized.
-   */
-  private _assertInitialized(): void {
-    if (!this._isInitialized) {
-      throw new RenegadeError(RenegadeErrorType.AccountNotInitialized);
-    }
-  }
+  // -----------
+  // | Getters |
+  // -----------
 
   /**
    * Getter for Balances.
@@ -218,7 +281,7 @@ export default class Account {
     return this._wallet.balances.reduce((acc, balance) => {
       acc[balance.balanceId] = balance;
       return acc;
-    }, {});
+    }, {} as Record<BalanceId, Balance>);
   }
 
   /**
@@ -231,7 +294,7 @@ export default class Account {
     return this._wallet.orders.reduce((acc, order) => {
       acc[order.orderId] = order;
       return acc;
-    }, {});
+    }, {} as Record<OrderId, Order>);
   }
 
   /**
@@ -244,7 +307,7 @@ export default class Account {
     return this._wallet.fees.reduce((acc, fee) => {
       acc[fee.feeId] = fee;
       return acc;
-    }, {});
+    }, {} as Record<FeeId, Fee>);
   }
 
   /**
@@ -258,6 +321,7 @@ export default class Account {
    * Getter for the AccountId.
    */
   get accountId(): AccountId {
-    return this._wallet.walletId;
+    // Hack to force type conversion, as AccountId = WalletId.
+    return this._wallet.walletId as string as AccountId;
   }
 }

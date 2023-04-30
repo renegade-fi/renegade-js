@@ -2,42 +2,92 @@ import * as uuid from "uuid";
 
 import { OrderId } from "../types";
 import Token from "./token";
+import { bigIntToLimbs, limbsToBigInt } from "./utils";
 
 export default class Order {
   public readonly orderId: OrderId;
-  constructor(
-    public readonly baseToken: Token,
-    public readonly quoteToken: Token,
-    public readonly side: "buy" | "sell",
-    public readonly type: "midpoint" | "limit",
-    public readonly amount: bigint,
-    public readonly minimumAmount?: bigint,
-    public readonly price?: bigint,
-  ) {
-    this.orderId = uuid.v4();
+  public readonly baseToken: Token;
+  public readonly quoteToken: Token;
+  public readonly side: "buy" | "sell";
+  public readonly type: "midpoint" | "limit";
+  public readonly amount: bigint;
+  public readonly minimumAmount?: bigint;
+  public readonly price?: number;
+  public readonly timestamp: number;
+  constructor(params: {
+    id?: OrderId;
+    baseToken: Token;
+    quoteToken: Token;
+    side: "buy" | "sell";
+    type: "midpoint" | "limit";
+    amount: bigint;
+    minimumAmount?: bigint;
+    price?: number;
+    timestamp?: number;
+  }) {
+    if (params.type === "midpoint") {
+      throw new Error("Midpoint orders are not yet supported.");
+    }
+    this.orderId = params.id || (uuid.v4() as OrderId);
+    this.baseToken = params.baseToken;
+    this.quoteToken = params.quoteToken;
+    this.side = params.side;
+    this.type = params.type;
+    this.amount = params.amount;
+    this.minimumAmount = params.minimumAmount;
+    this.price = params.price;
+    this.timestamp = params.timestamp || new Date().getTime();
   }
 
   serialize(): string {
+    let minimumAmountSerialized: string | null;
+    if (this.minimumAmount) {
+      minimumAmountSerialized = `[${bigIntToLimbs(this.minimumAmount).join(
+        ",",
+      )}]`;
+    } else {
+      minimumAmountSerialized = null;
+    }
+    let priceSerialized: number;
+    if (this.price) {
+      priceSerialized = this.price;
+    } else {
+      priceSerialized = 0;
+    }
     return `{
-      "base_token": "${this.baseToken.serialize()}",
-      "quote_token": "${this.quoteToken.serialize()}",
+      "id": "${this.orderId}",
+      "base_mint": "${this.baseToken.serialize()}",
+      "quote_mint": "${this.quoteToken.serialize()}",
       "side": "${this.side === "buy" ? "Buy" : "Sell"}",
       "type": "${this.type === "midpoint" ? "Midpoint" : "Limit"}",
-      "amount": ${this.amount},
-      "minimum_amount": ${this.minimumAmount},
-      "price": ${this.price}
+      "amount": [${bigIntToLimbs(this.amount).join(",")}],
+      "minimum_amount": ${minimumAmountSerialized},
+      "price": ${priceSerialized},
+      "timestamp": ${this.timestamp}
     }`.replace(/[\s\n]/g, "");
   }
 
   static deserialize(serializedOrder: any): Order {
-    return new Order(
-      Token.deserialize(serializedOrder.base_token),
-      Token.deserialize(serializedOrder.quote_token),
-      serializedOrder.side,
-      serializedOrder.type,
-      BigInt(serializedOrder.amount),
-      BigInt(serializedOrder.minimum_amount),
-      BigInt(serializedOrder.price),
-    );
+    let minimumAmountDeserialized: bigint | undefined;
+    if (serializedOrder.minimum_amount) {
+      minimumAmountDeserialized = limbsToBigInt(serializedOrder.minimum_amount);
+    } else {
+      minimumAmountDeserialized = undefined;
+    }
+    let priceDeserialized = Number(serializedOrder.price);
+    if (priceDeserialized === 0) {
+      priceDeserialized = undefined;
+    }
+    return new Order({
+      id: serializedOrder.id,
+      baseToken: Token.deserialize(serializedOrder.base_mint),
+      quoteToken: Token.deserialize(serializedOrder.quote_mint),
+      side: serializedOrder.side.toLowerCase(),
+      type: serializedOrder.type.toLowerCase(),
+      amount: limbsToBigInt(serializedOrder.amount),
+      minimumAmount: minimumAmountDeserialized,
+      price: priceDeserialized,
+      timestamp: serializedOrder.timestamp,
+    });
   }
 }

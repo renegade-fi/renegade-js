@@ -7,6 +7,8 @@ import * as fs from "fs";
 // https://github.com/paulmillr/noble-ed25519/blob/main/README.md
 ed.utils.sha512Sync = (...m) => sha512(ed.utils.concatBytes(...m));
 
+const SIG_VALIDITY_WINDOW_MS = 10_000;
+
 class SigningKey {
   secretKey: Uint8Array;
   publicKey: Uint8Array;
@@ -151,6 +153,22 @@ export default class Keychain {
   }
 
   /**
+   * Sign a data buffer (concretely, a request's body) with an expiring
+   * signature using sk_root.
+   *
+   * @returns A tuple consisting of an expiring signature and an expiration
+   * timestamp, to be appended as headers to the request.
+   */
+  generateExpiringSignature(dataBuffer: Buffer): [number[], number] {
+    const validUntil = Date.now() + SIG_VALIDITY_WINDOW_MS;
+    const validUntilBuffer = Buffer.alloc(8);
+    validUntilBuffer.writeBigUInt64LE(BigInt(validUntil));
+    const message = Buffer.concat([dataBuffer, validUntilBuffer]);
+    const signature = this.keyHierarchy.root.signMessage(message);
+    return [Array.from(signature), validUntil];
+  }
+
+  /**
    * Save the keychain to a file.
    *
    * @param filePath File path to save the keychain to.
@@ -213,11 +231,11 @@ export default class Keychain {
     }`.replace(/[\s\n]/g, "");
   }
 
-  static deserialize(serializedKeychain: any): Keychain {
+  static deserialize(serializedKeychain: any, asBigEndian?: boolean): Keychain {
     const skRoot = Buffer.from(
       serializedKeychain.secret_keys.sk_root.replace("0x", ""),
       "hex",
     );
-    return new Keychain({ skRoot });
+    return new Keychain({ skRoot: asBigEndian ? skRoot.reverse() : skRoot });
   }
 }

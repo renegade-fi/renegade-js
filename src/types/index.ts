@@ -1,6 +1,4 @@
-import * as uuid from "uuid";
-
-type Uuid = uuid.UUID;
+type Uuid = string;
 
 /**
  * Brands and types for Wallet-related IDs.

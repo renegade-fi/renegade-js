@@ -247,19 +247,23 @@ export interface IRenegadeStreaming {
    *
    * @param callback The callback to invoke when a new order book update is received.
    */
-  registerOrderBookCallback(callback: (message: string) => void): CallbackId;
+  registerOrderBookCallback(
+    callback: (message: string) => void,
+  ): Promise<CallbackId>;
   /**
    * Register a callback to be invoked when a new network event is received.
    *
    * @param callback The callback to invoke when a new network event is received.
    */
-  registerNetworkCallback(callback: (message: string) => void): CallbackId;
+  registerNetworkCallback(
+    callback: (message: string) => void,
+  ): Promise<CallbackId>;
   /**
    * Register a callback to be invoked when a new MPC event is received.
    *
    * @param callback The callback to invoke when a new MPC event is received.
    */
-  registerMpcCallback(callback: (message: string) => void): CallbackId;
+  registerMpcCallback(callback: (message: string) => void): Promise<CallbackId>;
   /**
    * Register a callback to be invoked when a new account event is received.
    *
@@ -271,7 +275,7 @@ export interface IRenegadeStreaming {
   registerAccountCallback(
     callback: (message: string) => void,
     accountId: AccountId,
-  ): CallbackId;
+  ): Promise<CallbackId>;
   /**
    * Release a previously-registered callback. If no other callback is
    * registered for the same topic, the topic will be unsubscribed from.
@@ -280,5 +284,5 @@ export interface IRenegadeStreaming {
    *
    * @throws {CallbackNotRegistered} If the CallbackId is not registered with the Renegade object.
    */
-  releaseCallback(callbackId: CallbackId): void;
+  releaseCallback(callbackId: CallbackId): Promise<void>;
 }
