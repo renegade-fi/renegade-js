@@ -7,15 +7,8 @@ import {
   RENEGADE_AUTH_EXPIRATION_HEADER,
   RENEGADE_AUTH_HEADER,
 } from "./state/utils";
-import {
-  AccountId,
-  BalanceId,
-  CallbackId,
-  FeeId,
-  OrderId,
-  TaskId,
-} from "./types";
-import { RenegadeWs, unimplemented } from "./utils";
+import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
+import { RenegadeWs, TaskJob } from "./utils";
 
 // https://doc.dalek.rs/curve25519_dalek/constants/constant.BASEPOINT_ORDER.html
 const BASEPOINT_ORDER =
@@ -40,11 +33,9 @@ export default class Account {
   // The WebSocket connection to the relayer.
   private _ws: RenegadeWs;
   // The current Wallet state.
-  private _wallet: Wallet;
-  // The callbackId used to stream Wallet updates from the relayer.
-  private _walletCallbackId: CallbackId;
-  // Has this Account been initialized?
-  private _isInitialized: boolean;
+  _wallet: Wallet;
+  // Has this Account been synced to the relayer?
+  private _isSynced: boolean;
 
   constructor(
     keychain: Keychain,
@@ -55,31 +46,37 @@ export default class Account {
     this._relayerHttpUrl = relayerHttpUrl;
     this._relayerWsUrl = relayerWsUrl;
     this._verbose = verbose || false;
-    this._wallet = new Wallet({
-      balances: [],
-      orders: [],
-      fees: [],
-      keychain,
-      randomness: this._generateRandomness(),
-    });
-    this._isInitialized = false;
+    this._reset(keychain);
+    this._isSynced = false;
   }
 
   /**
-   * Generate blinding randomness, used to populate initial empty wallet state.
-   *
-   * @returns The generated randomness.
+   * Reset the Wallet to its initial state by clearing its balances, orders, and
+   * fees. Resets are useful in the case of desync from the relayer, allowing us
+   * to re-query the relayer for the current wallet state.
    */
-  private _generateRandomness(): bigint {
+  private _reset(keychain?: Keychain): void {
+    // Sample the randomness. Note that sampling in this manner slightly biases
+    // the randomness; should not be a big issue since the bias is extremely
+    // small.
     const sampleLimb = () => BigInt(crypto.randomInt(2 ** 32));
     const randomness =
       sampleLimb() +
       sampleLimb() * 2n ** 32n +
       sampleLimb() * 2n ** 64n +
       sampleLimb() * 2n ** 96n;
-    // Note that sampling in this manner slightly biases the randomness; should
-    // not be a big issue since the bias is extremely small.
-    return randomness % BASEPOINT_ORDER;
+
+    // Reset the Wallet.
+    this._wallet = new Wallet({
+      balances: [],
+      orders: [],
+      fees: [],
+      keychain: keychain || this._wallet.keychain,
+      randomness: randomness % BASEPOINT_ORDER,
+    });
+
+    // Reset the sync status.
+    this._isSynced = false;
   }
 
   // -------------
@@ -87,15 +84,15 @@ export default class Account {
   // -------------
 
   /**
-   * Assert that the Account has been initialized, meaning that the Wallet is
-   * now managed by the relayer and wallet update events are actively streaming
-   * to the Account.
+   * Assert that the Account has been synced, meaning that the Wallet is now
+   * managed by the relayer and wallet update events are actively streaming to
+   * the Account.
    *
-   * @throws {AccountNotInitialized} If the Account has not yet been initialized.
+   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
-  private _assertInitialized(): void {
-    if (!this._isInitialized) {
-      throw new RenegadeError(RenegadeErrorType.AccountNotInitialized);
+  private _assertSynced(): void {
+    if (!this._isSynced) {
+      throw new RenegadeError(RenegadeErrorType.AccountNotSynced);
     }
   }
 
@@ -129,7 +126,8 @@ export default class Account {
    * relayer.
    */
   teardown(): void {
-    this._isInitialized = false;
+    this._isSynced = false;
+    this._reset();
     this._ws?.teardown();
   }
 
@@ -138,7 +136,7 @@ export default class Account {
   // -----------------------
 
   /**
-   * Initialize the Account. We first query the relayer to see if the underlying
+   * Sync the Account. We first query the relayer to see if the underlying
    * Wallet is already managed; if so, simply assign the Wallet to the Account.
    *
    * If the Wallet is not managed by the relayer, we query the on-chain state to
@@ -146,27 +144,34 @@ export default class Account {
    *
    * Otherwise, we create a brand new Wallet on-chain.
    *
-   * @returns A TaskId representing the task of creating a new Wallet.
+   * @returns A TaskId representing the task of creating a new Wallet, if applicable.
    */
-  async startInitialization(): Promise<TaskId> {
+  async sync(): Promise<TaskJob<void>> {
     let wallet: Wallet | undefined;
     let taskId: TaskId;
     if ((wallet = await this._queryRelayerForWallet())) {
       // Query the relayer to see if this Account is already registered in relayer state.
       this._wallet = wallet;
-      taskId = "DONE" as TaskId;
+      await this._setupWebSocket();
+      this._isSynced = true;
+      return ["DONE" as TaskId, Promise.resolve()];
     } else if ((wallet = await this._queryChainForWallet())) {
       // Query the relayer to see if this Account is present in on-chain state.
       this._wallet = wallet;
-      taskId = "DONE" as TaskId;
+      await this._setupWebSocket();
+      this._isSynced = true;
+      return ["DONE" as TaskId, Promise.resolve()];
     } else {
       // The Wallet is not present in on-chain state, so we need to create it.
       taskId = await this._createNewWallet();
+      const taskPromise = new RenegadeWs(this._relayerWsUrl, this._verbose)
+        .awaitTaskCompletion(taskId)
+        .then(() => this._setupWebSocket())
+        .then(() => {
+          this._isSynced = true;
+        });
+      return [taskId, taskPromise];
     }
-    // Set up the WebSocket and start streaming events.
-    await this._setupWebSocket();
-    this._isInitialized = true; // TODO: We shouldn't actually set _isInitialized until the Wallet is created.
-    return taskId;
   }
 
   /**
@@ -180,9 +185,9 @@ export default class Account {
       if (parsedMessage.type !== "WalletUpdate") {
         return;
       }
-      this._wallet = Wallet.deserialize(parsedMessage.wallet);
+      this._wallet = Wallet.deserialize(parsedMessage.wallet, true);
     };
-    this._walletCallbackId = await this._ws.registerAccountCallback(
+    await this._ws.registerAccountCallback(
       callback,
       this.accountId,
       this._wallet.keychain,
@@ -239,7 +244,7 @@ export default class Account {
     };
     const response = await this._transmitHttpRequest(request, false);
     if (response.status !== 200) {
-      throw new Error("Failed to create new wallet.");
+      throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
     }
     return response.data.task_id;
   }
@@ -250,10 +255,10 @@ export default class Account {
    * @param order The new order to place.
    * @returns A TaskId that can be used to query the status of the order.
    *
-   * @throws {AccountNotInitialized} If the Account has not yet been initialized.
+   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
   async placeOrder(order: Order): Promise<TaskId> {
-    this._assertInitialized();
+    this._assertSynced();
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders`,
@@ -262,7 +267,54 @@ export default class Account {
     };
     const response = await this._transmitHttpRequest(request, true);
     if (response.status !== 200) {
-      throw new Error("Failed to create new order.");
+      throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
+    }
+    return response.data.task_id;
+  }
+
+  /**
+   * Modify an outstanding order.
+   *
+   * @param oldOrderId The ID of the order to modify.
+   * @param newOrder The new order to overwrite the old order.
+   * @returns A TaskId that can be used to query the status of the order.
+   *
+   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
+   */
+  async modifyOrder(oldOrderId: OrderId, newOrder: Order): Promise<TaskId> {
+    this._assertSynced();
+    const request: AxiosRequestConfig = {
+      method: "POST",
+      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}`,
+      data: `{"public_var_sig":[],"order":${newOrder.serialize()}}`,
+      validateStatus: () => true,
+    };
+    const response = await this._transmitHttpRequest(request, true);
+    if (response.status !== 200) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
+    }
+    return response.data.task_id;
+  }
+
+  /**
+   * Cancel an outstanding order.
+   *
+   * @param orderId The ID of the order to cancel.
+   * @returns A TaskId that can be used to query the status of the order.
+   *
+   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
+   */
+  async cancelOrder(orderId: OrderId): Promise<TaskId> {
+    this._assertSynced();
+    const request: AxiosRequestConfig = {
+      method: "POST",
+      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${orderId}/cancel`,
+      data: "{}",
+      validateStatus: () => true,
+    };
+    const response = await this._transmitHttpRequest(request, true);
+    if (response.status !== 200) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
     }
     return response.data.task_id;
   }
@@ -274,10 +326,10 @@ export default class Account {
   /**
    * Getter for Balances.
    *
-   * @throws {AccountNotInitialized} If the Account has not yet been initialized.
+   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
   get balances(): Record<BalanceId, Balance> {
-    this._assertInitialized();
+    this._assertSynced();
     return this._wallet.balances.reduce((acc, balance) => {
       acc[balance.balanceId] = balance;
       return acc;
@@ -287,10 +339,10 @@ export default class Account {
   /**
    * Getter for Orders.
    *
-   * @throws {AccountNotInitialized} If the Account has not yet been initialized.
+   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
   get orders(): Record<OrderId, Order> {
-    this._assertInitialized();
+    this._assertSynced();
     return this._wallet.orders.reduce((acc, order) => {
       acc[order.orderId] = order;
       return acc;
@@ -300,10 +352,10 @@ export default class Account {
   /**
    * Getter for Fees.
    *
-   * @throws {AccountNotInitialized} If the Account has not yet been initialized.
+   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
   get fees(): Record<FeeId, Fee> {
-    this._assertInitialized();
+    this._assertSynced();
     return this._wallet.fees.reduce((acc, fee) => {
       acc[fee.feeId] = fee;
       return acc;

@@ -9,6 +9,8 @@ import {
 } from "../state/utils";
 import { AccountId, CallbackId, TaskId } from "../types";
 
+export type TaskJob<R> = Promise<[TaskId, Promise<R>]>;
+
 export function unimplemented(): never {
   throw new Error("unimplemented");
 }
@@ -91,15 +93,7 @@ export class RenegadeWs {
     if (this._verbose) {
       console.log(`[WebSocket] Received message: ${message}`);
     }
-
-    let parsedMessage: any;
-    try {
-      parsedMessage = JSON.parse(message);
-    } catch (e) {
-      // Certain messages from the relayer are not JSON-compliant, and we can
-      // ignore them.
-      return;
-    }
+    const parsedMessage = JSON.parse(message);
     const topic = parsedMessage.topic;
     if (!(topic in this._topicListeners)) {
       return;
@@ -132,6 +126,9 @@ export class RenegadeWs {
    * @param taskId The UUID of the task to await.
    */
   async awaitTaskCompletion(taskId: TaskId): Promise<void> {
+    if (taskId === undefined) {
+      throw new RenegadeError(RenegadeErrorType.InvalidTaskId, "undefined");
+    }
     if (taskId === ("DONE" as TaskId)) {
       return;
     }
@@ -143,15 +140,7 @@ export class RenegadeWs {
       this._ws.addEventListener(
         "message",
         (messageEvent: WebSocket.MessageEvent) => {
-          const message = messageEvent.data;
-          let parsedMessage: any;
-          try {
-            parsedMessage = JSON.parse(message);
-          } catch (e) {
-            // Certain messages from the relayer are not JSON-compliant, and we can
-            // ignore them.
-            return;
-          }
+          const parsedMessage = JSON.parse(messageEvent.data);
           if (
             parsedMessage.topic !== topic ||
             parsedMessage.event.type !== "TaskStatusUpdate"

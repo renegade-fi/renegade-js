@@ -88,7 +88,7 @@ export default class Token {
   }
 
   serialize(): string {
-    return this.address;
+    return "0x" + this.address;
   }
 
   static deserialize(serializedToken: string): Token {

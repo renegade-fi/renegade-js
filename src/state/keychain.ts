@@ -201,30 +201,30 @@ export default class Keychain {
     const orderBytes = (x: Buffer) => (asBigEndian ? x.reverse() : x);
     return `{
       "public_keys": {
-        "pk_root": "${orderBytes(
+        "pk_root": "0x${orderBytes(
           Buffer.from(this.keyHierarchy.root.publicKey),
         ).toString("hex")}",
-        "pk_match": "${orderBytes(
+        "pk_match": "0x${orderBytes(
           Buffer.from(this.keyHierarchy.match.publicKey),
         ).toString("hex")}",
-        "pk_settle": "${orderBytes(
+        "pk_settle": "0x${orderBytes(
           Buffer.from(this.keyHierarchy.settle.publicKey),
         ).toString("hex")}",
-        "pk_view": "${orderBytes(
+        "pk_view": "0x${orderBytes(
           Buffer.from(this.keyHierarchy.view.publicKey),
         ).toString("hex")}"
       },
       "secret_keys": {
-        "sk_root": "${orderBytes(
+        "sk_root": "0x${orderBytes(
           Buffer.from(this.keyHierarchy.root.secretKey),
         ).toString("hex")}",
-        "sk_match": "${orderBytes(
+        "sk_match": "0x${orderBytes(
           Buffer.from(this.keyHierarchy.match.secretKey),
         ).toString("hex")}",
-        "sk_settle": "${orderBytes(
+        "sk_settle": "0x${orderBytes(
           Buffer.from(this.keyHierarchy.settle.secretKey),
         ).toString("hex")}",
-        "sk_view": "${orderBytes(
+        "sk_view": "0x${orderBytes(
           Buffer.from(this.keyHierarchy.view.secretKey),
         ).toString("hex")}"
       }

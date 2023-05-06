@@ -7,8 +7,8 @@ describe("Task-Based API", () => {
     const renegade = new Renegade(renegadeConfig);
     const keychain = new Keychain();
     const accountId = renegade.registerAccount(keychain);
-    const taskId = await renegade.task.initializeAccount(accountId);
-    await renegade.awaitTaskCompletion(taskId);
+    const [, taskJob] = await renegade.task.initializeAccount(accountId);
+    await taskJob;
 
     // Assert that this account has no balances, orders, or fees.
     expect(renegade.getBalances(accountId)).toEqual({});

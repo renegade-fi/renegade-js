@@ -1,12 +1,14 @@
 export enum RenegadeErrorType {
-  RenegadeNotInitialized = "The Renegade object has not yet been initialized. Call Renegade::initialize() before using the Renegade object.",
   RelayerUnreachable = "The provided Relayer URL is unreachable.",
+  RelayerError = "The relayer returned a non-200 response.",
   AccountAlreadyRegistered = "Account corresponding to this Keychain is already registered with the Renegade object.",
   AccountNotRegistered = "Provided AccountId is not registered with the Renegade object.",
-  AccountNotInitialized = "Account has not yet been initialized. Call Account::initialize() before using the Account.",
+  AccountNotSynced = "Account has not yet been synced. Call Account::sync() before using the Account.",
   CallbackNotRegistered = "Provided CallbackId does not correspond to a previously-registered callback.",
   InvalidHostname = "Provided hostname is not valid. Must be either a domain name, an IP address, or localhost.",
   InvalidPort = "Provided port is not valid. Must be an integer between 1 and 65535.",
+  InvalidTaskId = "Provided TaskId is not valid.",
+  BadParameters = "Parameters provided to the function are not valid.",
 }
 
 export default class RenegadeError extends Error {

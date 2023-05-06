@@ -20,9 +20,7 @@ import {
   OrderId,
   TaskId,
 } from "./types";
-import { RenegadeWs, unimplemented } from "./utils";
-
-type TaskJob<R> = Promise<[TaskId, Promise<R>]>;
+import { RenegadeWs, TaskJob, unimplemented } from "./utils";
 
 /**
  * Configuration parameters for initial Renegade object creation.
@@ -183,7 +181,7 @@ export default class Renegade
     unimplemented();
   }
 
-  private _lookupAccount(accountId: AccountId): Account {
+  _lookupAccount(accountId: AccountId): Account {
     const account = this._registeredAccounts[accountId];
     if (!account) {
       throw new RenegadeError(
@@ -228,8 +226,7 @@ export default class Renegade
 
   private async _initializeAccountTaskJob(accountId: AccountId): TaskJob<void> {
     const account = this._lookupAccount(accountId);
-    const taskId = await account.startInitialization();
-    return [taskId, this.awaitTaskCompletion(taskId)];
+    return await account.sync();
   }
 
   async unregisterAccount(accountId: AccountId): Promise<void> {
@@ -307,11 +304,36 @@ export default class Renegade
     oldOrderId: OrderId,
     newOrder: Order,
   ): Promise<void> {
-    unimplemented();
+    const [, taskJob] = await this._modifyOrderTaskJob(
+      accountId,
+      oldOrderId,
+      newOrder,
+    );
+    return await taskJob;
+  }
+
+  private async _modifyOrderTaskJob(
+    accountId: AccountId,
+    oldOrderId: OrderId,
+    newOrder: Order,
+  ): TaskJob<void> {
+    const account = this._lookupAccount(accountId);
+    const taskId = await account.modifyOrder(oldOrderId, newOrder);
+    return [taskId, this.awaitTaskCompletion(taskId)];
   }
 
   async cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void> {
-    unimplemented();
+    const [, taskJob] = await this._cancelOrderTaskJob(accountId, orderId);
+    return await taskJob;
+  }
+
+  private async _cancelOrderTaskJob(
+    accountId: AccountId,
+    orderId: OrderId,
+  ): TaskJob<void> {
+    const account = this._lookupAccount(accountId);
+    const taskId = await account.cancelOrder(orderId);
+    return [taskId, this.awaitTaskCompletion(taskId)];
   }
 
   // --------------------------------
@@ -402,29 +424,27 @@ export default class Renegade
   task = {
     initializeAccount: async (
       ...args: Parameters<typeof this.initializeAccount>
-    ) => (await this._initializeAccountTaskJob(...args))[0],
-    // deposit: (
+    ) => await this._initializeAccountTaskJob(...args),
+    // deposit: async (
     //   ...args: Parameters<typeof this._depositTaskJob>
-    // ) => this._depositTaskJob(...args)[0],
-    // withdraw: (
+    // ) => (await this._depositTaskJob(...args),
+    // withdraw: async (
     //   ...args: Parameters<typeof this._withdrawTaskJob>
-    // ) => this._withdrawTaskJob(...args)[0],
-    placeOrder: (...args: Parameters<typeof this._placeOrderTaskJob>) =>
-      this._placeOrderTaskJob(...args)[0],
-    // modifyOrder: (
-    //   ...args: Parameters<typeof this._modifyOrderTaskJob>
-    // ) => this._modifyOrderTaskJob(...args)[0],
-    // cancelOrder: (
-    //   ...args: Parameters<typeof this._cancelOrderTaskJob>
-    // ) => this._cancelOrderTaskJob(...args)[0],
-    // approveFee: (
+    // ) => (await this._withdrawTaskJob(...args),
+    placeOrder: async (...args: Parameters<typeof this._placeOrderTaskJob>) =>
+      await this._placeOrderTaskJob(...args),
+    modifyOrder: async (...args: Parameters<typeof this._modifyOrderTaskJob>) =>
+      await this._modifyOrderTaskJob(...args),
+    cancelOrder: async (...args: Parameters<typeof this._cancelOrderTaskJob>) =>
+      await this._cancelOrderTaskJob(...args),
+    // approveFee: async (
     //   ...args: Parameters<typeof this._approveFeeTaskJob>
-    // ) => this._approveFeeTaskJob(...args)[0],
-    // modifyFee: (
+    // ) => await this._approveFeeTaskJob(...args),
+    // modifyFee: async (
     //   ...args: Parameters<typeof this._modifyFeeTaskJob>
-    // ) => this._modifyFeeTaskJob(...args)[0],
-    // revokeFee: (
+    // ) => await this._modifyFeeTaskJob(...args),
+    // revokeFee: async (
     //   ...args: Parameters<typeof this._revokeFeeTaskJob>
-    // ) => this._revokeFeeTaskJob(...args)[0],
+    // ) => await this._revokeFeeTaskJob(...args),
   };
 }
