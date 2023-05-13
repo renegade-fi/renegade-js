@@ -14,7 +14,8 @@ describe("Task-Based API", () => {
     expect(renegade.getBalances(accountId)).toEqual({});
     expect(renegade.getOrders(accountId)).toEqual({});
     expect(renegade.getFees(accountId)).toEqual({});
-    await renegade.unregisterAccount(accountId);
+
+    // Teardown.
     await renegade.teardown();
   });
 });

@@ -13,7 +13,6 @@ describe("Populating Accounts", () => {
       const accountId1 = renegade.registerAccount(keychain);
       await renegade.unregisterAccount(accountId1);
       const accountId2 = renegade.registerAccount(keychain);
-      await renegade.unregisterAccount(accountId2);
       expect(accountId1).toEqual(accountId2);
       await renegade.teardown();
     },
@@ -37,7 +36,6 @@ describe("Populating Accounts", () => {
       expect(renegade.getBalances(accountId)).toEqual({});
       expect(renegade.getOrders(accountId)).toEqual({});
       expect(renegade.getFees(accountId)).toEqual({});
-      await renegade.unregisterAccount(accountId);
       await renegade.teardown();
     },
   );
@@ -57,7 +55,6 @@ describe("Populating Accounts", () => {
       const accountId2 = renegade.registerAccount(globalKeychain);
       await renegade.initializeAccount(accountId2);
       const endTime = Date.now();
-      await renegade.unregisterAccount(accountId2);
       expect(endTime - startTime).toBeLessThan(1000);
       await renegade.teardown();
     },

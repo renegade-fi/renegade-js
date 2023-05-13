@@ -15,6 +15,32 @@ const BASEPOINT_ORDER =
   BigInt(2) ** BigInt(252) + BigInt("0x14def9dea2f79cd65812631a5cf5d3ed");
 
 /**
+ * A decorator that asserts that the Account has been synced, meaning that the
+ * Wallet is now managed by the relayer and wallet update events are actively
+ * streaming to the Account.
+ *
+ * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
+ */
+function assertSynced(
+  _target: object,
+  _propertyKey: string,
+  descriptor: PropertyDescriptor,
+) {
+  const originalMethod = descriptor.value || descriptor.get;
+  const newMethod = function (...args: any[]) {
+    if (!this._isSynced) {
+      throw new RenegadeError(RenegadeErrorType.AccountNotSynced);
+    }
+    return originalMethod.apply(this, args);
+  };
+  if (descriptor.value) {
+    descriptor.value = newMethod;
+  } else if (descriptor.get) {
+    descriptor.get = newMethod;
+  }
+}
+
+/**
  * A Renegade Account, which is a thin wrapper over the Wallet abstraction. The
  * authoritative Wallet state is stored on-chain in StarkNet encrypted Wallet
  * blobs, but we use local Wallet state for fast querying and to avoid
@@ -33,7 +59,7 @@ export default class Account {
   // The WebSocket connection to the relayer.
   private _ws: RenegadeWs;
   // The current Wallet state.
-  _wallet: Wallet;
+  private _wallet: Wallet;
   // Has this Account been synced to the relayer?
   private _isSynced: boolean;
 
@@ -84,19 +110,6 @@ export default class Account {
   // -------------
 
   /**
-   * Assert that the Account has been synced, meaning that the Wallet is now
-   * managed by the relayer and wallet update events are actively streaming to
-   * the Account.
-   *
-   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
-   */
-  private _assertSynced(): void {
-    if (!this._isSynced) {
-      throw new RenegadeError(RenegadeErrorType.AccountNotSynced);
-    }
-  }
-
-  /**
    * Transmit an HTTP request to the relayer. If the request is authenticated,
    * we will append two headers (renegade-auth and renegade-auth-expiration)
    * with expiring signatures of the body before transmission.
@@ -126,7 +139,6 @@ export default class Account {
    * relayer.
    */
   teardown(): void {
-    this._isSynced = false;
     this._reset();
     this._ws?.teardown();
   }
@@ -257,8 +269,8 @@ export default class Account {
    *
    * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
+  @assertSynced
   async placeOrder(order: Order): Promise<TaskId> {
-    this._assertSynced();
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders`,
@@ -281,8 +293,8 @@ export default class Account {
    *
    * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
+  @assertSynced
   async modifyOrder(oldOrderId: OrderId, newOrder: Order): Promise<TaskId> {
-    this._assertSynced();
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}`,
@@ -304,8 +316,8 @@ export default class Account {
    *
    * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
+  @assertSynced
   async cancelOrder(orderId: OrderId): Promise<TaskId> {
-    this._assertSynced();
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${orderId}/cancel`,
@@ -328,8 +340,8 @@ export default class Account {
    *
    * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
+  @assertSynced
   get balances(): Record<BalanceId, Balance> {
-    this._assertSynced();
     return this._wallet.balances.reduce((acc, balance) => {
       acc[balance.balanceId] = balance;
       return acc;
@@ -341,8 +353,8 @@ export default class Account {
    *
    * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
+  @assertSynced
   get orders(): Record<OrderId, Order> {
-    this._assertSynced();
     return this._wallet.orders.reduce((acc, order) => {
       acc[order.orderId] = order;
       return acc;
@@ -354,8 +366,8 @@ export default class Account {
    *
    * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
    */
+  @assertSynced
   get fees(): Record<FeeId, Fee> {
-    this._assertSynced();
     return this._wallet.fees.reduce((acc, fee) => {
       acc[fee.feeId] = fee;
       return acc;

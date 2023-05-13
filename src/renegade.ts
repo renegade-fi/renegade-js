@@ -23,6 +23,25 @@ import {
 import { RenegadeWs, TaskJob, unimplemented } from "./utils";
 
 /**
+ * A decorator that asserts that the relayer has not been torn down.
+ *
+ * @throws {RelayerTornDown} If the relayer has been torn down.
+ */
+function assertNotTornDown(
+  _target: object,
+  _propertyKey: string,
+  descriptor: PropertyDescriptor,
+) {
+  const originalMethod = descriptor.value;
+  descriptor.value = function (...args: any[]) {
+    if (this._isTornDown) {
+      throw new RenegadeError(RenegadeErrorType.RelayerTornDown);
+    }
+    return originalMethod.apply(this, args);
+  };
+}
+
+/**
  * Configuration parameters for initial Renegade object creation.
  */
 export interface RenegadeConfig {
@@ -66,6 +85,8 @@ export default class Renegade
   private _ws: RenegadeWs;
   // All Accounts that have been registered with the Renegade object.
   private _registeredAccounts: Record<AccountId, Account>;
+  // If true, the relayer has been torn down and is no longer usable.
+  private _isTornDown: boolean;
 
   /**
    * Construct a new Renegade object.
@@ -99,10 +120,9 @@ export default class Renegade
       config.relayerWsPort,
       config.useInsecureTransport,
     );
-    // Open a WebSocket connection to the relayer.
     this._ws = new RenegadeWs(this.relayerWsUrl, this._verbose);
-    // Set empty accounts.
     this._registeredAccounts = {} as Record<AccountId, Account>;
+    this._isTornDown = false;
   }
 
   /**
@@ -154,6 +174,7 @@ export default class Renegade
   /**
    * Ping the relayer to check if it is reachable.
    */
+  @assertNotTornDown
   async ping(): Promise<void> {
     let response: AxiosResponse;
     try {
@@ -177,11 +198,12 @@ export default class Renegade
   /**
    * Get the semver of the relayer.
    */
+  @assertNotTornDown
   async getVersion(): Promise<string> {
     unimplemented();
   }
 
-  _lookupAccount(accountId: AccountId): Account {
+  private _lookupAccount(accountId: AccountId): Account {
     const account = this._registeredAccounts[accountId];
     if (!account) {
       throw new RenegadeError(
@@ -192,18 +214,24 @@ export default class Renegade
     return account;
   }
 
+  @assertNotTornDown
   async awaitTaskCompletion(taskId: TaskId): Promise<void> {
     await this._ws.awaitTaskCompletion(taskId);
   }
 
   async teardown(): Promise<void> {
+    for (const accountId in this._registeredAccounts) {
+      await this.unregisterAccount(accountId as AccountId);
+    }
     this._ws.teardown();
+    this._isTornDown = true;
   }
 
   // -----------------------------------
   // | IRenegadeAccount Implementation |
   // -----------------------------------
 
+  @assertNotTornDown
   registerAccount(keychain: Keychain): AccountId {
     const account = new Account(
       keychain,
@@ -219,6 +247,7 @@ export default class Renegade
     return accountId;
   }
 
+  @assertNotTornDown
   async initializeAccount(accountId: AccountId): Promise<void> {
     const [, taskJob] = await this._initializeAccountTaskJob(accountId);
     return await taskJob;
@@ -229,12 +258,14 @@ export default class Renegade
     return await account.sync();
   }
 
+  @assertNotTornDown
   async unregisterAccount(accountId: AccountId): Promise<void> {
     const account = this._lookupAccount(accountId);
-    await account.teardown();
+    account.teardown();
     delete this._registeredAccounts[accountId];
   }
 
+  @assertNotTornDown
   async delegateAccount(
     accountId: AccountId,
     sendRoot?: boolean,
@@ -246,16 +277,19 @@ export default class Renegade
   // | IRenegadeInformation Implementation |
   // ---------------------------------------
 
+  @assertNotTornDown
   getBalances(accountId: AccountId): Record<BalanceId, Balance> {
     const account = this._lookupAccount(accountId);
     return account.balances;
   }
 
+  @assertNotTornDown
   getOrders(accountId: AccountId): Record<OrderId, Order> {
     const account = this._lookupAccount(accountId);
     return account.orders;
   }
 
+  @assertNotTornDown
   getFees(accountId: AccountId): Record<FeeId, Fee> {
     const account = this._lookupAccount(accountId);
     return account.fees;
@@ -265,6 +299,7 @@ export default class Renegade
   // | IRenegadeBalance Implementation |
   // -----------------------------------
 
+  @assertNotTornDown
   async deposit(
     accountId: AccountId,
     mint: Token,
@@ -273,6 +308,7 @@ export default class Renegade
     unimplemented();
   }
 
+  @assertNotTornDown
   async withdraw(
     accountId: AccountId,
     mint: Token,
@@ -285,6 +321,7 @@ export default class Renegade
   // | IRenegadeTrading Implementation |
   // -----------------------------------
 
+  @assertNotTornDown
   async placeOrder(accountId: AccountId, order: Order): Promise<void> {
     const [, taskJob] = await this._placeOrderTaskJob(accountId, order);
     return await taskJob;
@@ -299,6 +336,7 @@ export default class Renegade
     return [taskId, this.awaitTaskCompletion(taskId)];
   }
 
+  @assertNotTornDown
   async modifyOrder(
     accountId: AccountId,
     oldOrderId: OrderId,
@@ -322,6 +360,7 @@ export default class Renegade
     return [taskId, this.awaitTaskCompletion(taskId)];
   }
 
+  @assertNotTornDown
   async cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void> {
     const [, taskJob] = await this._cancelOrderTaskJob(accountId, orderId);
     return await taskJob;
@@ -340,14 +379,17 @@ export default class Renegade
   // | IRenegadeFees Implementation |
   // --------------------------------
 
+  @assertNotTornDown
   async queryDesiredFee(): Promise<Fee> {
     unimplemented();
   }
 
+  @assertNotTornDown
   async approveFee(accountId: AccountId, fee: Fee): Promise<void> {
     unimplemented();
   }
 
+  @assertNotTornDown
   async modifyFee(
     accountId: AccountId,
     oldFeeId: FeeId,
@@ -356,6 +398,7 @@ export default class Renegade
     unimplemented();
   }
 
+  @assertNotTornDown
   async revokeFee(accountId: AccountId, feeId: FeeId): Promise<void> {
     unimplemented();
   }
@@ -364,6 +407,7 @@ export default class Renegade
   // | IRenegadeStreaming Implementation |
   // -------------------------------------
 
+  @assertNotTornDown
   registerPriceReportCallback(
     callback: (message: string) => void,
     exchange: Exchange,
@@ -373,24 +417,28 @@ export default class Renegade
     unimplemented();
   }
 
+  @assertNotTornDown
   registerOrderBookCallback(
     callback: (message: string) => void,
   ): Promise<CallbackId> {
     unimplemented();
   }
 
+  @assertNotTornDown
   registerNetworkCallback(
     callback: (message: string) => void,
   ): Promise<CallbackId> {
     unimplemented();
   }
 
+  @assertNotTornDown
   registerMpcCallback(
     callback: (message: string) => void,
   ): Promise<CallbackId> {
     unimplemented();
   }
 
+  @assertNotTornDown
   async registerAccountCallback(
     callback: (message: string) => void,
     accountId: AccountId,
@@ -403,6 +451,7 @@ export default class Renegade
     );
   }
 
+  @assertNotTornDown
   async releaseCallback(callbackId: CallbackId): Promise<void> {
     await this._ws.releaseCallback(callbackId);
   }

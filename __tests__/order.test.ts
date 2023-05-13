@@ -34,30 +34,28 @@ describe("Creating and Cancelling Orders", () => {
         [order1.orderId]: order1,
       });
 
-      await renegade.unregisterAccount(accountId);
+      // Teardown.
       await renegade.teardown();
     },
   );
 
-  // test.concurrent("Modifying an order should work", async () => {
-  //   // Setup the Account.
-  //   const renegade = new Renegade(renegadeConfig);
-  //   const accountId = renegade.registerAccount(new Keychain());
-  //   await renegade.initializeAccount(accountId);
+  test.skip("Modifying an order should work", async () => {
+    // Setup the Account.
+    const renegade = new Renegade(renegadeConfig);
+    const accountId = renegade.registerAccount(new Keychain());
+    await renegade.initializeAccount(accountId);
 
-  //   // Create and submit the order.
-  //   await renegade.placeOrder(accountId, order1);
-  //   const a = { [order1.orderId]: order1 };
-  //   console.log("a:", a);
-  //   expect(renegade.getOrders(accountId)).toEqual({ [order1.orderId]: order1 });
+    // Create and submit the order.
+    await renegade.placeOrder(accountId, order1);
+    expect(renegade.getOrders(accountId)).toEqual({ [order1.orderId]: order1 });
 
-  //   // Modify the order.
-  //   await renegade.modifyOrder(accountId, order1.orderId, order2);
-  //   expect(renegade.getOrders(accountId)).toEqual({ [order2.orderId]: order2 });
+    // Modify the order.
+    await renegade.modifyOrder(accountId, order1.orderId, order2);
+    expect(renegade.getOrders(accountId)).toEqual({ [order2.orderId]: order2 });
 
-  //   await renegade.unregisterAccount(accountId);
-  //   await renegade.teardown();
-  // });
+    // Teardown.
+    await renegade.teardown();
+  });
 
   test.concurrent(
     "Creating and cancelling multiple orders should work",
@@ -84,7 +82,7 @@ describe("Creating and Cancelling Orders", () => {
         [order2.orderId]: order2,
       });
 
-      await renegade.unregisterAccount(accountId);
+      // Teardown.
       await renegade.teardown();
     },
   );
@@ -120,8 +118,7 @@ describe("Creating and Cancelling Orders", () => {
         );
       await Promise.all([promise1, promise2]);
 
-      await renegade.unregisterAccount(accountId1);
-      await renegade.unregisterAccount(accountId2);
+      // Teardown.
       await renegade.teardown();
     },
   );
