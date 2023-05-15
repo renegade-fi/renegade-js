@@ -1,5 +1,5 @@
 import * as uuid from "uuid";
-import WebSocket from "ws";
+import WebSocket from "isomorphic-ws";
 import RenegadeError, { RenegadeErrorType } from "../errors";
 import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, } from "../state/utils";
 export function unimplemented() {

@@ -1,5 +1,5 @@
 import * as uuid from "uuid";
-import WebSocket from "ws";
+import WebSocket from "isomorphic-ws"
 
 import RenegadeError, { RenegadeErrorType } from "../errors";
 import { Keychain } from "../state";
