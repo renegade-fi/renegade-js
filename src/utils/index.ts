@@ -1,13 +1,13 @@
 import * as uuid from "uuid";
-import WebSocket from "isomorphic-ws"
+import WebSocket from "isomorphic-ws";
 
 import RenegadeError, { RenegadeErrorType } from "../errors";
-import { Keychain } from "../state";
+import { Keychain, Token } from "../state";
 import {
   RENEGADE_AUTH_EXPIRATION_HEADER,
   RENEGADE_AUTH_HEADER,
 } from "../state/utils";
-import { AccountId, CallbackId, TaskId } from "../types";
+import { AccountId, CallbackId, Exchange, TaskId } from "../types";
 
 export type TaskJob<R> = Promise<[TaskId, Promise<R>]>;
 
@@ -57,11 +57,11 @@ export class RenegadeWs {
    * Subscribe to a topic on the relayer.
    *
    * @param topic The topic to subscribe to.
+   * @param keychain The keychain to use for authentication. If no authentication is required, leave undefined.
    */
   private async _subscribeToTopic(
     topic: string,
     keychain?: Keychain,
-    isAuthenticated?: boolean,
   ): Promise<void> {
     await this._awaitWsOpen();
     const message = {
@@ -71,7 +71,7 @@ export class RenegadeWs {
         topic: topic,
       },
     };
-    if (isAuthenticated) {
+    if (keychain) {
       const [renegadeAuth, renegadeAuthExpiration] =
         keychain.generateExpiringSignature(
           Buffer.from(JSON.stringify(message.body), "ascii"),
@@ -168,7 +168,26 @@ export class RenegadeWs {
     keychain: Keychain,
   ): Promise<CallbackId> {
     const topic = `/v0/wallet/${accountId.toString()}`;
-    await this._subscribeToTopic(topic, keychain, true);
+    return await this._registerCallbackWithTopic(callback, topic, keychain);
+  }
+
+  async registerPriceReportCallback(
+    callback: (message: string) => void,
+    exchange: Exchange,
+    baseToken: Token,
+    quoteToken: Token,
+  ): Promise<CallbackId> {
+    const topic = `/v0/price_report/${exchange}/${baseToken.serialize()}/${quoteToken.serialize()}`;
+    return await this._registerCallbackWithTopic(callback, topic);
+  }
+
+  async _registerCallbackWithTopic(
+    callback: (message: string) => void,
+    topic: string,
+    keychain?: Keychain,
+  ): Promise<CallbackId> {
+    await this._awaitWsOpen();
+    await this._subscribeToTopic(topic, keychain);
     if (!this._topicListeners[topic]) {
       this._topicListeners[topic] = new Set<CallbackId>();
     }

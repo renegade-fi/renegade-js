@@ -1,5 +1,5 @@
-import { Keychain } from "../state";
-import { AccountId, CallbackId, TaskId } from "../types";
+import { Keychain, Token } from "../state";
+import { AccountId, CallbackId, Exchange, TaskId } from "../types";
 export type TaskJob<R> = Promise<[TaskId, Promise<R>]>;
 export declare function unimplemented(): never;
 export declare class RenegadeWs {
@@ -17,6 +17,7 @@ export declare class RenegadeWs {
      * Subscribe to a topic on the relayer.
      *
      * @param topic The topic to subscribe to.
+     * @param keychain The keychain to use for authentication. If no authentication is required, leave undefined.
      */
     private _subscribeToTopic;
     /**
@@ -38,6 +39,8 @@ export declare class RenegadeWs {
      */
     awaitTaskCompletion(taskId: TaskId): Promise<void>;
     registerAccountCallback(callback: (message: string) => void, accountId: AccountId, keychain: Keychain): Promise<CallbackId>;
+    registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token): Promise<CallbackId>;
+    _registerCallbackWithTopic(callback: (message: string) => void, topic: string, keychain?: Keychain): Promise<CallbackId>;
     releaseCallback(callbackId: CallbackId): Promise<void>;
     teardown(): void;
 }

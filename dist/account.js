@@ -90,7 +90,10 @@ export default class Account {
      */
     async _transmitHttpRequest(request, isAuthenticated) {
         if (isAuthenticated) {
-            const [renegadeAuth, renegadeAuthExpiration] = this._wallet.keychain.generateExpiringSignature(Buffer.from(request.data.toString(), "ascii"));
+            const messageBuffer = request.data
+                ? Buffer.from(request.data.toString(), "ascii")
+                : Buffer.alloc(0);
+            const [renegadeAuth, renegadeAuthExpiration] = this._wallet.keychain.generateExpiringSignature(messageBuffer);
             request.headers = request.headers || {};
             request.headers[RENEGADE_AUTH_HEADER] = JSON.stringify(renegadeAuth);
             request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
@@ -175,7 +178,6 @@ export default class Account {
         const request = {
             method: "GET",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`,
-            data: "{}",
             validateStatus: () => true,
         };
         const response = await this._transmitHttpRequest(request, true);
@@ -271,7 +273,6 @@ export default class Account {
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${orderId}/cancel`,
-            data: "{}",
             validateStatus: () => true,
         };
         const response = await this._transmitHttpRequest(request, true);

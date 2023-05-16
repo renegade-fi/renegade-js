@@ -121,11 +121,14 @@ export default class Renegade {
      * Ping the relayer to check if it is reachable.
      */
     async ping() {
+        const request = {
+            method: "GET",
+            url: `${this.relayerHttpUrl}/v0/ping`,
+            validateStatus: () => true,
+        };
         let response;
         try {
-            response = await axios.get(this.relayerHttpUrl + "/v0/ping", {
-                data: {},
-            });
+            response = await axios.request(request);
         }
         catch (e) {
             throw new RenegadeError(RenegadeErrorType.RelayerUnreachable, this.relayerHttpUrl);
@@ -133,6 +136,15 @@ export default class Renegade {
         if (response.status !== 200 || !response.data.timestamp) {
             throw new RenegadeError(RenegadeErrorType.RelayerUnreachable, this.relayerHttpUrl);
         }
+    }
+    async queryExchangeHealthStates(baseToken, quoteToken) {
+        const request = {
+            method: "POST",
+            url: `${this.relayerHttpUrl}/v0/exchange/health_check`,
+            data: `{"base_token": {"addr": "${baseToken.serialize()}"}, "quote_token": {"addr": "${quoteToken.serialize()}"}}`,
+        };
+        const response = await axios.request(request);
+        return response.data;
     }
     /**
      * Get the semver of the relayer.
@@ -257,8 +269,12 @@ export default class Renegade {
     // -------------------------------------
     // | IRenegadeStreaming Implementation |
     // -------------------------------------
-    registerPriceReportCallback(callback, exchange, baseToken, quoteToken) {
-        unimplemented();
+    async registerAccountCallback(callback, accountId) {
+        const account = this._lookupAccount(accountId);
+        return await this._ws.registerAccountCallback(callback, accountId, account.keychain);
+    }
+    async registerPriceReportCallback(callback, exchange, baseToken, quoteToken) {
+        return await this._ws.registerPriceReportCallback(callback, exchange, baseToken, quoteToken);
     }
     registerOrderBookCallback(callback) {
         unimplemented();
@@ -269,10 +285,6 @@ export default class Renegade {
     registerMpcCallback(callback) {
         unimplemented();
     }
-    async registerAccountCallback(callback, accountId) {
-        const account = this._lookupAccount(accountId);
-        return await this._ws.registerAccountCallback(callback, accountId, account.keychain);
-    }
     async releaseCallback(callbackId) {
         await this._ws.releaseCallback(callbackId);
     }
@@ -280,6 +292,9 @@ export default class Renegade {
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "ping", null);
+__decorate([
+    assertNotTornDown
+], Renegade.prototype, "queryExchangeHealthStates", null);
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "getVersion", null);
@@ -336,6 +351,9 @@ __decorate([
 ], Renegade.prototype, "revokeFee", null);
 __decorate([
     assertNotTornDown
+], Renegade.prototype, "registerAccountCallback", null);
+__decorate([
+    assertNotTornDown
 ], Renegade.prototype, "registerPriceReportCallback", null);
 __decorate([
     assertNotTornDown
@@ -346,9 +364,6 @@ __decorate([
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "registerMpcCallback", null);
-__decorate([
-    assertNotTornDown
-], Renegade.prototype, "registerAccountCallback", null);
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "releaseCallback", null);

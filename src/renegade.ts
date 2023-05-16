@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
@@ -176,11 +176,14 @@ export default class Renegade
    */
   @assertNotTornDown
   async ping(): Promise<void> {
-    let response: AxiosResponse;
+    const request: AxiosRequestConfig = {
+      method: "GET",
+      url: `${this.relayerHttpUrl}/v0/ping`,
+      validateStatus: () => true,
+    };
+    let response;
     try {
-      response = await axios.get(this.relayerHttpUrl + "/v0/ping", {
-        data: {},
-      });
+      response = await axios.request(request);
     } catch (e) {
       throw new RenegadeError(
         RenegadeErrorType.RelayerUnreachable,
@@ -193,6 +196,20 @@ export default class Renegade
         this.relayerHttpUrl,
       );
     }
+  }
+
+  @assertNotTornDown
+  async queryExchangeHealthStates(
+    baseToken: Token,
+    quoteToken: Token,
+  ): Promise<any> {
+    const request: AxiosRequestConfig = {
+      method: "POST",
+      url: `${this.relayerHttpUrl}/v0/exchange/health_check`,
+      data: `{"base_token": {"addr": "${baseToken.serialize()}"}, "quote_token": {"addr": "${quoteToken.serialize()}"}}`,
+    };
+    const response = await axios.request(request);
+    return response.data;
   }
 
   /**
@@ -408,13 +425,31 @@ export default class Renegade
   // -------------------------------------
 
   @assertNotTornDown
-  registerPriceReportCallback(
+  async registerAccountCallback(
+    callback: (message: string) => void,
+    accountId: AccountId,
+  ): Promise<CallbackId> {
+    const account = this._lookupAccount(accountId);
+    return await this._ws.registerAccountCallback(
+      callback,
+      accountId,
+      account.keychain,
+    );
+  }
+
+  @assertNotTornDown
+  async registerPriceReportCallback(
     callback: (message: string) => void,
     exchange: Exchange,
     baseToken: Token,
     quoteToken: Token,
-  ): CallbackId {
-    unimplemented();
+  ): Promise<CallbackId> {
+    return await this._ws.registerPriceReportCallback(
+      callback,
+      exchange,
+      baseToken,
+      quoteToken,
+    );
   }
 
   @assertNotTornDown
@@ -436,19 +471,6 @@ export default class Renegade
     callback: (message: string) => void,
   ): Promise<CallbackId> {
     unimplemented();
-  }
-
-  @assertNotTornDown
-  async registerAccountCallback(
-    callback: (message: string) => void,
-    accountId: AccountId,
-  ): Promise<CallbackId> {
-    const account = this._lookupAccount(accountId);
-    return await this._ws.registerAccountCallback(
-      callback,
-      accountId,
-      account.keychain,
-    );
   }
 
   @assertNotTornDown

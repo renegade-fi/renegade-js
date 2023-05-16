@@ -18,10 +18,10 @@ export type TaskId = Brand<Uuid, "TaskId">;
 export type CallbackId = Brand<Uuid, "CallbackId">;
 
 export enum Exchange {
-  Median = 0,
-  Binance,
-  Coinbase,
-  Kraken,
-  Okx,
-  Uniswapv3,
+  Median = "median",
+  Binance = "binance",
+  Coinbase = "coinbase",
+  Kraken = "kraken",
+  Okx = "okx",
+  Uniswapv3 = "uniswapv3",
 }

@@ -229,6 +229,18 @@ export interface IRenegadeFees {
  */
 export interface IRenegadeStreaming {
   /**
+   * Register a callback to be invoked when a new account event is received.
+   *
+   * @param callback The callback to invoke when a new account event is received.
+   * @param accountId The AccountId of the Account to register the callback for.
+   *
+   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+   */
+  registerAccountCallback(
+    callback: (message: string) => void,
+    accountId: AccountId,
+  ): Promise<CallbackId>;
+  /**
    * Register a callback to be invoked when a new price report is received.
    *
    * @param callback The callback to invoke when a new price report is received.
@@ -241,7 +253,7 @@ export interface IRenegadeStreaming {
     exchange: Exchange,
     baseToken: Token,
     quoteToken: Token,
-  ): CallbackId;
+  ): Promise<CallbackId>;
   /**
    * Register a callback to be invoked when a new order book update is received.
    *
@@ -264,18 +276,6 @@ export interface IRenegadeStreaming {
    * @param callback The callback to invoke when a new MPC event is received.
    */
   registerMpcCallback(callback: (message: string) => void): Promise<CallbackId>;
-  /**
-   * Register a callback to be invoked when a new account event is received.
-   *
-   * @param callback The callback to invoke when a new account event is received.
-   * @param accountId The AccountId of the Account to register the callback for.
-   *
-   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
-   */
-  registerAccountCallback(
-    callback: (message: string) => void,
-    accountId: AccountId,
-  ): Promise<CallbackId>;
   /**
    * Release a previously-registered callback. If no other callback is
    * registered for the same topic, the topic will be unsubscribed from.

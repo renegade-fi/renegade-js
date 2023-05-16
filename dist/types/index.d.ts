@@ -16,11 +16,11 @@ export type AccountId = Brand<Uuid, "AccountId">;
 export type TaskId = Brand<Uuid, "TaskId">;
 export type CallbackId = Brand<Uuid, "CallbackId">;
 export declare enum Exchange {
-    Median = 0,
-    Binance = 1,
-    Coinbase = 2,
-    Kraken = 3,
-    Okx = 4,
-    Uniswapv3 = 5
+    Median = "median",
+    Binance = "binance",
+    Coinbase = "coinbase",
+    Kraken = "kraken",
+    Okx = "okx",
+    Uniswapv3 = "uniswapv3"
 }
 export {};

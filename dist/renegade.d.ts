@@ -48,6 +48,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
      * Ping the relayer to check if it is reachable.
      */
     ping(): Promise<void>;
+    queryExchangeHealthStates(baseToken: Token, quoteToken: Token): Promise<any>;
     /**
      * Get the semver of the relayer.
      */
@@ -75,11 +76,11 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     approveFee(accountId: AccountId, fee: Fee): Promise<void>;
     modifyFee(accountId: AccountId, oldFeeId: FeeId, newFee: Fee): Promise<void>;
     revokeFee(accountId: AccountId, feeId: FeeId): Promise<void>;
-    registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token): CallbackId;
+    registerAccountCallback(callback: (message: string) => void, accountId: AccountId): Promise<CallbackId>;
+    registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token): Promise<CallbackId>;
     registerOrderBookCallback(callback: (message: string) => void): Promise<CallbackId>;
     registerNetworkCallback(callback: (message: string) => void): Promise<CallbackId>;
     registerMpcCallback(callback: (message: string) => void): Promise<CallbackId>;
-    registerAccountCallback(callback: (message: string) => void, accountId: AccountId): Promise<CallbackId>;
     releaseCallback(callbackId: CallbackId): Promise<void>;
     /**
      * The `task` object contains a subset of the Renegade API that contain

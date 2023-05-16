@@ -31,8 +31,9 @@ export class RenegadeWs {
      * Subscribe to a topic on the relayer.
      *
      * @param topic The topic to subscribe to.
+     * @param keychain The keychain to use for authentication. If no authentication is required, leave undefined.
      */
-    async _subscribeToTopic(topic, keychain, isAuthenticated) {
+    async _subscribeToTopic(topic, keychain) {
         await this._awaitWsOpen();
         const message = {
             headers: {},
@@ -41,7 +42,7 @@ export class RenegadeWs {
                 topic: topic,
             },
         };
-        if (isAuthenticated) {
+        if (keychain) {
             const [renegadeAuth, renegadeAuthExpiration] = keychain.generateExpiringSignature(Buffer.from(JSON.stringify(message.body), "ascii"));
             message.headers[RENEGADE_AUTH_HEADER] = JSON.stringify(renegadeAuth);
             message.headers[RENEGADE_AUTH_EXPIRATION_HEADER] =
@@ -121,7 +122,15 @@ export class RenegadeWs {
     }
     async registerAccountCallback(callback, accountId, keychain) {
         const topic = `/v0/wallet/${accountId.toString()}`;
-        await this._subscribeToTopic(topic, keychain, true);
+        return await this._registerCallbackWithTopic(callback, topic, keychain);
+    }
+    async registerPriceReportCallback(callback, exchange, baseToken, quoteToken) {
+        const topic = `/v0/price_report/${exchange}/${baseToken.serialize()}/${quoteToken.serialize()}`;
+        return await this._registerCallbackWithTopic(callback, topic);
+    }
+    async _registerCallbackWithTopic(callback, topic, keychain) {
+        await this._awaitWsOpen();
+        await this._subscribeToTopic(topic, keychain);
         if (!this._topicListeners[topic]) {
             this._topicListeners[topic] = new Set();
         }
