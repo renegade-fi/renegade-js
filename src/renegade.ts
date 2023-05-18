@@ -317,6 +317,12 @@ export default class Renegade
     return account.fees;
   }
 
+  @assertNotTornDown
+  getKeychain(accountId: AccountId): Keychain {
+    const account = this._lookupAccount(accountId);
+    return account.keychain;
+  }
+
   // -----------------------------------
   // | IRenegadeBalance Implementation |
   // -----------------------------------

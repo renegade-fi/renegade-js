@@ -214,6 +214,10 @@ export default class Renegade {
         const account = this._lookupAccount(accountId);
         return account.fees;
     }
+    getKeychain(accountId) {
+        const account = this._lookupAccount(accountId);
+        return account.keychain;
+    }
     // -----------------------------------
     // | IRenegadeBalance Implementation |
     // -----------------------------------
@@ -339,6 +343,9 @@ __decorate([
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "getFees", null);
+__decorate([
+    assertNotTornDown
+], Renegade.prototype, "getKeychain", null);
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "deposit", null);

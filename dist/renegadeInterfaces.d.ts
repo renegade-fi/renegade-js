@@ -82,6 +82,14 @@ export interface IRenegadeInformation {
      * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
      */
     getFees(accountId: AccountId): Record<FeeId, Fee>;
+    /**
+     * Get the Keychain of an Account.
+     *
+     * @param accountId The AccountId of the Account to get the keychain for.
+     *
+     * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
+     */
+    getKeychain(accountId: AccountId): Keychain;
 }
 /**
  * Interface for manipulation of Account balances (depositing, withdrawing).
