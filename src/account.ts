@@ -1,8 +1,9 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 
 import RenegadeError, { RenegadeErrorType } from "./errors";
-import { Balance, Fee, Keychain, Order, Wallet } from "./state";
+import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
 import {
+  bigIntToLimbs,
   RENEGADE_AUTH_EXPIRATION_HEADER,
   RENEGADE_AUTH_HEADER,
 } from "./state/utils";
@@ -261,6 +262,69 @@ export default class Account {
     let response;
     try {
       response = await this._transmitHttpRequest(request, false);
+    } catch (e) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError);
+    }
+    if (response.status !== 200) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
+    }
+    return response.data.task_id;
+  }
+
+  /**
+   * Deposit funds into the Account.
+   *
+   * TODO: This is a mock function, and does not actually transfer any ERC-20s at the moment.
+   *
+   * @param mint The Token to deposit.
+   * @param amount The amount to deposit.
+   */
+  @assertSynced
+  async deposit(mint: Token, amount: bigint) {
+    const request: AxiosRequestConfig = {
+      method: "POST",
+      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
+      data: `{"public_var_sig":[],"from_addr":"0x0","mint":"${mint.serialize()}","amount":[${bigIntToLimbs(
+        amount,
+      ).join(",")}]}`,
+      validateStatus: () => true,
+    };
+    let response;
+    try {
+      response = await this._transmitHttpRequest(request, true);
+    } catch (e) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError);
+    }
+    if (response.status !== 200) {
+      console.log(response);
+      throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
+    }
+    return response.data.task_id;
+  }
+
+  /**
+   * Withdraw funds from an account.
+   *
+   * TODO: This is a mock function, and does not actually transfer any ERC-20s at the moment.
+   *
+   * @param mint The Token to withdraw.
+   * @param amount The amount to withdraw.
+   */
+  @assertSynced
+  async withdraw(mint: Token, amount: bigint) {
+    const request: AxiosRequestConfig = {
+      method: "POST",
+      url: `${this._relayerHttpUrl}/v0/wallet/${
+        this.accountId
+      }/balances/${mint.serialize()}/withdraw`,
+      data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbs(
+        amount,
+      ).join(",")}]}`,
+      validateStatus: () => true,
+    };
+    let response;
+    try {
+      response = await this._transmitHttpRequest(request, true);
     } catch (e) {
       throw new RenegadeError(RenegadeErrorType.RelayerError);
     }

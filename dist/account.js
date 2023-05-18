@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import axios from "axios";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
-import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, } from "./state/utils";
+import { bigIntToLimbs, RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, } from "./state/utils";
 import { RenegadeWs } from "./utils";
 // https://doc.dalek.rs/curve25519_dalek/constants/constant.BASEPOINT_ORDER.html
 const BASEPOINT_ORDER = BigInt(2) ** BigInt(252) + BigInt("0x14def9dea2f79cd65812631a5cf5d3ed");
@@ -230,6 +230,61 @@ export default class Account {
         return response.data.task_id;
     }
     /**
+     * Deposit funds into the Account.
+     *
+     * TODO: This is a mock function, and does not actually transfer any ERC-20s at the moment.
+     *
+     * @param mint The Token to deposit.
+     * @param amount The amount to deposit.
+     */
+    async deposit(mint, amount) {
+        const request = {
+            method: "POST",
+            url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
+            data: `{"public_var_sig":[],"from_addr":"0x0","mint":"${mint.serialize()}","amount":[${bigIntToLimbs(amount).join(",")}]}`,
+            validateStatus: () => true,
+        };
+        let response;
+        try {
+            response = await this._transmitHttpRequest(request, true);
+        }
+        catch (e) {
+            throw new RenegadeError(RenegadeErrorType.RelayerError);
+        }
+        if (response.status !== 200) {
+            console.log(response);
+            throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
+        }
+        return response.data.task_id;
+    }
+    /**
+     * Withdraw funds from an account.
+     *
+     * TODO: This is a mock function, and does not actually transfer any ERC-20s at the moment.
+     *
+     * @param mint The Token to withdraw.
+     * @param amount The amount to withdraw.
+     */
+    async withdraw(mint, amount) {
+        const request = {
+            method: "POST",
+            url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/${mint.serialize()}/withdraw`,
+            data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbs(amount).join(",")}]}`,
+            validateStatus: () => true,
+        };
+        let response;
+        try {
+            response = await this._transmitHttpRequest(request, true);
+        }
+        catch (e) {
+            throw new RenegadeError(RenegadeErrorType.RelayerError);
+        }
+        if (response.status !== 200) {
+            throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
+        }
+        return response.data.task_id;
+    }
+    /**
      * Place a new order.
      *
      * @param order The new order to place.
@@ -360,6 +415,12 @@ export default class Account {
         return this._wallet.walletId;
     }
 }
+__decorate([
+    assertSynced
+], Account.prototype, "deposit", null);
+__decorate([
+    assertSynced
+], Account.prototype, "withdraw", null);
 __decorate([
     assertSynced
 ], Account.prototype, "placeOrder", null);

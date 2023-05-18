@@ -327,7 +327,18 @@ export default class Renegade
     mint: Token,
     amount: bigint,
   ): Promise<void> {
-    unimplemented();
+    const [, taskJob] = await this._depositTaskJob(accountId, mint, amount);
+    return await taskJob;
+  }
+
+  private async _depositTaskJob(
+    accountId: AccountId,
+    mint: Token,
+    amount: bigint,
+  ): TaskJob<void> {
+    const account = this._lookupAccount(accountId);
+    const taskId = await account.deposit(mint, amount);
+    return [taskId, this.awaitTaskCompletion(taskId)];
   }
 
   @assertNotTornDown
@@ -336,7 +347,18 @@ export default class Renegade
     mint: Token,
     amount: bigint,
   ): Promise<void> {
-    unimplemented();
+    const [, taskJob] = await this._withdrawTaskJob(accountId, mint, amount);
+    return await taskJob;
+  }
+
+  private async _withdrawTaskJob(
+    accountId: AccountId,
+    mint: Token,
+    amount: bigint,
+  ): TaskJob<void> {
+    const account = this._lookupAccount(accountId);
+    const taskId = await account.withdraw(mint, amount);
+    return [taskId, this.awaitTaskCompletion(taskId)];
   }
 
   // -----------------------------------
@@ -509,12 +531,10 @@ export default class Renegade
     initializeAccount: async (
       ...args: Parameters<typeof this.initializeAccount>
     ) => await this._initializeAccountTaskJob(...args),
-    // deposit: async (
-    //   ...args: Parameters<typeof this._depositTaskJob>
-    // ) => (await this._depositTaskJob(...args),
-    // withdraw: async (
-    //   ...args: Parameters<typeof this._withdrawTaskJob>
-    // ) => (await this._withdrawTaskJob(...args),
+    deposit: async (...args: Parameters<typeof this._depositTaskJob>) =>
+      await this._depositTaskJob(...args),
+    withdraw: async (...args: Parameters<typeof this._withdrawTaskJob>) =>
+      await this._withdrawTaskJob(...args),
     placeOrder: async (...args: Parameters<typeof this._placeOrderTaskJob>) =>
       await this._placeOrderTaskJob(...args),
     modifyOrder: async (...args: Parameters<typeof this._modifyOrderTaskJob>) =>

@@ -51,12 +51,8 @@ export default class Renegade {
          */
         this.task = {
             initializeAccount: async (...args) => await this._initializeAccountTaskJob(...args),
-            // deposit: async (
-            //   ...args: Parameters<typeof this._depositTaskJob>
-            // ) => (await this._depositTaskJob(...args),
-            // withdraw: async (
-            //   ...args: Parameters<typeof this._withdrawTaskJob>
-            // ) => (await this._withdrawTaskJob(...args),
+            deposit: async (...args) => await this._depositTaskJob(...args),
+            withdraw: async (...args) => await this._withdrawTaskJob(...args),
             placeOrder: async (...args) => await this._placeOrderTaskJob(...args),
             modifyOrder: async (...args) => await this._modifyOrderTaskJob(...args),
             cancelOrder: async (...args) => await this._cancelOrderTaskJob(...args),
@@ -222,10 +218,22 @@ export default class Renegade {
     // | IRenegadeBalance Implementation |
     // -----------------------------------
     async deposit(accountId, mint, amount) {
-        unimplemented();
+        const [, taskJob] = await this._depositTaskJob(accountId, mint, amount);
+        return await taskJob;
+    }
+    async _depositTaskJob(accountId, mint, amount) {
+        const account = this._lookupAccount(accountId);
+        const taskId = await account.deposit(mint, amount);
+        return [taskId, this.awaitTaskCompletion(taskId)];
     }
     async withdraw(accountId, mint, amount) {
-        unimplemented();
+        const [, taskJob] = await this._withdrawTaskJob(accountId, mint, amount);
+        return await taskJob;
+    }
+    async _withdrawTaskJob(accountId, mint, amount) {
+        const account = this._lookupAccount(accountId);
+        const taskId = await account.withdraw(mint, amount);
+        return [taskId, this.awaitTaskCompletion(taskId)];
     }
     // -----------------------------------
     // | IRenegadeTrading Implementation |

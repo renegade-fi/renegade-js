@@ -1,4 +1,4 @@
-import { Balance, Fee, Keychain, Order } from "./state";
+import { Balance, Fee, Keychain, Order, Token } from "./state";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
 import { TaskJob } from "./utils";
 /**
@@ -78,6 +78,24 @@ export default class Account {
      * with a VALID WALLET CREATE proof.
      */
     private _createNewWallet;
+    /**
+     * Deposit funds into the Account.
+     *
+     * TODO: This is a mock function, and does not actually transfer any ERC-20s at the moment.
+     *
+     * @param mint The Token to deposit.
+     * @param amount The amount to deposit.
+     */
+    deposit(mint: Token, amount: bigint): Promise<any>;
+    /**
+     * Withdraw funds from an account.
+     *
+     * TODO: This is a mock function, and does not actually transfer any ERC-20s at the moment.
+     *
+     * @param mint The Token to withdraw.
+     * @param amount The amount to withdraw.
+     */
+    withdraw(mint: Token, amount: bigint): Promise<any>;
     /**
      * Place a new order.
      *
