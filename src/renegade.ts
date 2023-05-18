@@ -9,7 +9,7 @@ import {
   IRenegadeInformation,
   IRenegadeStreaming,
   IRenegadeTrading,
-} from "./renegadeInterfaces";
+} from "./irenegade";
 import { Balance, Fee, Keychain, Order, Token } from "./state";
 import {
   AccountId,

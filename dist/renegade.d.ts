@@ -1,4 +1,4 @@
-import { IRenegadeAccount, IRenegadeBalance, IRenegadeFees, IRenegadeInformation, IRenegadeStreaming, IRenegadeTrading } from "./renegadeInterfaces";
+import { IRenegadeAccount, IRenegadeBalance, IRenegadeFees, IRenegadeInformation, IRenegadeStreaming, IRenegadeTrading } from "./irenegade";
 import { Balance, Fee, Keychain, Order, Token } from "./state";
 import { AccountId, BalanceId, CallbackId, Exchange, FeeId, OrderId, TaskId } from "./types";
 /**
