@@ -143,7 +143,13 @@ export default class Renegade {
             url: `${this.relayerHttpUrl}/v0/exchange/health_check`,
             data: `{"base_token": {"addr": "${baseToken.serialize()}"}, "quote_token": {"addr": "${quoteToken.serialize()}"}}`,
         };
-        const response = await axios.request(request);
+        let response;
+        try {
+            response = await axios.request(request);
+        }
+        catch (e) {
+            throw new RenegadeError(RenegadeErrorType.RelayerError);
+        }
         return response.data;
     }
     /**
@@ -276,6 +282,9 @@ export default class Renegade {
     async registerPriceReportCallback(callback, exchange, baseToken, quoteToken) {
         return await this._ws.registerPriceReportCallback(callback, exchange, baseToken, quoteToken);
     }
+    async registerTaskCallback(callback, taskId) {
+        return await this._ws.registerTaskCallback(callback, taskId);
+    }
     registerOrderBookCallback(callback) {
         unimplemented();
     }
@@ -355,6 +364,9 @@ __decorate([
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "registerPriceReportCallback", null);
+__decorate([
+    assertNotTornDown
+], Renegade.prototype, "registerTaskCallback", null);
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "registerOrderBookCallback", null);

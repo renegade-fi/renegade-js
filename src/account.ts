@@ -1,5 +1,4 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import crypto from "crypto";
 
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Wallet } from "./state";
@@ -85,7 +84,7 @@ export default class Account {
     // Sample the randomness. Note that sampling in this manner slightly biases
     // the randomness; should not be a big issue since the bias is extremely
     // small.
-    const sampleLimb = () => BigInt(crypto.randomInt(2 ** 32));
+    const sampleLimb = () => BigInt(Math.floor(Math.random() * 2 ** 32));
     const randomness =
       sampleLimb() +
       sampleLimb() * 2n ** 32n +
@@ -221,7 +220,12 @@ export default class Account {
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`,
       validateStatus: () => true,
     };
-    const response = await this._transmitHttpRequest(request, true);
+    let response;
+    try {
+      response = await this._transmitHttpRequest(request, true);
+    } catch (e) {
+      return undefined;
+    }
     if (response.status === 200) {
       return Wallet.deserialize(response.data.wallet, true);
     } else {
@@ -254,7 +258,12 @@ export default class Account {
       data: `{"wallet":${this._wallet.serialize(true)}}`,
       validateStatus: () => true,
     };
-    const response = await this._transmitHttpRequest(request, false);
+    let response;
+    try {
+      response = await this._transmitHttpRequest(request, false);
+    } catch (e) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError);
+    }
     if (response.status !== 200) {
       throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
     }
@@ -277,7 +286,12 @@ export default class Account {
       data: `{"public_var_sig":[],"order":${order.serialize()}}`,
       validateStatus: () => true,
     };
-    const response = await this._transmitHttpRequest(request, true);
+    let response;
+    try {
+      response = await this._transmitHttpRequest(request, true);
+    } catch (e) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError);
+    }
     if (response.status !== 200) {
       throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
     }
@@ -301,7 +315,12 @@ export default class Account {
       data: `{"public_var_sig":[],"order":${newOrder.serialize()}}`,
       validateStatus: () => true,
     };
-    const response = await this._transmitHttpRequest(request, true);
+    let response;
+    try {
+      response = await this._transmitHttpRequest(request, true);
+    } catch (e) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError);
+    }
     if (response.status !== 200) {
       throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
     }
@@ -323,7 +342,12 @@ export default class Account {
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${orderId}/cancel`,
       validateStatus: () => true,
     };
-    const response = await this._transmitHttpRequest(request, true);
+    let response;
+    try {
+      response = await this._transmitHttpRequest(request, true);
+    } catch (e) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError);
+    }
     if (response.status !== 200) {
       throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
     }

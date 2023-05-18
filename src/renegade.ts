@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
@@ -208,7 +208,12 @@ export default class Renegade
       url: `${this.relayerHttpUrl}/v0/exchange/health_check`,
       data: `{"base_token": {"addr": "${baseToken.serialize()}"}, "quote_token": {"addr": "${quoteToken.serialize()}"}}`,
     };
-    const response = await axios.request(request);
+    let response;
+    try {
+      response = await axios.request(request);
+    } catch (e) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError);
+    }
     return response.data;
   }
 
@@ -450,6 +455,14 @@ export default class Renegade
       baseToken,
       quoteToken,
     );
+  }
+
+  @assertNotTornDown
+  async registerTaskCallback(
+    callback: (message: string) => void,
+    taskId: TaskId,
+  ): Promise<CallbackId> {
+    return await this._ws.registerTaskCallback(callback, taskId);
   }
 
   @assertNotTornDown

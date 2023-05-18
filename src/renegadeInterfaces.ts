@@ -6,6 +6,7 @@ import {
   Exchange,
   FeeId,
   OrderId,
+  TaskId,
 } from "./types";
 
 // ----------------------
@@ -253,6 +254,16 @@ export interface IRenegadeStreaming {
     exchange: Exchange,
     baseToken: Token,
     quoteToken: Token,
+  ): Promise<CallbackId>;
+  /**
+   * Register a callback to be invoked when a task state transition is received.
+   *
+   * @param callback The callback to invoke when a new order book update is received.
+   * @param taskId The ID of the task to register the callback for.
+   */
+  registerTaskCallback(
+    callback: (message: string) => void,
+    taskId: TaskId,
   ): Promise<CallbackId>;
   /**
    * Register a callback to be invoked when a new order book update is received.

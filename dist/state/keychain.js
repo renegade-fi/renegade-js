@@ -102,7 +102,8 @@ class Keychain {
     generateExpiringSignature(dataBuffer) {
         const validUntil = Date.now() + SIG_VALIDITY_WINDOW_MS;
         const validUntilBuffer = Buffer.alloc(8);
-        validUntilBuffer.writeBigUInt64LE(BigInt(validUntil));
+        validUntilBuffer.writeUInt32LE(validUntil % 2 ** 32, 0);
+        validUntilBuffer.writeUInt32LE(Math.floor(validUntil / 2 ** 32), 4);
         const message = Buffer.concat([dataBuffer, validUntilBuffer]);
         const signature = this.keyHierarchy.root.signMessage(message);
         return [Array.from(signature), validUntil];

@@ -78,6 +78,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     revokeFee(accountId: AccountId, feeId: FeeId): Promise<void>;
     registerAccountCallback(callback: (message: string) => void, accountId: AccountId): Promise<CallbackId>;
     registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token): Promise<CallbackId>;
+    registerTaskCallback(callback: (message: string) => void, taskId: TaskId): Promise<CallbackId>;
     registerOrderBookCallback(callback: (message: string) => void): Promise<CallbackId>;
     registerNetworkCallback(callback: (message: string) => void): Promise<CallbackId>;
     registerMpcCallback(callback: (message: string) => void): Promise<CallbackId>;

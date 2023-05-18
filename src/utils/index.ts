@@ -123,6 +123,8 @@ export class RenegadeWs {
    * For a given taskId, await the relayer until the task transitions to the
    * "Completed" state.
    *
+   * TODO: Refactor this to use Self::registerTaskCallback
+   *
    * @param taskId The UUID of the task to await.
    */
   async awaitTaskCompletion(taskId: TaskId): Promise<void> {
@@ -178,6 +180,26 @@ export class RenegadeWs {
     quoteToken: Token,
   ): Promise<CallbackId> {
     const topic = `/v0/price_report/${exchange}/${baseToken.serialize()}/${quoteToken.serialize()}`;
+    return await this._registerCallbackWithTopic(callback, topic);
+  }
+
+  async registerTaskCallback(
+    callback: (message: string) => void,
+    taskId: TaskId,
+  ): Promise<CallbackId> {
+    if (taskId === undefined) {
+      throw new RenegadeError(
+        RenegadeErrorType.InvalidTaskId,
+        "Cannot register callback for taskId = undefined",
+      );
+    }
+    if (taskId === ("DONE" as TaskId)) {
+      throw new RenegadeError(
+        RenegadeErrorType.InvalidTaskId,
+        "Cannot register callback for taskId = DONE",
+      );
+    }
+    const topic = `/v0/tasks/${taskId}`;
     return await this._registerCallbackWithTopic(callback, topic);
   }
 

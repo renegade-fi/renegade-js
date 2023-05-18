@@ -35,11 +35,14 @@ export declare class RenegadeWs {
      * For a given taskId, await the relayer until the task transitions to the
      * "Completed" state.
      *
+     * TODO: Refactor this to use Self::registerTaskCallback
+     *
      * @param taskId The UUID of the task to await.
      */
     awaitTaskCompletion(taskId: TaskId): Promise<void>;
     registerAccountCallback(callback: (message: string) => void, accountId: AccountId, keychain: Keychain): Promise<CallbackId>;
     registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token): Promise<CallbackId>;
+    registerTaskCallback(callback: (message: string) => void, taskId: TaskId): Promise<CallbackId>;
     _registerCallbackWithTopic(callback: (message: string) => void, topic: string, keychain?: Keychain): Promise<CallbackId>;
     releaseCallback(callbackId: CallbackId): Promise<void>;
     teardown(): void;

@@ -1,5 +1,5 @@
 import { Balance, Fee, Keychain, Order, Token } from "./state";
-import { AccountId, BalanceId, CallbackId, Exchange, FeeId, OrderId } from "./types";
+import { AccountId, BalanceId, CallbackId, Exchange, FeeId, OrderId, TaskId } from "./types";
 /**
  * Interface for Account-related functions (registration, initialization,
  * relayer delegation, etc.).
@@ -200,6 +200,13 @@ export interface IRenegadeStreaming {
      * @param quoteToken The quote Token to get price reports for.
      */
     registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token): Promise<CallbackId>;
+    /**
+     * Register a callback to be invoked when a task state transition is received.
+     *
+     * @param callback The callback to invoke when a new order book update is received.
+     * @param taskId The ID of the task to register the callback for.
+     */
+    registerTaskCallback(callback: (message: string) => void, taskId: TaskId): Promise<CallbackId>;
     /**
      * Register a callback to be invoked when a new order book update is received.
      *
