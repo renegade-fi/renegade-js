@@ -21,6 +21,7 @@ export default class Order {
         price?: number;
         timestamp?: number;
     });
+    pack(): bigint[];
     serialize(): string;
     static deserialize(serializedOrder: any): Order;
 }

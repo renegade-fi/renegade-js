@@ -26,9 +26,9 @@ describe("Populating Accounts", () => {
       const accountId = renegade.registerAccount(keychain);
       await renegade.initializeAccount(accountId);
 
-      // Assert that accountId = uuidV4(keccak256(pk_view)[-16:])
+      // Assert that accountId = uuidV4(keccak256(pk_root)[-16:])
       const publicKeyHash = new Uint8Array(
-        keccak256(Buffer.from(keychain.keyHierarchy.view.publicKey.buffer)),
+        keccak256(Buffer.from(keychain.keyHierarchy.root.publicKey.buffer)),
       );
       expect(accountId).toEqual(uuid.v4({ random: publicKeyHash.slice(-16) }));
 

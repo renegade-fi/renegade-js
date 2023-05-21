@@ -2,16 +2,17 @@ import { FeeId } from "../types";
 import Token from "./token";
 export default class Fee {
     readonly feeId: FeeId;
-    readonly pkSettle: bigint;
+    readonly recipientKey: bigint;
     readonly gasMint: Token;
     readonly gasAmount: bigint;
-    readonly percentFee: number;
+    readonly percentageFee: number;
     constructor(params: {
-        pkSettle: bigint;
+        recipientKey: bigint;
         gasMint: Token;
         gasAmount: bigint;
-        percentFee: number;
+        percentageFee: number;
     });
+    pack(): bigint[];
     serialize(): string;
     static deserialize(serializedFee: any): Fee;
 }

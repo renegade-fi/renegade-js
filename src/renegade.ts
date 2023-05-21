@@ -56,6 +56,9 @@ export interface RenegadeConfig {
   useInsecureTransport?: boolean;
   // Whether to print verbose output to the console.
   verbose?: boolean;
+  // Number of milliseconds to sleep before returning from any task. Useful for
+  // testing under load, when websocket messages may be buffered.
+  taskDelay?: number;
 }
 
 /**
@@ -81,6 +84,8 @@ export default class Renegade
   public readonly relayerWsUrl: string;
   // Print verbose output.
   private _verbose: boolean;
+  // Number of milliseconds to sleep before returning from any task.
+  private _taskDelay: number;
   // The WebSocket connection to the relayer.
   private _ws: RenegadeWs;
   // All Accounts that have been registered with the Renegade object.
@@ -104,6 +109,7 @@ export default class Renegade
       config.relayerWsPort !== undefined ? config.relayerWsPort : 4000;
     config.useInsecureTransport = config.useInsecureTransport || false;
     this._verbose = config.verbose || false;
+    this._taskDelay = config.taskDelay || 0;
     // Construct the URLs and save them.
     if (config.relayerHostname === "localhost") {
       config.relayerHostname = "127.0.0.1";
@@ -239,6 +245,7 @@ export default class Renegade
   @assertNotTornDown
   async awaitTaskCompletion(taskId: TaskId): Promise<void> {
     await this._ws.awaitTaskCompletion(taskId);
+    await new Promise((resolve) => setTimeout(resolve, this._taskDelay));
   }
 
   async teardown(): Promise<void> {

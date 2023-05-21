@@ -73,6 +73,7 @@ export default class Renegade {
             config.relayerWsPort !== undefined ? config.relayerWsPort : 4000;
         config.useInsecureTransport = config.useInsecureTransport || false;
         this._verbose = config.verbose || false;
+        this._taskDelay = config.taskDelay || 0;
         // Construct the URLs and save them.
         if (config.relayerHostname === "localhost") {
             config.relayerHostname = "127.0.0.1";
@@ -163,6 +164,7 @@ export default class Renegade {
     }
     async awaitTaskCompletion(taskId) {
         await this._ws.awaitTaskCompletion(taskId);
+        await new Promise((resolve) => setTimeout(resolve, this._taskDelay));
     }
     async teardown() {
         for (const accountId in this._registeredAccounts) {
