@@ -8,6 +8,7 @@ export default class Balance {
         mint: Token;
         amount: bigint;
     });
+    pack(): bigint[];
     serialize(): string;
     static deserialize(serializedBalance: any): Balance;
 }

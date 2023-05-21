@@ -6,6 +6,9 @@ export default class Balance {
         this.mint = params.mint;
         this.amount = params.amount;
     }
+    pack() {
+        return [BigInt("0x" + this.mint.address), this.amount];
+    }
     serialize() {
         return `{
       "mint": "${this.mint.serialize()}",

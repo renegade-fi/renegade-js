@@ -9,15 +9,31 @@ export default class Wallet {
     readonly orders: Order[];
     readonly fees: Fee[];
     readonly keychain: Keychain;
-    readonly randomness: bigint;
+    readonly blinder: bigint;
+    readonly blindedPublicShares: bigint[];
+    readonly privateShares: bigint[];
     constructor(params: {
         id?: WalletId;
         balances: Balance[];
         orders: Order[];
         fees: Fee[];
         keychain: Keychain;
-        randomness: bigint;
+        blinder: bigint;
     });
+    packBalances(): bigint[];
+    packOrders(): bigint[];
+    packFees(): bigint[];
+    packKeychain(): bigint[];
+    packBlinder(): bigint[];
+    /**
+     * Generated the "packed" form of this wallet by concatenating the packed
+     * forms of each of its components.
+     */
+    packWallet(): bigint[];
+    /**
+     * Derive blinded public shares and private shares for the wallet.
+     */
+    deriveShares(): [bigint[], bigint[]];
     serialize(asBigEndian?: boolean): string;
     static deserialize(serializedWallet: any, asBigEndian?: boolean): Wallet;
 }

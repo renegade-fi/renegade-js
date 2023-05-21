@@ -2,17 +2,14 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
+import { BASEPOINT_ORDER } from "./state/keychain";
 import {
-  bigIntToLimbs,
+  bigIntToLimbsLE,
   RENEGADE_AUTH_EXPIRATION_HEADER,
   RENEGADE_AUTH_HEADER,
 } from "./state/utils";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
 import { RenegadeWs, TaskJob } from "./utils";
-
-// https://doc.dalek.rs/curve25519_dalek/constants/constant.BASEPOINT_ORDER.html
-const BASEPOINT_ORDER =
-  BigInt(2) ** BigInt(252) + BigInt("0x14def9dea2f79cd65812631a5cf5d3ed");
 
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -85,12 +82,12 @@ export default class Account {
     // Sample the randomness. Note that sampling in this manner slightly biases
     // the randomness; should not be a big issue since the bias is extremely
     // small.
-    const sampleLimb = () => BigInt(Math.floor(Math.random() * 2 ** 32));
-    const randomness =
+    const sampleLimb = () => BigInt(Math.floor(Math.random() * 2 ** 64));
+    const blinder =
       sampleLimb() +
-      sampleLimb() * 2n ** 32n +
       sampleLimb() * 2n ** 64n +
-      sampleLimb() * 2n ** 96n;
+      sampleLimb() * 2n ** 128n +
+      sampleLimb() * 2n ** 192n;
 
     // Reset the Wallet.
     this._wallet = new Wallet({
@@ -98,7 +95,7 @@ export default class Account {
       orders: [],
       fees: [],
       keychain: keychain || this._wallet.keychain,
-      randomness: randomness % BASEPOINT_ORDER,
+      blinder: blinder % BASEPOINT_ORDER,
     });
 
     // Reset the sync status.
@@ -284,7 +281,7 @@ export default class Account {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
-      data: `{"public_var_sig":[],"from_addr":"0x0","mint":"${mint.serialize()}","amount":[${bigIntToLimbs(
+      data: `{"public_var_sig":[],"from_addr":"0x0","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(
         amount,
       ).join(",")}]}`,
       validateStatus: () => true,
@@ -296,7 +293,6 @@ export default class Account {
       throw new RenegadeError(RenegadeErrorType.RelayerError);
     }
     if (response.status !== 200) {
-      console.log(response);
       throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
     }
     return response.data.task_id;
@@ -317,7 +313,7 @@ export default class Account {
       url: `${this._relayerHttpUrl}/v0/wallet/${
         this.accountId
       }/balances/${mint.serialize()}/withdraw`,
-      data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbs(
+      data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbsLE(
         amount,
       ).join(",")}]}`,
       validateStatus: () => true,

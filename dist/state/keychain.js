@@ -2,6 +2,8 @@ import * as ed from "@noble/ed25519";
 import { sha512 } from "@noble/hashes/sha512";
 import * as crypto from "crypto";
 import * as fs from "fs";
+// https://doc.dalek.rs/curve25519_dalek/constants/constant.BASEPOINT_ORDER.html
+export const BASEPOINT_ORDER = BigInt(2) ** BigInt(252) + BigInt("0x14def9dea2f79cd65812631a5cf5d3ed");
 // Allow for synchronous ed25519 signing. See:
 // https://github.com/paulmillr/noble-ed25519/blob/main/README.md
 ed.utils.sha512Sync = (...m) => sha512(ed.utils.concatBytes(...m));
@@ -25,7 +27,11 @@ class IdentificationKey {
             throw new Error("IdentificationKey secretKey must be 32 bytes.");
         }
         this.secretKey = secretKey;
-        this.publicKey = ed.utils.sha512Sync(this.secretKey).slice(32);
+        // TODO: Turn this into a Pedersen hash.
+        const secretKeyHash = ed.utils.sha512Sync(this.secretKey);
+        const publicKey = BigInt("0x" + Buffer.from(secretKeyHash).toString("hex")) %
+            BASEPOINT_ORDER;
+        this.publicKey = new Uint8Array(Buffer.from(publicKey.toString(16), "hex"));
     }
 }
 /**
@@ -80,17 +86,12 @@ class Keychain {
         // Derive the match key.
         const rootSignatureBytes = root.signMessage(Buffer.from(Keychain.CREATE_SK_MATCH_MESSAGE));
         const skMatch = ed.utils.sha512Sync(rootSignatureBytes).slice(32);
-        const match = new SigningKey(skMatch);
+        const match = new IdentificationKey(skMatch);
         // Derive the settle key.
-        const matchSignatureBytes = match.signMessage(Buffer.from(Keychain.CREATE_SK_SETTLE_MESSAGE));
-        const skSettle = ed.utils.sha512Sync(matchSignatureBytes).slice(32);
+        const skSettle = ed.utils.sha512Sync(match.secretKey).slice(32);
         const settle = new SigningKey(skSettle);
-        // Derive the view key.
-        const settleSignatureBytes = settle.signMessage(Buffer.from(Keychain.CREATE_SK_VIEW_MESSAGE));
-        const skView = ed.utils.sha512Sync(settleSignatureBytes).slice(32);
-        const view = new SigningKey(skView);
         // Save the key hierarchy.
-        this.keyHierarchy = { root, match, settle, view };
+        this.keyHierarchy = { root, match, settle };
     }
     /**
      * Sign a data buffer (concretely, a request's body) with an expiring
@@ -129,7 +130,8 @@ class Keychain {
     /**
      * Serialize the keychain to a string. Note that @noble/ed25519 uses little
      * endian byte order for all EC points, so we reverse the byte order for big
-     * endian encodings.*
+     * endian encodings.
+     *
      * @param asBigEndian If true, the keys will be serialized in big endian byte order.
      * @returns The serialized keychain.
      */
@@ -139,24 +141,23 @@ class Keychain {
       "public_keys": {
         "pk_root": "0x${orderBytes(Buffer.from(this.keyHierarchy.root.publicKey)).toString("hex")}",
         "pk_match": "0x${orderBytes(Buffer.from(this.keyHierarchy.match.publicKey)).toString("hex")}",
-        "pk_settle": "0x${orderBytes(Buffer.from(this.keyHierarchy.settle.publicKey)).toString("hex")}",
-        "pk_view": "0x${orderBytes(Buffer.from(this.keyHierarchy.view.publicKey)).toString("hex")}"
+        "pk_settle": "0x${orderBytes(Buffer.from(this.keyHierarchy.settle.publicKey)).toString("hex")}"
       },
       "secret_keys": {
         "sk_root": "0x${orderBytes(Buffer.from(this.keyHierarchy.root.secretKey)).toString("hex")}",
         "sk_match": "0x${orderBytes(Buffer.from(this.keyHierarchy.match.secretKey)).toString("hex")}",
-        "sk_settle": "0x${orderBytes(Buffer.from(this.keyHierarchy.settle.secretKey)).toString("hex")}",
-        "sk_view": "0x${orderBytes(Buffer.from(this.keyHierarchy.view.secretKey)).toString("hex")}"
+        "sk_settle": "0x${orderBytes(Buffer.from(this.keyHierarchy.settle.secretKey)).toString("hex")}"
       }
     }`.replace(/[\s\n]/g, "");
     }
     static deserialize(serializedKeychain, asBigEndian) {
-        const skRoot = Buffer.from(serializedKeychain.secret_keys.sk_root.replace("0x", ""), "hex");
+        let skRoot = Buffer.from(serializedKeychain.secret_keys.sk_root.replace("0x", ""), "hex");
+        if (skRoot.length < 32) {
+            skRoot = Buffer.concat([Buffer.alloc(32 - skRoot.length), skRoot]);
+        }
         return new Keychain({ skRoot: asBigEndian ? skRoot.reverse() : skRoot });
     }
 }
 Keychain.CREATE_SK_ROOT_MESSAGE = "Unlock your Renegade account.\nTestnet v0";
 Keychain.CREATE_SK_MATCH_MESSAGE = "Unlock your Renegade match key.\nTestnet v0";
-Keychain.CREATE_SK_SETTLE_MESSAGE = "Unlock your Renegade settle key.\nTestnet v0";
-Keychain.CREATE_SK_VIEW_MESSAGE = "Unlock your Renegade view key.\nTestnet v0";
 export default Keychain;

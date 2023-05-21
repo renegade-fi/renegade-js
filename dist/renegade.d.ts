@@ -10,6 +10,7 @@ export interface RenegadeConfig {
     relayerWsPort?: number;
     useInsecureTransport?: boolean;
     verbose?: boolean;
+    taskDelay?: number;
 }
 /**
  * The Renegade object is the primary method of interacting with the Renegade
@@ -19,6 +20,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     readonly relayerHttpUrl: string;
     readonly relayerWsUrl: string;
     private _verbose;
+    private _taskDelay;
     private _ws;
     private _registeredAccounts;
     private _isTornDown;

@@ -1,19 +1,24 @@
 /// <reference types="node" />
+export declare const BASEPOINT_ORDER: bigint;
 declare class SigningKey {
     secretKey: Uint8Array;
     publicKey: Uint8Array;
     constructor(secretKey: Uint8Array);
     signMessage(message: Uint8Array): Uint8Array;
 }
+declare class IdentificationKey {
+    secretKey: Uint8Array;
+    publicKey: Uint8Array;
+    constructor(secretKey: Uint8Array);
+}
 /**
- * The KeyHierarchy contains the root, match, settle, and view keypairs for a
- * Renegade Account.
+ * The KeyHierarchy contains the root, match, and settlekeypairs for a Renegade
+ * Account.
  */
 interface KeyHierarchy {
     root: SigningKey;
-    match: SigningKey;
+    match: IdentificationKey;
     settle: SigningKey;
-    view: SigningKey;
 }
 /**
  * Options for creating a Keychain. If all options are undefined, then a random
@@ -30,11 +35,9 @@ interface KeychainOptions {
 export default class Keychain {
     static CREATE_SK_ROOT_MESSAGE: string;
     static CREATE_SK_MATCH_MESSAGE: string;
-    static CREATE_SK_SETTLE_MESSAGE: string;
-    static CREATE_SK_VIEW_MESSAGE: string;
     /**
-     * The full renegade key hierarchy, including root, match, settle, and view
-     * keypairs. Note that the Keychain class always contains all four secret
+     * The full renegade key hierarchy, including root, match, and settle
+     * keypairs. Note that the Keychain class always contains all three secret
      * keys; for delegation to non-super-relayers, we support delegation without
      * sk_root.
      */
@@ -72,7 +75,8 @@ export default class Keychain {
     /**
      * Serialize the keychain to a string. Note that @noble/ed25519 uses little
      * endian byte order for all EC points, so we reverse the byte order for big
-     * endian encodings.*
+     * endian encodings.
+     *
      * @param asBigEndian If true, the keys will be serialized in big endian byte order.
      * @returns The serialized keychain.
      */

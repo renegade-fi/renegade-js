@@ -8,7 +8,8 @@ export const renegadeConfig: RenegadeConfig = {
   relayerHttpPort: 3000,
   relayerWsPort: 4000,
   useInsecureTransport: true,
-  verbose: true,
+  verbose: false,
+  taskDelay: 1000,
 };
 export const globalKeychain = new Keychain({
   skRoot: Buffer.from(

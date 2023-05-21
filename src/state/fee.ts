@@ -2,41 +2,51 @@ import * as uuid from "uuid";
 
 import { FeeId } from "../types";
 import Token from "./token";
+import { bigIntToLimbsLE } from "./utils";
 
 export default class Fee {
   public readonly feeId: FeeId;
-  public readonly pkSettle: bigint;
+  public readonly recipientKey: bigint;
   public readonly gasMint: Token;
   public readonly gasAmount: bigint;
-  public readonly percentFee: number;
+  public readonly percentageFee: number;
   constructor(params: {
-    pkSettle: bigint;
+    recipientKey: bigint;
     gasMint: Token;
     gasAmount: bigint;
-    percentFee: number;
+    percentageFee: number;
   }) {
     this.feeId = uuid.v4() as FeeId;
-    this.pkSettle = params.pkSettle;
+    this.recipientKey = params.recipientKey;
     this.gasMint = params.gasMint;
     this.gasAmount = params.gasAmount;
-    this.percentFee = params.percentFee;
+    this.percentageFee = params.percentageFee;
+  }
+
+  pack(): bigint[] {
+    return [
+      this.recipientKey,
+      BigInt("0x" + this.gasMint.address),
+      this.gasAmount,
+      BigInt(this.percentageFee),
+    ];
   }
 
   serialize(): string {
     return `{
-      "pk_settle": ${this.pkSettle},
-      "gas_mint": "${this.gasMint.serialize()}",
-      "gas_amount": ${this.gasAmount},
-      "percent_fee": ${this.percentFee}
+      "recipient_key": "${this.recipientKey}",
+      "gas_addr": "${this.gasMint.serialize()}",
+      "gas_amount": [${bigIntToLimbsLE(this.gasAmount).join(",")}],
+      "percentage_fee": ${this.percentageFee}
     }`.replace(/[\s\n]/g, "");
   }
 
   static deserialize(serializedFee: any): Fee {
     return new Fee({
-      pkSettle: BigInt(serializedFee.pk_settle),
+      recipientKey: BigInt(serializedFee.pk_settle),
       gasMint: Token.deserialize(serializedFee.gas_mint),
       gasAmount: BigInt(serializedFee.gas_amount),
-      percentFee: serializedFee.percent_fee,
+      percentageFee: serializedFee.percent_fee,
     });
   }
 }

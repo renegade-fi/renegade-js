@@ -1,6 +1,6 @@
 import * as uuid from "uuid";
 import Token from "./token";
-import { bigIntToLimbs, limbsToBigInt } from "./utils";
+import { bigIntToLimbsLE, limbsToBigIntLE } from "./utils";
 export default class Order {
     constructor(params) {
         if (params.type === "midpoint") {
@@ -16,20 +16,24 @@ export default class Order {
         this.price = params.price;
         this.timestamp = params.timestamp || new Date().getTime();
     }
+    pack() {
+        // TODO: Figure out correct price encoding.
+        return [
+            BigInt("0x" + this.quoteToken.address),
+            BigInt("0x" + this.baseToken.address),
+            this.side === "buy" ? 0n : 1n,
+            BigInt(Math.floor(this.price)),
+            this.amount,
+            BigInt(this.timestamp),
+        ];
+    }
     serialize() {
         let minimumAmountSerialized;
         if (this.minimumAmount) {
-            minimumAmountSerialized = `[${bigIntToLimbs(this.minimumAmount).join(",")}]`;
+            minimumAmountSerialized = `[${bigIntToLimbsLE(this.minimumAmount).join(",")}]`;
         }
         else {
             minimumAmountSerialized = null;
-        }
-        let priceSerialized;
-        if (this.price) {
-            priceSerialized = this.price;
-        }
-        else {
-            priceSerialized = 0;
         }
         return `{
       "id": "${this.orderId}",
@@ -37,16 +41,16 @@ export default class Order {
       "quote_mint": "${this.quoteToken.serialize()}",
       "side": "${this.side === "buy" ? "Buy" : "Sell"}",
       "type": "${this.type === "midpoint" ? "Midpoint" : "Limit"}",
-      "amount": [${bigIntToLimbs(this.amount).join(",")}],
+      "amount": [${bigIntToLimbsLE(this.amount).join(",")}],
       "minimum_amount": ${minimumAmountSerialized},
-      "price": ${priceSerialized},
+      "price": ${this.price || 0},
       "timestamp": ${this.timestamp}
     }`.replace(/[\s\n]/g, "");
     }
     static deserialize(serializedOrder) {
         let minimumAmountDeserialized;
         if (serializedOrder.minimum_amount) {
-            minimumAmountDeserialized = limbsToBigInt(serializedOrder.minimum_amount);
+            minimumAmountDeserialized = limbsToBigIntLE(serializedOrder.minimum_amount);
         }
         else {
             minimumAmountDeserialized = undefined;
@@ -61,7 +65,7 @@ export default class Order {
             quoteToken: Token.deserialize(serializedOrder.quote_mint),
             side: serializedOrder.side.toLowerCase(),
             type: serializedOrder.type.toLowerCase(),
-            amount: limbsToBigInt(serializedOrder.amount),
+            amount: limbsToBigIntLE(serializedOrder.amount),
             minimumAmount: minimumAmountDeserialized,
             price: priceDeserialized,
             timestamp: serializedOrder.timestamp,
