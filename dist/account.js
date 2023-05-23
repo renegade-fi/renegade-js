@@ -412,6 +412,12 @@ export default class Account {
         // Hack to force type conversion, as AccountId = WalletId.
         return this._wallet.walletId;
     }
+    /**
+     * Getter for the underlying RenegadeWs.
+     */
+    get ws() {
+        return this._ws;
+    }
 }
 __decorate([
     assertSynced

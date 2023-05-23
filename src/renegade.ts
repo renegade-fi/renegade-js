@@ -20,7 +20,7 @@ import {
   OrderId,
   TaskId,
 } from "./types";
-import { RenegadeWs, TaskJob, unimplemented } from "./utils";
+import { Priority, RenegadeWs, TaskJob, unimplemented } from "./utils";
 
 /**
  * A decorator that asserts that the relayer has not been torn down.
@@ -468,12 +468,24 @@ export default class Renegade
   async registerAccountCallback(
     callback: (message: string) => void,
     accountId: AccountId,
+    priority?: Priority,
   ): Promise<CallbackId> {
+    // We could directly register a callback with
+    // this._ws.registerAccountCallback(callback, ...), but this can lead to
+    // race conditions.
+    //
+    // Since each individual Account streams account events to update its
+    // internal balances, orders, and fees, directly registering an account
+    // callback with the Renegade websocket does not guarantee ordering of these
+    // messages.
+    //
+    // Instead, we hook directly into the Account stream.
     const account = this._lookupAccount(accountId);
-    return await this._ws.registerAccountCallback(
+    return await account.ws.registerAccountCallback(
       callback,
       accountId,
       account.keychain,
+      priority,
     );
   }
 
@@ -483,12 +495,14 @@ export default class Renegade
     exchange: Exchange,
     baseToken: Token,
     quoteToken: Token,
+    priority?: Priority,
   ): Promise<CallbackId> {
     return await this._ws.registerPriceReportCallback(
       callback,
       exchange,
       baseToken,
       quoteToken,
+      priority,
     );
   }
 
@@ -496,13 +510,15 @@ export default class Renegade
   async registerTaskCallback(
     callback: (message: string) => void,
     taskId: TaskId,
+    priority?: Priority,
   ): Promise<CallbackId> {
-    return await this._ws.registerTaskCallback(callback, taskId);
+    return await this._ws.registerTaskCallback(callback, taskId, priority);
   }
 
   @assertNotTornDown
   registerOrderBookCallback(
     callback: (message: string) => void,
+    priority?: Priority,
   ): Promise<CallbackId> {
     unimplemented();
   }
@@ -510,6 +526,7 @@ export default class Renegade
   @assertNotTornDown
   registerNetworkCallback(
     callback: (message: string) => void,
+    priority?: Priority,
   ): Promise<CallbackId> {
     unimplemented();
   }
@@ -517,6 +534,7 @@ export default class Renegade
   @assertNotTornDown
   registerMpcCallback(
     callback: (message: string) => void,
+    priority?: Priority,
   ): Promise<CallbackId> {
     unimplemented();
   }

@@ -1,6 +1,7 @@
 import { Keychain, Token } from "../state";
 import { AccountId, CallbackId, Exchange, TaskId } from "../types";
 export type TaskJob<R> = Promise<[TaskId, Promise<R>]>;
+export type Priority = number;
 export declare function unimplemented(): never;
 export declare class RenegadeWs {
     private _ws;
@@ -40,10 +41,10 @@ export declare class RenegadeWs {
      * @param taskId The UUID of the task to await.
      */
     awaitTaskCompletion(taskId: TaskId): Promise<void>;
-    registerAccountCallback(callback: (message: string) => void, accountId: AccountId, keychain: Keychain): Promise<CallbackId>;
-    registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token): Promise<CallbackId>;
-    registerTaskCallback(callback: (message: string) => void, taskId: TaskId): Promise<CallbackId>;
-    _registerCallbackWithTopic(callback: (message: string) => void, topic: string, keychain?: Keychain): Promise<CallbackId>;
+    registerAccountCallback(callback: (message: string) => void, accountId: AccountId, keychain: Keychain, priority?: Priority): Promise<CallbackId>;
+    registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token, priority?: Priority): Promise<CallbackId>;
+    registerTaskCallback(callback: (message: string) => void, taskId: TaskId, priority?: Priority): Promise<CallbackId>;
+    _registerCallbackWithTopic(callback: (message: string) => void, topic: string, keychain?: Keychain, priority?: Priority): Promise<CallbackId>;
     releaseCallback(callbackId: CallbackId): Promise<void>;
     teardown(): void;
 }

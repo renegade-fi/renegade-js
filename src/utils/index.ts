@@ -10,6 +10,7 @@ import {
 import { AccountId, CallbackId, Exchange, TaskId } from "../types";
 
 export type TaskJob<R> = Promise<[TaskId, Promise<R>]>;
+export type Priority = number;
 
 export function unimplemented(): never {
   throw new Error("unimplemented");
@@ -21,7 +22,7 @@ export class RenegadeWs {
   // If true, the WebSocket has sent an error event.
   private _wsError: boolean;
   // For each topic, contains a list of callbackIds to send messages to.
-  private _topicListeners: Record<string, Set<CallbackId>>;
+  private _topicListeners: Record<string, Set<[CallbackId, Priority]>>;
   // Lookup from callbackId to actual callback function.
   private _topicCallbacks: Record<CallbackId, (message: string) => void>;
   // Print verbose output.
@@ -39,7 +40,7 @@ export class RenegadeWs {
         this._handleWsMessage(messageEvent.data);
       },
     );
-    this._topicListeners = {} as Record<string, Set<CallbackId>>;
+    this._topicListeners = {} as Record<string, Set<[CallbackId, Priority]>>;
     this._topicCallbacks = {} as Record<CallbackId, (message: string) => void>;
     this._verbose = verbose || false;
   }
@@ -98,7 +99,10 @@ export class RenegadeWs {
     if (!(topic in this._topicListeners)) {
       return;
     }
-    for (const callbackId of this._topicListeners[topic]) {
+    // Collect all callback IDs, and sort them in decreasing order by priority.
+    const callbackIdsWithPriorities = Array.from(this._topicListeners[topic]);
+    callbackIdsWithPriorities.sort((a, b) => b[1] - a[1]);
+    for (const [callbackId] of callbackIdsWithPriorities) {
       this._topicCallbacks[callbackId](JSON.stringify(parsedMessage.event));
     }
   }
@@ -168,9 +172,15 @@ export class RenegadeWs {
     callback: (message: string) => void,
     accountId: AccountId,
     keychain: Keychain,
+    priority?: Priority,
   ): Promise<CallbackId> {
     const topic = `/v0/wallet/${accountId.toString()}`;
-    return await this._registerCallbackWithTopic(callback, topic, keychain);
+    return await this._registerCallbackWithTopic(
+      callback,
+      topic,
+      keychain,
+      priority,
+    );
   }
 
   async registerPriceReportCallback(
@@ -178,14 +188,21 @@ export class RenegadeWs {
     exchange: Exchange,
     baseToken: Token,
     quoteToken: Token,
+    priority?: Priority,
   ): Promise<CallbackId> {
     const topic = `/v0/price_report/${exchange}/${baseToken.serialize()}/${quoteToken.serialize()}`;
-    return await this._registerCallbackWithTopic(callback, topic);
+    return await this._registerCallbackWithTopic(
+      callback,
+      topic,
+      undefined,
+      priority,
+    );
   }
 
   async registerTaskCallback(
     callback: (message: string) => void,
     taskId: TaskId,
+    priority?: Priority,
   ): Promise<CallbackId> {
     if (taskId === undefined) {
       throw new RenegadeError(
@@ -200,22 +217,28 @@ export class RenegadeWs {
       );
     }
     const topic = `/v0/tasks/${taskId}`;
-    return await this._registerCallbackWithTopic(callback, topic);
+    return await this._registerCallbackWithTopic(
+      callback,
+      topic,
+      undefined,
+      priority,
+    );
   }
 
   async _registerCallbackWithTopic(
     callback: (message: string) => void,
     topic: string,
     keychain?: Keychain,
+    priority?: Priority,
   ): Promise<CallbackId> {
     await this._awaitWsOpen();
     await this._subscribeToTopic(topic, keychain);
     if (!this._topicListeners[topic]) {
-      this._topicListeners[topic] = new Set<CallbackId>();
+      this._topicListeners[topic] = new Set<[CallbackId, Priority]>();
     }
     const callbackId = uuid.v4() as CallbackId;
     this._topicCallbacks[callbackId] = callback;
-    this._topicListeners[topic].add(callbackId);
+    this._topicListeners[topic].add([callbackId, priority || 0]);
     return callbackId;
   }
 
@@ -225,7 +248,11 @@ export class RenegadeWs {
     }
     delete this._topicCallbacks[callbackId];
     for (const topic of Object.keys(this._topicListeners)) {
-      this._topicListeners[topic].delete(callbackId);
+      for (const [topicCallbackId, priority] of this._topicListeners[topic]) {
+        if (topicCallbackId === callbackId) {
+          this._topicListeners[topic].delete([topicCallbackId, priority]);
+        }
+      }
     }
     // TODO: If we released the last remaining callback for this topic,
     // unsubscribe from the relayer's messages.

@@ -1,5 +1,6 @@
 import { Balance, Fee, Keychain, Order, Token } from "./state";
 import { AccountId, BalanceId, CallbackId, Exchange, FeeId, OrderId, TaskId } from "./types";
+import { Priority } from "./utils";
 /**
  * Interface for Account-related functions (registration, initialization,
  * relayer delegation, etc.).
@@ -195,10 +196,11 @@ export interface IRenegadeStreaming {
      *
      * @param callback The callback to invoke when a new account event is received.
      * @param accountId The AccountId of the Account to register the callback for.
+     * @param priority The priority of the callback. Higher priority callbacks will be invoked before lower priority callbacks.
      *
      * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
      */
-    registerAccountCallback(callback: (message: string) => void, accountId: AccountId): Promise<CallbackId>;
+    registerAccountCallback(callback: (message: string) => void, accountId: AccountId, priority?: Priority): Promise<CallbackId>;
     /**
      * Register a callback to be invoked when a new price report is received.
      *
@@ -206,33 +208,38 @@ export interface IRenegadeStreaming {
      * @param exchange The Exchange to get price reports from.
      * @param baseToken The base Token to get price reports for.
      * @param quoteToken The quote Token to get price reports for.
+     * @param priority The priority of the callback. Higher priority callbacks will be invoked before lower priority callbacks.
      */
-    registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token): Promise<CallbackId>;
+    registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token, priority?: Priority): Promise<CallbackId>;
     /**
      * Register a callback to be invoked when a task state transition is received.
      *
      * @param callback The callback to invoke when a new order book update is received.
      * @param taskId The ID of the task to register the callback for.
+     * @param priority The priority of the callback. Higher priority callbacks will be invoked before lower priority callbacks.
      */
-    registerTaskCallback(callback: (message: string) => void, taskId: TaskId): Promise<CallbackId>;
+    registerTaskCallback(callback: (message: string) => void, taskId: TaskId, priority?: Priority): Promise<CallbackId>;
     /**
      * Register a callback to be invoked when a new order book update is received.
      *
      * @param callback The callback to invoke when a new order book update is received.
+     * @param priority The priority of the callback. Higher priority callbacks will be invoked before lower priority callbacks.
      */
-    registerOrderBookCallback(callback: (message: string) => void): Promise<CallbackId>;
+    registerOrderBookCallback(callback: (message: string) => void, priority?: Priority): Promise<CallbackId>;
     /**
      * Register a callback to be invoked when a new network event is received.
      *
      * @param callback The callback to invoke when a new network event is received.
+     * @param priority The priority of the callback. Higher priority callbacks will be invoked before lower priority callbacks.
      */
-    registerNetworkCallback(callback: (message: string) => void): Promise<CallbackId>;
+    registerNetworkCallback(callback: (message: string) => void, priority?: Priority): Promise<CallbackId>;
     /**
      * Register a callback to be invoked when a new MPC event is received.
      *
      * @param callback The callback to invoke when a new MPC event is received.
+     * @param priority The priority of the callback. Higher priority callbacks will be invoked before lower priority callbacks.
      */
-    registerMpcCallback(callback: (message: string) => void): Promise<CallbackId>;
+    registerMpcCallback(callback: (message: string) => void, priority?: Priority): Promise<CallbackId>;
     /**
      * Release a previously-registered callback. If no other callback is
      * registered for the same topic, the topic will be unsubscribed from.

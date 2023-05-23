@@ -65,7 +65,10 @@ export class RenegadeWs {
         if (!(topic in this._topicListeners)) {
             return;
         }
-        for (const callbackId of this._topicListeners[topic]) {
+        // Collect all callback IDs, and sort them in decreasing order by priority.
+        const callbackIdsWithPriorities = Array.from(this._topicListeners[topic]);
+        callbackIdsWithPriorities.sort((a, b) => b[1] - a[1]);
+        for (const [callbackId] of callbackIdsWithPriorities) {
             this._topicCallbacks[callbackId](JSON.stringify(parsedMessage.event));
         }
     }
@@ -122,15 +125,15 @@ export class RenegadeWs {
         await this._subscribeToTopic(topic);
         return taskCompletionPromise;
     }
-    async registerAccountCallback(callback, accountId, keychain) {
+    async registerAccountCallback(callback, accountId, keychain, priority) {
         const topic = `/v0/wallet/${accountId.toString()}`;
-        return await this._registerCallbackWithTopic(callback, topic, keychain);
+        return await this._registerCallbackWithTopic(callback, topic, keychain, priority);
     }
-    async registerPriceReportCallback(callback, exchange, baseToken, quoteToken) {
+    async registerPriceReportCallback(callback, exchange, baseToken, quoteToken, priority) {
         const topic = `/v0/price_report/${exchange}/${baseToken.serialize()}/${quoteToken.serialize()}`;
-        return await this._registerCallbackWithTopic(callback, topic);
+        return await this._registerCallbackWithTopic(callback, topic, undefined, priority);
     }
-    async registerTaskCallback(callback, taskId) {
+    async registerTaskCallback(callback, taskId, priority) {
         if (taskId === undefined) {
             throw new RenegadeError(RenegadeErrorType.InvalidTaskId, "Cannot register callback for taskId = undefined");
         }
@@ -138,9 +141,9 @@ export class RenegadeWs {
             throw new RenegadeError(RenegadeErrorType.InvalidTaskId, "Cannot register callback for taskId = DONE");
         }
         const topic = `/v0/tasks/${taskId}`;
-        return await this._registerCallbackWithTopic(callback, topic);
+        return await this._registerCallbackWithTopic(callback, topic, undefined, priority);
     }
-    async _registerCallbackWithTopic(callback, topic, keychain) {
+    async _registerCallbackWithTopic(callback, topic, keychain, priority) {
         await this._awaitWsOpen();
         await this._subscribeToTopic(topic, keychain);
         if (!this._topicListeners[topic]) {
@@ -148,7 +151,7 @@ export class RenegadeWs {
         }
         const callbackId = uuid.v4();
         this._topicCallbacks[callbackId] = callback;
-        this._topicListeners[topic].add(callbackId);
+        this._topicListeners[topic].add([callbackId, priority || 0]);
         return callbackId;
     }
     async releaseCallback(callbackId) {
@@ -157,7 +160,11 @@ export class RenegadeWs {
         }
         delete this._topicCallbacks[callbackId];
         for (const topic of Object.keys(this._topicListeners)) {
-            this._topicListeners[topic].delete(callbackId);
+            for (const [topicCallbackId, priority] of this._topicListeners[topic]) {
+                if (topicCallbackId === callbackId) {
+                    this._topicListeners[topic].delete([topicCallbackId, priority]);
+                }
+            }
         }
         // TODO: If we released the last remaining callback for this topic,
         // unsubscribe from the relayer's messages.
