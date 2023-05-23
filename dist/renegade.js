@@ -289,23 +289,33 @@ export default class Renegade {
     // -------------------------------------
     // | IRenegadeStreaming Implementation |
     // -------------------------------------
-    async registerAccountCallback(callback, accountId) {
+    async registerAccountCallback(callback, accountId, priority) {
+        // We could directly register a callback with
+        // this._ws.registerAccountCallback(callback, ...), but this can lead to
+        // race conditions.
+        //
+        // Since each individual Account streams account events to update its
+        // internal balances, orders, and fees, directly registering an account
+        // callback with the Renegade websocket does not guarantee ordering of these
+        // messages.
+        //
+        // Instead, we hook directly into the Account stream.
         const account = this._lookupAccount(accountId);
-        return await this._ws.registerAccountCallback(callback, accountId, account.keychain);
+        return await account.ws.registerAccountCallback(callback, accountId, account.keychain, priority);
     }
-    async registerPriceReportCallback(callback, exchange, baseToken, quoteToken) {
-        return await this._ws.registerPriceReportCallback(callback, exchange, baseToken, quoteToken);
+    async registerPriceReportCallback(callback, exchange, baseToken, quoteToken, priority) {
+        return await this._ws.registerPriceReportCallback(callback, exchange, baseToken, quoteToken, priority);
     }
-    async registerTaskCallback(callback, taskId) {
-        return await this._ws.registerTaskCallback(callback, taskId);
+    async registerTaskCallback(callback, taskId, priority) {
+        return await this._ws.registerTaskCallback(callback, taskId, priority);
     }
-    registerOrderBookCallback(callback) {
+    registerOrderBookCallback(callback, priority) {
         unimplemented();
     }
-    registerNetworkCallback(callback) {
+    registerNetworkCallback(callback, priority) {
         unimplemented();
     }
-    registerMpcCallback(callback) {
+    registerMpcCallback(callback, priority) {
         unimplemented();
     }
     async releaseCallback(callbackId) {

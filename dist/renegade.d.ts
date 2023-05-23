@@ -1,6 +1,7 @@
 import { IRenegadeAccount, IRenegadeBalance, IRenegadeFees, IRenegadeInformation, IRenegadeStreaming, IRenegadeTrading } from "./irenegade";
 import { Balance, Fee, Keychain, Order, Token } from "./state";
 import { AccountId, BalanceId, CallbackId, Exchange, FeeId, OrderId, TaskId } from "./types";
+import { Priority } from "./utils";
 /**
  * Configuration parameters for initial Renegade object creation.
  */
@@ -81,12 +82,12 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     approveFee(accountId: AccountId, fee: Fee): Promise<void>;
     modifyFee(accountId: AccountId, oldFeeId: FeeId, newFee: Fee): Promise<void>;
     revokeFee(accountId: AccountId, feeId: FeeId): Promise<void>;
-    registerAccountCallback(callback: (message: string) => void, accountId: AccountId): Promise<CallbackId>;
-    registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token): Promise<CallbackId>;
-    registerTaskCallback(callback: (message: string) => void, taskId: TaskId): Promise<CallbackId>;
-    registerOrderBookCallback(callback: (message: string) => void): Promise<CallbackId>;
-    registerNetworkCallback(callback: (message: string) => void): Promise<CallbackId>;
-    registerMpcCallback(callback: (message: string) => void): Promise<CallbackId>;
+    registerAccountCallback(callback: (message: string) => void, accountId: AccountId, priority?: Priority): Promise<CallbackId>;
+    registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token, priority?: Priority): Promise<CallbackId>;
+    registerTaskCallback(callback: (message: string) => void, taskId: TaskId, priority?: Priority): Promise<CallbackId>;
+    registerOrderBookCallback(callback: (message: string) => void, priority?: Priority): Promise<CallbackId>;
+    registerNetworkCallback(callback: (message: string) => void, priority?: Priority): Promise<CallbackId>;
+    registerMpcCallback(callback: (message: string) => void, priority?: Priority): Promise<CallbackId>;
     releaseCallback(callbackId: CallbackId): Promise<void>;
     /**
      * The `task` object contains a subset of the Renegade API that contain

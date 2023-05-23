@@ -1,6 +1,6 @@
 import { Balance, Fee, Keychain, Order, Token } from "./state";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
-import { TaskJob } from "./utils";
+import { RenegadeWs, TaskJob } from "./utils";
 /**
  * A Renegade Account, which is a thin wrapper over the Wallet abstraction. The
  * authoritative Wallet state is stored on-chain in StarkNet encrypted Wallet
@@ -150,4 +150,8 @@ export default class Account {
      * Getter for the AccountId.
      */
     get accountId(): AccountId;
+    /**
+     * Getter for the underlying RenegadeWs.
+     */
+    get ws(): RenegadeWs;
 }

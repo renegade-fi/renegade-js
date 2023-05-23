@@ -471,4 +471,11 @@ export default class Account {
     // Hack to force type conversion, as AccountId = WalletId.
     return this._wallet.walletId as string as AccountId;
   }
+
+  /**
+   * Getter for the underlying RenegadeWs.
+   */
+  get ws(): RenegadeWs {
+    return this._ws;
+  }
 }
