@@ -12,7 +12,7 @@ const SHARES_PER_BALANCE = 2;
 const SHARES_PER_ORDER = 6;
 const SHARES_PER_FEE = 4;
 // The number of felt words to represent pk_root
-const NUM_ROOT_KEY_WORDS = 3;
+const NUM_ROOT_KEY_WORDS = 2;
 // The number of shares to represent the keychain. Equal to the number of shares
 // to represent pk_root, plus one for pk_match
 const SHARES_PER_KEYCHAIN = NUM_ROOT_KEY_WORDS + 1;
@@ -58,11 +58,7 @@ export default class Wallet {
             Buffer.from(this.keychain.keyHierarchy.match.publicKey)
                 .reverse()
                 .toString("hex"));
-        const packedPkRoot = [
-            pkRoot % 2n ** 126n,
-            (pkRoot >> 126n) % 2n ** 126n,
-            (pkRoot >> 252n) % 2n ** 126n,
-        ];
+        const packedPkRoot = [pkRoot % 2n ** 248n, (pkRoot >> 248n) % 2n ** 248n];
         const packedPkMatch = [pkMatch];
         return packedPkRoot.concat(packedPkMatch);
     }

@@ -44,6 +44,9 @@ export declare class RenegadeWs {
     registerAccountCallback(callback: (message: string) => void, accountId: AccountId, keychain: Keychain, priority?: Priority): Promise<CallbackId>;
     registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token, priority?: Priority): Promise<CallbackId>;
     registerTaskCallback(callback: (message: string) => void, taskId: TaskId, priority?: Priority): Promise<CallbackId>;
+    registerOrderBookCallback(callback: (message: string) => void, priority?: Priority): Promise<CallbackId>;
+    registerNetworkCallback(callback: (message: string) => void, priority?: Priority): Promise<CallbackId>;
+    registerMpcCallback(callback: (message: string) => void, priority?: Priority): Promise<CallbackId>;
     _registerCallbackWithTopic(callback: (message: string) => void, topic: string, keychain?: Keychain, priority?: Priority): Promise<CallbackId>;
     releaseCallback(callbackId: CallbackId): Promise<void>;
     teardown(): void;

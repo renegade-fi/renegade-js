@@ -43,7 +43,7 @@ export default class Order {
       "type": "${this.type === "midpoint" ? "Midpoint" : "Limit"}",
       "amount": [${bigIntToLimbsLE(this.amount).join(",")}],
       "minimum_amount": ${minimumAmountSerialized},
-      "price": ${this.price || 0},
+      "worst_case_price": ${this.price || 0},
       "timestamp": ${this.timestamp}
     }`.replace(/[\s\n]/g, "");
     }
@@ -55,7 +55,7 @@ export default class Order {
         else {
             minimumAmountDeserialized = undefined;
         }
-        let priceDeserialized = Number(serializedOrder.price);
+        let priceDeserialized = Number(serializedOrder.worst_case_price);
         if (priceDeserialized === 0) {
             priceDeserialized = undefined;
         }

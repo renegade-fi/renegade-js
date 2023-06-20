@@ -516,27 +516,27 @@ export default class Renegade
   }
 
   @assertNotTornDown
-  registerOrderBookCallback(
+  async registerOrderBookCallback(
     callback: (message: string) => void,
     priority?: Priority,
   ): Promise<CallbackId> {
-    unimplemented();
+    return await this._ws.registerOrderBookCallback(callback, priority);
   }
 
   @assertNotTornDown
-  registerNetworkCallback(
+  async registerNetworkCallback(
     callback: (message: string) => void,
     priority?: Priority,
   ): Promise<CallbackId> {
-    unimplemented();
+    return await this._ws.registerNetworkCallback(callback, priority);
   }
 
   @assertNotTornDown
-  registerMpcCallback(
+  async registerMpcCallback(
     callback: (message: string) => void,
     priority?: Priority,
   ): Promise<CallbackId> {
-    unimplemented();
+    return await this._ws.registerMpcCallback(callback, priority);
   }
 
   @assertNotTornDown

@@ -225,6 +225,45 @@ export class RenegadeWs {
     );
   }
 
+  async registerOrderBookCallback(
+    callback: (message: string) => void,
+    priority?: Priority,
+  ): Promise<CallbackId> {
+    const topic = "/v0/order_book";
+    return await this._registerCallbackWithTopic(
+      callback,
+      topic,
+      undefined,
+      priority,
+    );
+  }
+
+  async registerNetworkCallback(
+    callback: (message: string) => void,
+    priority?: Priority,
+  ): Promise<CallbackId> {
+    const topic = "/v0/network";
+    return await this._registerCallbackWithTopic(
+      callback,
+      topic,
+      undefined,
+      priority,
+    );
+  }
+
+  async registerMpcCallback(
+    callback: (message: string) => void,
+    priority?: Priority,
+  ): Promise<CallbackId> {
+    const topic = "/v0/handshake";
+    return await this._registerCallbackWithTopic(
+      callback,
+      topic,
+      undefined,
+      priority,
+    );
+  }
+
   async _registerCallbackWithTopic(
     callback: (message: string) => void,
     topic: string,

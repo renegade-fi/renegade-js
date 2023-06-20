@@ -309,14 +309,14 @@ export default class Renegade {
     async registerTaskCallback(callback, taskId, priority) {
         return await this._ws.registerTaskCallback(callback, taskId, priority);
     }
-    registerOrderBookCallback(callback, priority) {
-        unimplemented();
+    async registerOrderBookCallback(callback, priority) {
+        return await this._ws.registerOrderBookCallback(callback, priority);
     }
-    registerNetworkCallback(callback, priority) {
-        unimplemented();
+    async registerNetworkCallback(callback, priority) {
+        return await this._ws.registerNetworkCallback(callback, priority);
     }
-    registerMpcCallback(callback, priority) {
-        unimplemented();
+    async registerMpcCallback(callback, priority) {
+        return await this._ws.registerMpcCallback(callback, priority);
     }
     async releaseCallback(callbackId) {
         await this._ws.releaseCallback(callbackId);

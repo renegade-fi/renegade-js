@@ -143,6 +143,18 @@ export class RenegadeWs {
         const topic = `/v0/tasks/${taskId}`;
         return await this._registerCallbackWithTopic(callback, topic, undefined, priority);
     }
+    async registerOrderBookCallback(callback, priority) {
+        const topic = "/v0/order_book";
+        return await this._registerCallbackWithTopic(callback, topic, undefined, priority);
+    }
+    async registerNetworkCallback(callback, priority) {
+        const topic = "/v0/network";
+        return await this._registerCallbackWithTopic(callback, topic, undefined, priority);
+    }
+    async registerMpcCallback(callback, priority) {
+        const topic = "/v0/handshake";
+        return await this._registerCallbackWithTopic(callback, topic, undefined, priority);
+    }
     async _registerCallbackWithTopic(callback, topic, keychain, priority) {
         await this._awaitWsOpen();
         await this._subscribeToTopic(topic, keychain);
