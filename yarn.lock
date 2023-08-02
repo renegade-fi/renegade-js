@@ -713,7 +713,7 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
-"@noble/ed25519@github:renegade-fi/noble-ed25519#prehashed-context":
+"@noble/ed25519@github:https://renegade-fi/noble-ed25519#prehashed-context":
   version "1.7.1"
   resolved "https://codeload.github.com/renegade-fi/noble-ed25519/tar.gz/dcd9e5541c527e23b07f09db09d3a2c32ff61b2c"
 
