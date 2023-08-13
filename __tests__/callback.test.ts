@@ -5,7 +5,7 @@ describe("Events Streaming", () => {
   test.concurrent("Streaming price reports should work", async () => {
     const renegade = new Renegade(renegadeConfig);
     let receivedAnyMessage = false;
-    const callback = (message: string) => {
+    const callback = () => {
       receivedAnyMessage = true;
     };
     renegade.registerPriceReportCallback(

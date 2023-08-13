@@ -11,11 +11,11 @@ function expectBalances(
   expectedBalances: Record<string, bigint>,
 ) {
   const expectedBalancesAddresses = {};
-  for (let ticker of Object.keys(expectedBalances)) {
+  for (const ticker of Object.keys(expectedBalances)) {
     const address = new Token({ ticker }).address;
     expectedBalancesAddresses[address] = expectedBalances[ticker];
   }
-  for (let balance of Object.values(balances)) {
+  for (const balance of Object.values(balances)) {
     expect(balance.amount).toEqual(
       expectedBalancesAddresses[balance.mint.address],
     );
@@ -72,14 +72,12 @@ describe("Depositing and Withdrawing Tokens", () => {
       // Withdraw WETH.
       await renegade.withdraw(accountId, new Token({ ticker: "WETH" }), 1000n);
       expectBalances(renegade.getBalances(accountId), {
-        WETH: 0n,
         USDC: 2000n,
       });
 
       // Withdraw USDC.
       await renegade.withdraw(accountId, new Token({ ticker: "USDC" }), 500n);
       expectBalances(renegade.getBalances(accountId), {
-        WETH: 0n,
         USDC: 1500n,
       });
 
