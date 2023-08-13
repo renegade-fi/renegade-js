@@ -425,10 +425,12 @@ export default class Account {
    */
   @assertSynced
   get balances(): Record<BalanceId, Balance> {
-    return this._wallet.balances.reduce((acc, balance) => {
-      acc[balance.balanceId] = balance;
-      return acc;
-    }, {} as Record<BalanceId, Balance>);
+    return this._wallet.balances
+      .filter((balance) => balance.amount !== BigInt(0))
+      .reduce((acc, balance) => {
+        acc[balance.balanceId] = balance;
+        return acc;
+      }, {} as Record<BalanceId, Balance>);
   }
 
   /**
@@ -438,10 +440,12 @@ export default class Account {
    */
   @assertSynced
   get orders(): Record<OrderId, Order> {
-    return this._wallet.orders.reduce((acc, order) => {
-      acc[order.orderId] = order;
-      return acc;
-    }, {} as Record<OrderId, Order>);
+    return this._wallet.orders
+      .filter((order) => order.amount !== BigInt(0))
+      .reduce((acc, order) => {
+        acc[order.orderId] = order;
+        return acc;
+      }, {} as Record<OrderId, Order>);
   }
 
   /**
