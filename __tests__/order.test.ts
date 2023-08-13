@@ -1,46 +1,21 @@
-import { Keychain, Order, OrderId, Renegade, Token } from "../src";
-import { renegadeConfig } from "./utils";
+import { Keychain, Order, Renegade, Token } from "../src";
+import { expectOrdersEquality, renegadeConfig } from "./utils";
 
 // Some test orders.
 const order1 = new Order({
   baseToken: new Token({ ticker: "WETH" }),
   quoteToken: new Token({ ticker: "USDC" }),
   side: "buy",
-  type: "limit",
+  type: "midpoint",
   amount: BigInt(5),
-  price: 2000,
 });
 const order2 = new Order({
   baseToken: new Token({ ticker: "WBTC" }),
   quoteToken: new Token({ ticker: "USDC" }),
   side: "sell",
-  type: "limit",
+  type: "midpoint",
   amount: BigInt(1),
-  price: 30000,
 });
-
-// Equality check for orders, ignoring the timestamp.
-function expectOrderEquality(order1: Order, order2: Order) {
-  expect(order1.orderId).toEqual(order2.orderId);
-  expect(order1.baseToken).toEqual(order2.baseToken);
-  expect(order1.quoteToken).toEqual(order2.quoteToken);
-  expect(order1.side).toEqual(order2.side);
-  expect(order1.type).toEqual(order2.type);
-  expect(order1.amount).toEqual(order2.amount);
-  expect(order1.minimumAmount).toEqual(order2.minimumAmount);
-  expect(order1.price).toEqual(order2.price);
-}
-
-// Equality check for a hashmap of orders, ignoring the timestamp.
-function expectOrdersEquality(
-  orders1: Record<OrderId, Order>,
-  orders2: Record<OrderId, Order>,
-) {
-  expect(Object.keys(orders1).sort()).toEqual(Object.keys(orders2).sort());
-  for (const orderId in orders1) {
-    expectOrderEquality(orders1[orderId], orders2[orderId]);
-  }
-}
 
 describe("Creating and Cancelling Orders", () => {
   test.concurrent(
