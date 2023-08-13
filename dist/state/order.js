@@ -1,10 +1,17 @@
 import * as uuid from "uuid";
 import Token from "./token";
 import { bigIntToLimbsLE, limbsToBigIntLE } from "./utils";
+// A large number that is used to represent the higest possible price. We should
+// think more deeply about extensibility here, as our relayer currently
+// overflows large price values.
+const MAX_PRICE = 2 ** 20;
 export default class Order {
     constructor(params) {
-        if (params.type === "midpoint") {
-            throw new Error("Midpoint orders are not yet supported.");
+        if (params.type === "bidirectional") {
+            throw new Error("Bidirectional LP orders are not yet supported.");
+        }
+        if (params.worstPrice && params.worstPrice > MAX_PRICE) {
+            throw new Error(`worstPrice must be less than MAX_PRICE = ${MAX_PRICE}`);
         }
         this.orderId = params.id || uuid.v4();
         this.baseToken = params.baseToken;
@@ -12,8 +19,13 @@ export default class Order {
         this.side = params.side;
         this.type = params.type;
         this.amount = params.amount;
-        this.minimumAmount = params.minimumAmount;
-        this.price = params.price;
+        this.minimumAmount = params.minimumAmount || BigInt(0);
+        this.worstPrice =
+            params.worstPrice !== undefined
+                ? params.worstPrice
+                : params.side === "buy"
+                    ? MAX_PRICE
+                    : 0;
         this.timestamp = params.timestamp || new Date().getTime();
     }
     pack() {
@@ -22,7 +34,7 @@ export default class Order {
             BigInt("0x" + this.quoteToken.address),
             BigInt("0x" + this.baseToken.address),
             this.side === "buy" ? 0n : 1n,
-            BigInt(Math.floor(this.price)),
+            BigInt(Math.floor(this.worstPrice || 0)),
             this.amount,
             BigInt(this.timestamp),
         ];
@@ -43,7 +55,7 @@ export default class Order {
       "type": "${this.type === "midpoint" ? "Midpoint" : "Limit"}",
       "amount": [${bigIntToLimbsLE(this.amount).join(",")}],
       "minimum_amount": ${minimumAmountSerialized},
-      "worst_case_price": ${this.price || 0},
+      "worst_case_price": ${this.worstPrice},
       "timestamp": ${this.timestamp}
     }`.replace(/[\s\n]/g, "");
     }
@@ -55,10 +67,6 @@ export default class Order {
         else {
             minimumAmountDeserialized = undefined;
         }
-        let priceDeserialized = Number(serializedOrder.worst_case_price);
-        if (priceDeserialized === 0) {
-            priceDeserialized = undefined;
-        }
         return new Order({
             id: serializedOrder.id,
             baseToken: Token.deserialize(serializedOrder.base_mint),
@@ -67,7 +75,7 @@ export default class Order {
             type: serializedOrder.type.toLowerCase(),
             amount: limbsToBigIntLE(serializedOrder.amount),
             minimumAmount: minimumAmountDeserialized,
-            price: priceDeserialized,
+            worstPrice: Number(serializedOrder.worst_case_price),
             timestamp: serializedOrder.timestamp,
         });
     }

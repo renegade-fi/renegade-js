@@ -372,7 +372,9 @@ export default class Account {
      * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
      */
     get balances() {
-        return this._wallet.balances.reduce((acc, balance) => {
+        return this._wallet.balances
+            .filter((balance) => balance.amount !== BigInt(0))
+            .reduce((acc, balance) => {
             acc[balance.balanceId] = balance;
             return acc;
         }, {});
@@ -383,7 +385,9 @@ export default class Account {
      * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
      */
     get orders() {
-        return this._wallet.orders.reduce((acc, order) => {
+        return this._wallet.orders
+            .filter((order) => order.amount !== BigInt(0))
+            .reduce((acc, order) => {
             acc[order.orderId] = order;
             return acc;
         }, {});

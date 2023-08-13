@@ -5,20 +5,20 @@ export default class Order {
     readonly baseToken: Token;
     readonly quoteToken: Token;
     readonly side: "buy" | "sell";
-    readonly type: "midpoint" | "limit";
+    readonly type: "midpoint" | "bidirectional";
     readonly amount: bigint;
-    readonly minimumAmount?: bigint;
-    readonly price?: number;
+    readonly minimumAmount: bigint;
+    readonly worstPrice: number;
     readonly timestamp: number;
     constructor(params: {
         id?: OrderId;
         baseToken: Token;
         quoteToken: Token;
         side: "buy" | "sell";
-        type: "midpoint" | "limit";
+        type: "midpoint" | "bidirectional";
         amount: bigint;
         minimumAmount?: bigint;
-        price?: number;
+        worstPrice?: number;
         timestamp?: number;
     });
     pack(): bigint[];
