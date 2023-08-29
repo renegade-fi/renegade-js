@@ -10,6 +10,8 @@ export default class Wallet {
     readonly fees: Fee[];
     readonly keychain: Keychain;
     readonly blinder: bigint;
+    readonly publicBlinder: bigint;
+    readonly privateBlinder: bigint;
     readonly blindedPublicShares: bigint[];
     readonly privateShares: bigint[];
     constructor(params: {
@@ -20,6 +22,7 @@ export default class Wallet {
         keychain: Keychain;
         blinder: bigint;
     });
+    getBlinders(): [bigint, bigint, bigint];
     packBalances(): bigint[];
     packOrders(): bigint[];
     packFees(): bigint[];

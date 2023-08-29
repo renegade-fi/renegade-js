@@ -2,7 +2,7 @@ import Balance from "./balance";
 import Fee from "./fee";
 import Keychain from "./keychain";
 import Order from "./order";
-import { bigIntToLimbsLE, generateId, limbsToBigIntLE } from "./utils";
+import { PoseidonCSPRNG, bigIntToLimbsLE, generateId, limbsToBigIntLE, F, } from "./utils";
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
 const MAX_ORDERS = 5;
@@ -31,8 +31,17 @@ export default class Wallet {
         this.orders = params.orders;
         this.fees = params.fees;
         this.keychain = params.keychain;
-        this.blinder = 0n; // params.blinder;
+        [this.blinder, this.privateBlinder, this.publicBlinder] =
+            this.getBlinders();
         [this.blindedPublicShares, this.privateShares] = this.deriveShares();
+    }
+    getBlinders() {
+        // TODO: Generate seed from Ethereuem private key
+        const blinderStream = PoseidonCSPRNG(Buffer.from(this.keychain.keyHierarchy.root.secretKey.buffer).readBigInt64BE());
+        const blinder = blinderStream.next().value;
+        const privateBlinder = blinderStream.next().value;
+        const publicBlinder = F.sub(blinder, privateBlinder);
+        return [blinder, privateBlinder, publicBlinder];
     }
     packBalances() {
         const packedBalances = this.balances.map((balance) => balance.pack());
@@ -58,7 +67,7 @@ export default class Wallet {
             Buffer.from(this.keychain.keyHierarchy.match.publicKey)
                 .reverse()
                 .toString("hex"));
-        const packedPkRoot = [pkRoot % 2n ** 248n, (pkRoot >> 248n) % 2n ** 248n];
+        const packedPkRoot = [pkRoot, (pkRoot >> 251n) % 2n ** 251n];
         const packedPkMatch = [pkMatch];
         return packedPkRoot.concat(packedPkMatch);
     }
@@ -82,8 +91,19 @@ export default class Wallet {
     deriveShares() {
         const packedWallet = this.packWallet();
         const publicShares = packedWallet;
-        const privateShares = Array(packedWallet.length).fill(0n);
         const blindedPublicShares = publicShares;
+        // TODO: Generate seed from Ethereuem private key
+        const secretShareStream = PoseidonCSPRNG(Buffer.from(this.keychain.keyHierarchy.root.secretKey.buffer).readBigInt64LE());
+        const privateShares = Array(packedWallet.length).fill(0n);
+        for (let i = 0; i < SHARES_PER_WALLET; i++) {
+            privateShares[i] = secretShareStream.next().value;
+        }
+        for (let i = 0; i < SHARES_PER_WALLET; i++) {
+            const blinded = F.add(F.e(blindedPublicShares[i]), this.blinder);
+            blindedPublicShares[i] = F.sub(blinded, privateShares[i]);
+        }
+        blindedPublicShares[blindedPublicShares.length - 1] = this.publicBlinder;
+        privateShares[privateShares.length - 1] = this.privateBlinder;
         if (blindedPublicShares.length !== SHARES_PER_WALLET ||
             privateShares.length !== SHARES_PER_WALLET) {
             throw new Error("Invalid number of shares generated");

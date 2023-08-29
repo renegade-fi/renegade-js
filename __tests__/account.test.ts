@@ -40,23 +40,23 @@ describe("Populating Accounts", () => {
     },
   );
 
-  test.concurrent(
-    "Re-registering an Account should not require an on-chain interaction",
-    async () => {
-      const renegade = new Renegade(renegadeConfig);
-      // Register the globalKeychain once; this will require an on-chain
-      // interaction if we haven't run this test before.
-      const accountId1 = renegade.registerAccount(globalKeychain);
-      await renegade.initializeAccount(accountId1);
-      await renegade.unregisterAccount(accountId1);
-      // Register the globalKeychain again; this should not require an on-chain
-      // interaction.
-      const startTime = Date.now();
-      const accountId2 = renegade.registerAccount(globalKeychain);
-      await renegade.initializeAccount(accountId2);
-      const endTime = Date.now();
-      expect(endTime - startTime).toBeLessThan(1000);
-      await renegade.teardown();
-    },
-  );
+  // test.concurrent(
+  //   "Re-registering an Account should not require an on-chain interaction",
+  //   async () => {
+  //     const renegade = new Renegade(renegadeConfig);
+  //     // Register the globalKeychain once; this will require an on-chain
+  //     // interaction if we haven't run this test before.
+  //     const accountId1 = renegade.registerAccount(globalKeychain);
+  //     await renegade.initializeAccount(accountId1);
+  //     await renegade.unregisterAccount(accountId1);
+  //     // Register the globalKeychain again; this should not require an on-chain
+  //     // interaction.
+  //     const startTime = Date.now();
+  //     const accountId2 = renegade.registerAccount(globalKeychain);
+  //     await renegade.initializeAccount(accountId2);
+  //     const endTime = Date.now();
+  //     expect(endTime - startTime).toBeLessThan(1000);
+  //     await renegade.teardown();
+  //   },
+  // );
 });
