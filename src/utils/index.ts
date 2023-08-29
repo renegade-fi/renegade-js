@@ -155,10 +155,10 @@ export class RenegadeWs {
           }
           if (this._verbose) {
             console.log(
-              `[WebSocket] New task state for ${taskId}: ${parsedMessage.event.state.state}`,
+              `[WebSocket] New task state for ${taskId}: ${parsedMessage.event.state}`,
             );
           }
-          if (parsedMessage.event.state.state === "Completed") {
+          if (parsedMessage.event.state === "Completed") {
             resolve();
           }
         },

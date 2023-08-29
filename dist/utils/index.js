@@ -115,9 +115,9 @@ export class RenegadeWs {
                     return;
                 }
                 if (this._verbose) {
-                    console.log(`[WebSocket] New task state for ${taskId}: ${parsedMessage.event.state.state}`);
+                    console.log(`[WebSocket] New task state for ${taskId}: ${parsedMessage.event.state}`);
                 }
-                if (parsedMessage.event.state.state === "Completed") {
+                if (parsedMessage.event.state === "Completed") {
                     resolve();
                 }
             });
