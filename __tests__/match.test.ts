@@ -136,80 +136,80 @@ describe("Internal Order Matching", () => {
     },
   );
 
-  // test.concurrent(
-  //   "A second match should be possible after the first match",
-  //   async () => {
-  //     // Set up accounts.
-  //     const renegade = new Renegade(renegadeConfig);
-  //     const orderBuy = new Order({
-  //       baseToken: new Token({ ticker: "WBTC" }),
-  //       quoteToken: new Token({ ticker: "USDC" }),
-  //       side: "buy",
-  //       type: "midpoint",
-  //       amount: BigInt(1),
-  //     });
-  //     const orderSell = new Order({
-  //       baseToken: new Token({ ticker: "WBTC" }),
-  //       quoteToken: new Token({ ticker: "USDC" }),
-  //       side: "sell",
-  //       type: "midpoint",
-  //       amount: BigInt(5),
-  //     });
-  //     const amountBase = BigInt(50);
-  //     const amountQuote = BigInt(1_000_000);
-  //     const [accountIdBuy, accountIdSell] = await setupMatchingAccounts(
-  //       renegade,
-  //       orderBuy,
-  //       orderSell,
-  //       amountBase,
-  //       amountQuote,
-  //     );
+  test.concurrent(
+    "A second match should be possible after the first match",
+    async () => {
+      // Set up accounts.
+      const renegade = new Renegade(renegadeConfig);
+      const orderBuy = new Order({
+        baseToken: new Token({ ticker: "WBTC" }),
+        quoteToken: new Token({ ticker: "USDC" }),
+        side: "buy",
+        type: "midpoint",
+        amount: BigInt(1),
+      });
+      const orderSell = new Order({
+        baseToken: new Token({ ticker: "WBTC" }),
+        quoteToken: new Token({ ticker: "USDC" }),
+        side: "sell",
+        type: "midpoint",
+        amount: BigInt(5),
+      });
+      const amountBase = BigInt(50);
+      const amountQuote = BigInt(1_000_000);
+      const [accountIdBuy, accountIdSell] = await setupMatchingAccounts(
+        renegade,
+        orderBuy,
+        orderSell,
+        amountBase,
+        amountQuote,
+      );
 
-  //     // Await until both wallets have an update.
-  //     await Promise.all([
-  //       blockUntilUpdate(renegade, accountIdBuy),
-  //       blockUntilUpdate(renegade, accountIdSell),
-  //     ]);
+      // Await until both wallets have an update.
+      await Promise.all([
+        blockUntilUpdate(renegade, accountIdBuy),
+        blockUntilUpdate(renegade, accountIdSell),
+      ]);
 
-  //     // Assert that the first pair of orders were matched.
-  //     const orderRemaining1 = new Order({
-  //       id: orderSell.orderId,
-  //       baseToken: new Token({ ticker: "WBTC" }),
-  //       quoteToken: new Token({ ticker: "USDC" }),
-  //       side: "sell",
-  //       type: "midpoint",
-  //       amount: BigInt(4),
-  //     });
-  //     expectOrdersEquality(renegade.getOrders(accountIdBuy), {});
-  //     expectOrdersEquality(renegade.getOrders(accountIdSell), {
-  //       [orderRemaining1.orderId]: orderRemaining1,
-  //     });
+      // Assert that the first pair of orders were matched.
+      const orderRemaining1 = new Order({
+        id: orderSell.orderId,
+        baseToken: new Token({ ticker: "WBTC" }),
+        quoteToken: new Token({ ticker: "USDC" }),
+        side: "sell",
+        type: "midpoint",
+        amount: BigInt(4),
+      });
+      expectOrdersEquality(renegade.getOrders(accountIdBuy), {});
+      expectOrdersEquality(renegade.getOrders(accountIdSell), {
+        [orderRemaining1.orderId]: orderRemaining1,
+      });
 
-  //     // Place the second buy order.
-  //     await renegade.placeOrder(accountIdBuy, orderBuy);
+      // Place the second buy order.
+      await renegade.placeOrder(accountIdBuy, orderBuy);
 
-  //     // Await until both wallets have an update.
-  //     await Promise.all([
-  //       blockUntilUpdate(renegade, accountIdBuy),
-  //       blockUntilUpdate(renegade, accountIdSell),
-  //     ]);
+      // Await until both wallets have an update.
+      await Promise.all([
+        blockUntilUpdate(renegade, accountIdBuy),
+        blockUntilUpdate(renegade, accountIdSell),
+      ]);
 
-  //     // Assert that the second pair of orders were matched.
-  //     const orderRemaining2 = new Order({
-  //       id: orderSell.orderId,
-  //       baseToken: new Token({ ticker: "WBTC" }),
-  //       quoteToken: new Token({ ticker: "USDC" }),
-  //       side: "sell",
-  //       type: "midpoint",
-  //       amount: BigInt(3),
-  //     });
-  //     expectOrdersEquality(renegade.getOrders(accountIdBuy), {});
-  //     expectOrdersEquality(renegade.getOrders(accountIdSell), {
-  //       [orderRemaining2.orderId]: orderRemaining2,
-  //     });
+      // Assert that the second pair of orders were matched.
+      const orderRemaining2 = new Order({
+        id: orderSell.orderId,
+        baseToken: new Token({ ticker: "WBTC" }),
+        quoteToken: new Token({ ticker: "USDC" }),
+        side: "sell",
+        type: "midpoint",
+        amount: BigInt(3),
+      });
+      expectOrdersEquality(renegade.getOrders(accountIdBuy), {});
+      expectOrdersEquality(renegade.getOrders(accountIdSell), {
+        [orderRemaining2.orderId]: orderRemaining2,
+      });
 
-  //     // Teardown.
-  //     await renegade.teardown();
-  //   },
-  // );
+      // Teardown.
+      await renegade.teardown();
+    },
+  );
 });
