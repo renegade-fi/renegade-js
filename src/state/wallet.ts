@@ -177,7 +177,6 @@ export default class Wallet {
     return [blindedPublicShares, privateShares];
   }
 
-  // TODO: Check if order ahas always been empty
   serialize(asBigEndian?: boolean): string {
     const serializedBlindedPublicShares = this.blindedPublicShares.map(
       (share) => "[" + bigIntToLimbsLE(share).join(",") + "]",

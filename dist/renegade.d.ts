@@ -1,6 +1,7 @@
 import { IRenegadeAccount, IRenegadeBalance, IRenegadeFees, IRenegadeInformation, IRenegadeStreaming, IRenegadeTrading } from "./irenegade";
 import { Balance, Fee, Keychain, Order, Token } from "./state";
 import { AccountId, BalanceId, CallbackId, Exchange, FeeId, OrderId, TaskId } from "./types";
+import { ExchangeHealthState } from "./types/schema";
 import { Priority } from "./utils";
 /**
  * Configuration parameters for initial Renegade object creation.
@@ -51,7 +52,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
      * Ping the relayer to check if it is reachable.
      */
     ping(): Promise<void>;
-    queryExchangeHealthStates(baseToken: Token, quoteToken: Token): Promise<any>;
+    queryExchangeHealthStates(baseToken: Token, quoteToken: Token): Promise<ExchangeHealthState>;
     /**
      * Get the semver of the relayer.
      */
