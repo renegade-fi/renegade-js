@@ -8,6 +8,7 @@ import {
   RENEGADE_AUTH_HEADER,
 } from "../state/utils";
 import { AccountId, CallbackId, Exchange, TaskId } from "../types";
+import { createZodFetcher } from "./fetcher";
 
 export type TaskJob<R> = Promise<[TaskId, Promise<R>]>;
 export type Priority = number;
@@ -303,3 +304,5 @@ export class RenegadeWs {
     }
   }
 }
+
+export { createZodFetcher };

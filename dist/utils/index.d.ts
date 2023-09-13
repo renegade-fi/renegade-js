@@ -1,5 +1,6 @@
 import { Keychain, Token } from "../state";
 import { AccountId, CallbackId, Exchange, TaskId } from "../types";
+import { createZodFetcher } from "./fetcher";
 export type TaskJob<R> = Promise<[TaskId, Promise<R>]>;
 export type Priority = number;
 export declare function unimplemented(): never;
@@ -51,3 +52,4 @@ export declare class RenegadeWs {
     releaseCallback(callbackId: CallbackId): Promise<void>;
     teardown(): void;
 }
+export { createZodFetcher };

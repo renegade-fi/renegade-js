@@ -20,7 +20,18 @@ import {
   OrderId,
   TaskId,
 } from "./types";
-import { Priority, RenegadeWs, TaskJob, unimplemented } from "./utils";
+import {
+  ExchangeHealthState,
+  oldExchangeHealthStatesSchema,
+  parseExchangeHealthStates,
+} from "./types/schema";
+import {
+  Priority,
+  RenegadeWs,
+  TaskJob,
+  unimplemented,
+  createZodFetcher,
+} from "./utils";
 
 /**
  * A decorator that asserts that the relayer has not been torn down.
@@ -208,7 +219,8 @@ export default class Renegade
   async queryExchangeHealthStates(
     baseToken: Token,
     quoteToken: Token,
-  ): Promise<any> {
+  ): Promise<ExchangeHealthState> {
+    const fetchWithZod = createZodFetcher(axios.request);
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this.relayerHttpUrl}/v0/exchange/health_check`,
@@ -216,11 +228,14 @@ export default class Renegade
     };
     let response;
     try {
-      response = await axios.request(request);
+      await fetchWithZod(oldExchangeHealthStatesSchema, request).then(
+        (res) => (response = res),
+      );
     } catch (e) {
+      console.log("🚀 ~ e:", e);
       throw new RenegadeError(RenegadeErrorType.RelayerError);
     }
-    return response.data;
+    return parseExchangeHealthStates(response);
   }
 
   /**

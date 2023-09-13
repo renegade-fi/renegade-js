@@ -2,6 +2,7 @@ import * as uuid from "uuid";
 import WebSocket from "isomorphic-ws";
 import RenegadeError, { RenegadeErrorType } from "../errors";
 import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, } from "../state/utils";
+import { createZodFetcher } from "./fetcher";
 export function unimplemented() {
     throw new Error("unimplemented");
 }
@@ -187,3 +188,4 @@ export class RenegadeWs {
         }
     }
 }
+export { createZodFetcher };

@@ -7,7 +7,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import axios from "axios";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
-import { RenegadeWs, unimplemented } from "./utils";
+import { oldExchangeHealthStatesSchema, parseExchangeHealthStates, } from "./types/schema";
+import { RenegadeWs, unimplemented, createZodFetcher, } from "./utils";
 /**
  * A decorator that asserts that the relayer has not been torn down.
  *
@@ -135,6 +136,7 @@ export default class Renegade {
         }
     }
     async queryExchangeHealthStates(baseToken, quoteToken) {
+        const fetchWithZod = createZodFetcher(axios.request);
         const request = {
             method: "POST",
             url: `${this.relayerHttpUrl}/v0/exchange/health_check`,
@@ -142,12 +144,13 @@ export default class Renegade {
         };
         let response;
         try {
-            response = await axios.request(request);
+            await fetchWithZod(oldExchangeHealthStatesSchema, request).then((res) => (response = res));
         }
         catch (e) {
+            console.log("🚀 ~ e:", e);
             throw new RenegadeError(RenegadeErrorType.RelayerError);
         }
-        return response.data;
+        return parseExchangeHealthStates(response);
     }
     /**
      * Get the semver of the relayer.
