@@ -119,11 +119,10 @@ export class RenegadeWs {
                     console.log(`[WebSocket] New task state for ${taskId}: ${parsedMessage.event.state}`);
                 }
                 if (parsedMessage.event.state === "Completed") {
-                    resolve();
+                    return this._subscribeToTopic(topic).then(() => resolve());
                 }
             });
         });
-        await this._subscribeToTopic(topic);
         return taskCompletionPromise;
     }
     async registerAccountCallback(callback, accountId, keychain, priority) {
