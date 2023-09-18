@@ -42,12 +42,13 @@ function assertSynced(_target, _propertyKey, descriptor) {
  * including streaming Wallet events in real-time from the relayer.
  */
 export default class Account {
-    constructor(keychain, relayerHttpUrl, relayerWsUrl, verbose) {
+    constructor(keychain, relayerHttpUrl, relayerWsUrl, verbose, ws) {
         this._relayerHttpUrl = relayerHttpUrl;
         this._relayerWsUrl = relayerWsUrl;
         this._verbose = verbose || false;
         this._reset(keychain);
         this._isSynced = false;
+        this._ws = ws;
     }
     /**
      * Reset the Wallet to its initial state by clearing its balances, orders, and
@@ -140,7 +141,7 @@ export default class Account {
         else {
             // The Wallet is not present in on-chain state, so we need to create it.
             taskId = await this._createNewWallet();
-            const taskPromise = new RenegadeWs(this._relayerWsUrl, this._verbose)
+            const taskPromise = this._ws
                 .awaitTaskCompletion(taskId)
                 .then(() => this._setupWebSocket())
                 .then(() => {

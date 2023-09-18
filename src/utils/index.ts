@@ -160,12 +160,11 @@ export class RenegadeWs {
             );
           }
           if (parsedMessage.event.state === "Completed") {
-            resolve();
+            return this._subscribeToTopic(topic).then(() => resolve());
           }
         },
       );
     });
-    await this._subscribeToTopic(topic);
     return taskCompletionPromise;
   }
 

@@ -282,6 +282,7 @@ export default class Renegade
       this.relayerHttpUrl,
       this.relayerWsUrl,
       this._verbose,
+      this._ws,
     );
     const accountId = account.accountId;
     if (this._registeredAccounts[accountId]) {
