@@ -180,7 +180,7 @@ export default class Renegade {
     // | IRenegadeAccount Implementation |
     // -----------------------------------
     registerAccount(keychain) {
-        const account = new Account(keychain, this.relayerHttpUrl, this.relayerWsUrl, this._verbose, this._ws);
+        const account = new Account(keychain, this.relayerHttpUrl, this.relayerWsUrl, this._verbose);
         const accountId = account.accountId;
         if (this._registeredAccounts[accountId]) {
             throw new RenegadeError(RenegadeErrorType.AccountAlreadyRegistered);

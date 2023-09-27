@@ -65,14 +65,12 @@ export default class Account {
     relayerHttpUrl: string,
     relayerWsUrl: string,
     verbose?: boolean,
-    ws?: RenegadeWs,
   ) {
     this._relayerHttpUrl = relayerHttpUrl;
     this._relayerWsUrl = relayerWsUrl;
     this._verbose = verbose || false;
     this._reset(keychain);
     this._isSynced = false;
-    this._ws = ws;
   }
 
   /**
@@ -176,7 +174,7 @@ export default class Account {
     } else {
       // The Wallet is not present in on-chain state, so we need to create it.
       taskId = await this._createNewWallet();
-      const taskPromise = this._ws
+      const taskPromise = new RenegadeWs(this._relayerWsUrl, this._verbose)
         .awaitTaskCompletion(taskId)
         .then(() => this._setupWebSocket())
         .then(() => {

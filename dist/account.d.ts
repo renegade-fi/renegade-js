@@ -17,7 +17,7 @@ export default class Account {
     private _ws;
     private _wallet;
     private _isSynced;
-    constructor(keychain: Keychain, relayerHttpUrl: string, relayerWsUrl: string, verbose?: boolean, ws?: RenegadeWs);
+    constructor(keychain: Keychain, relayerHttpUrl: string, relayerWsUrl: string, verbose?: boolean);
     /**
      * Reset the Wallet to its initial state by clearing its balances, orders, and
      * fees. Resets are useful in the case of desync from the relayer, allowing us
