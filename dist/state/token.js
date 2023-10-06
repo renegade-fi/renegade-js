@@ -52,9 +52,18 @@ const ADDR_TO_TICKER = {
     "18aaa7115705e8be94bffebde57af9bfc265b998": "AUDIO",
     "0d8775f648430679a709e98d2b0cb6250d2887ef": "BAT",
 };
+const KATANA_ADDR_TO_TICKER = {
+    ...ADDR_TO_TICKER,
+    "49d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7": "WETH",
+    "8e3feea13add88dce4439bc1d02a662ab4c4cb6dca4639dccba89b4e594680": "USDC",
+};
 const TICKER_TO_ADDR = {};
 for (const addr in ADDR_TO_TICKER) {
     TICKER_TO_ADDR[ADDR_TO_TICKER[addr]] = addr;
+}
+const KATANA_TICKER_TO_ADDR = {};
+for (const addr in KATANA_ADDR_TO_TICKER) {
+    KATANA_TICKER_TO_ADDR[KATANA_ADDR_TO_TICKER[addr]] = addr;
 }
 export default class Token {
     /**
@@ -69,12 +78,13 @@ export default class Token {
             throw new Error("Exactly one of address or ticker must be specified.");
         }
         if (params.ticker) {
+            const REMAPPED_TICKER_TO_ADDR = params.network === "katana" ? KATANA_TICKER_TO_ADDR : TICKER_TO_ADDR;
             params.ticker = params.ticker.toUpperCase();
-            if (params.ticker in TICKER_TO_ADDR) {
-                params.address = TICKER_TO_ADDR[params.ticker];
+            if (params.ticker in REMAPPED_TICKER_TO_ADDR) {
+                params.address = REMAPPED_TICKER_TO_ADDR[params.ticker];
             }
             else {
-                throw new Error(`Unknown ticker: ${params.ticker}. Try using the params.address instead.`);
+                throw new Error(`Unknown ticker: ${params.ticker}${params.network ? " in network: " + params.network : ""}. Try using the params.address instead.`);
             }
         }
         this.address = params.address.toLowerCase().replace("0x", "");

@@ -9,6 +9,7 @@ export default class Token {
     constructor(params: {
         address?: string;
         ticker?: string;
+        network?: string;
     });
     serialize(): string;
     static deserialize(serializedToken: string): Token;
