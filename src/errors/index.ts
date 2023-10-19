@@ -10,6 +10,7 @@ export enum RenegadeErrorType {
   InvalidPort = "Provided port is not valid. Must be an integer between 1 and 65535.",
   InvalidTaskId = "Provided TaskId is not valid.",
   BadParameters = "Parameters provided to the function are not valid.",
+  MaxOrders = "The maximum number of active, unmatched orders has been reached.",
 }
 
 export default class RenegadeError extends Error {

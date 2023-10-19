@@ -11,6 +11,7 @@ export var RenegadeErrorType;
     RenegadeErrorType["InvalidPort"] = "Provided port is not valid. Must be an integer between 1 and 65535.";
     RenegadeErrorType["InvalidTaskId"] = "Provided TaskId is not valid.";
     RenegadeErrorType["BadParameters"] = "Parameters provided to the function are not valid.";
+    RenegadeErrorType["MaxOrders"] = "The maximum number of active, unmatched orders has been reached.";
 })(RenegadeErrorType || (RenegadeErrorType = {}));
 export default class RenegadeError extends Error {
     constructor(renegadeErrorType, message) {

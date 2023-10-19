@@ -9,7 +9,8 @@ export declare enum RenegadeErrorType {
     InvalidHostname = "Provided hostname is not valid. Must be either a domain name, an IP address, or localhost.",
     InvalidPort = "Provided port is not valid. Must be an integer between 1 and 65535.",
     InvalidTaskId = "Provided TaskId is not valid.",
-    BadParameters = "Parameters provided to the function are not valid."
+    BadParameters = "Parameters provided to the function are not valid.",
+    MaxOrders = "The maximum number of active, unmatched orders has been reached."
 }
 export default class RenegadeError extends Error {
     constructor(renegadeErrorType: RenegadeErrorType, message?: string);

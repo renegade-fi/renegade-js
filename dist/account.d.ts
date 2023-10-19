@@ -116,6 +116,15 @@ export default class Account {
      */
     modifyOrder(oldOrderId: OrderId, newOrder: Order): Promise<TaskId>;
     /**
+     * Modify or place an order.
+     *
+     * @param order The order to modify or place.
+     * @returns A TaskId that can be used to query the status of the order.
+     *
+     * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
+     */
+    modifyOrPlaceOrder(order: Order): Promise<TaskId>;
+    /**
      * Cancel an outstanding order.
      *
      * @param orderId The ID of the order to cancel.

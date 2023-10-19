@@ -8,7 +8,7 @@ import axios from "axios";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
 import { BASEPOINT_ORDER } from "./state/keychain";
-import { bigIntToLimbsLE, RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, } from "./state/utils";
+import { bigIntToLimbsLE, findZeroOrders, RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, } from "./state/utils";
 import { RenegadeWs } from "./utils";
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -321,7 +321,7 @@ export default class Account {
     async modifyOrder(oldOrderId, newOrder) {
         const request = {
             method: "POST",
-            url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}`,
+            url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}/update`,
             data: `{"public_var_sig":[],"order":${newOrder.serialize()}}`,
             validateStatus: () => true,
         };
@@ -336,6 +336,33 @@ export default class Account {
             throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
         }
         return response.data.task_id;
+    }
+    /**
+     * Modify or place an order.
+     *
+     * @param order The order to modify or place.
+     * @returns A TaskId that can be used to query the status of the order.
+     *
+     * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
+     */
+    async modifyOrPlaceOrder(order) {
+        const orders = this._wallet.orders.reduce((acc, order) => {
+            acc[order.orderId] = order;
+            return acc;
+        }, {});
+        const zeroOrders = findZeroOrders(orders);
+        if (Object.keys(this.orders).length === 5 && zeroOrders.length === 0) {
+            return new Promise((_, reject) => {
+                reject(new RenegadeError(RenegadeErrorType.MaxOrders));
+            });
+        }
+        if (zeroOrders.length > 0) {
+            const randomOrderId = zeroOrders[Math.floor(Math.random() * zeroOrders.length)];
+            return await this.modifyOrder(randomOrderId, order);
+        }
+        else {
+            return await this.placeOrder(order);
+        }
     }
     /**
      * Cancel an outstanding order.
@@ -435,6 +462,9 @@ __decorate([
 __decorate([
     assertSynced
 ], Account.prototype, "modifyOrder", null);
+__decorate([
+    assertSynced
+], Account.prototype, "modifyOrPlaceOrder", null);
 __decorate([
     assertSynced
 ], Account.prototype, "cancelOrder", null);

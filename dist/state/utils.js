@@ -1,5 +1,5 @@
-import keccak256 from "keccak256";
 import { F1Field } from "ffjavascript";
+import keccak256 from "keccak256";
 import * as uuid from "uuid";
 import { poseidon } from "../utils/poseidon";
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
@@ -37,4 +37,9 @@ export function* PoseidonCSPRNG(seed) {
         state = hash;
         yield hash;
     }
+}
+export function findZeroOrders(orders) {
+    return Object.entries(orders)
+        .filter(([, order]) => order.amount === 0n)
+        .map(([id]) => id);
 }

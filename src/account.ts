@@ -5,6 +5,7 @@ import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
 import { BASEPOINT_ORDER } from "./state/keychain";
 import {
   bigIntToLimbsLE,
+  findZeroOrders,
   RENEGADE_AUTH_EXPIRATION_HEADER,
   RENEGADE_AUTH_HEADER,
 } from "./state/utils";
@@ -371,7 +372,7 @@ export default class Account {
   async modifyOrder(oldOrderId: OrderId, newOrder: Order): Promise<TaskId> {
     const request: AxiosRequestConfig = {
       method: "POST",
-      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}`,
+      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}/update`,
       data: `{"public_var_sig":[],"order":${newOrder.serialize()}}`,
       validateStatus: () => true,
     };
@@ -385,6 +386,35 @@ export default class Account {
       throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
     }
     return response.data.task_id;
+  }
+
+  /**
+   * Modify or place an order.
+   *
+   * @param order The order to modify or place.
+   * @returns A TaskId that can be used to query the status of the order.
+   *
+   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
+   */
+  @assertSynced
+  async modifyOrPlaceOrder(order: Order): Promise<TaskId> {
+    const orders = this._wallet.orders.reduce((acc, order) => {
+      acc[order.orderId] = order;
+      return acc;
+    }, {} as Record<OrderId, Order>);
+    const zeroOrders = findZeroOrders(orders);
+    if (Object.keys(this.orders).length === 5 && zeroOrders.length === 0) {
+      return new Promise((_, reject) => {
+        reject(new RenegadeError(RenegadeErrorType.MaxOrders));
+      });
+    }
+    if (zeroOrders.length > 0) {
+      const randomOrderId =
+        zeroOrders[Math.floor(Math.random() * zeroOrders.length)];
+      return await this.modifyOrder(randomOrderId, order);
+    } else {
+      return await this.placeOrder(order);
+    }
   }
 
   /**
