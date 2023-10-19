@@ -232,10 +232,25 @@ export default class Renegade
         (res) => (response = res),
       );
     } catch (e) {
-      console.log("🚀 ~ e:", e);
       throw new RenegadeError(RenegadeErrorType.RelayerError);
     }
     return parseExchangeHealthStates(response);
+  }
+
+  @assertNotTornDown
+  async queryOrders() {
+    const request: AxiosRequestConfig = {
+      method: "GET",
+      url: `${this.relayerHttpUrl}/v0/order_book/orders`,
+      validateStatus: () => true,
+    };
+    let response;
+    try {
+      await axios.request(request).then((res) => (response = res.data));
+    } catch (e) {
+      throw new RenegadeError(RenegadeErrorType.RelayerError, String(e));
+    }
+    return response;
   }
 
   /**
@@ -433,6 +448,27 @@ export default class Renegade
   }
 
   @assertNotTornDown
+  async modifyOrPlaceOrder(
+    accountId: AccountId,
+    newOrder: Order,
+  ): Promise<void> {
+    const [, taskJob] = await this._modifyOrPlaceOrderTaskJob(
+      accountId,
+      newOrder,
+    );
+    return await taskJob;
+  }
+
+  private async _modifyOrPlaceOrderTaskJob(
+    accountId: AccountId,
+    newOrder: Order,
+  ): TaskJob<void> {
+    const account = this._lookupAccount(accountId);
+    const taskId = await account.modifyOrPlaceOrder(newOrder);
+    return [taskId, this.awaitTaskCompletion(taskId)];
+  }
+
+  @assertNotTornDown
   async cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void> {
     const [, taskJob] = await this._cancelOrderTaskJob(accountId, orderId);
     return await taskJob;
@@ -585,6 +621,9 @@ export default class Renegade
       await this._placeOrderTaskJob(...args),
     modifyOrder: async (...args: Parameters<typeof this._modifyOrderTaskJob>) =>
       await this._modifyOrderTaskJob(...args),
+    modifyOrPlaceOrder: async (
+      ...args: Parameters<typeof this._modifyOrPlaceOrderTaskJob>
+    ) => await this._modifyOrPlaceOrderTaskJob(...args),
     cancelOrder: async (...args: Parameters<typeof this._cancelOrderTaskJob>) =>
       await this._cancelOrderTaskJob(...args),
     // approveFee: async (

@@ -1,7 +1,9 @@
-import keccak256 from "keccak256";
 import { F1Field } from "ffjavascript";
+import keccak256 from "keccak256";
 import * as uuid from "uuid";
+import { OrderId } from "../types";
 import { poseidon } from "../utils/poseidon";
+import Order from "./order";
 
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
@@ -55,4 +57,10 @@ export function* PoseidonCSPRNG(
     state = hash;
     yield hash;
   }
+}
+
+export function findZeroOrders(orders: Record<OrderId, Order>) {
+  return Object.entries(orders)
+    .filter(([, order]) => order.amount === 0n)
+    .map(([id]) => id as OrderId);
 }

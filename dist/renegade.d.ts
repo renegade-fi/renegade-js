@@ -53,6 +53,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
      */
     ping(): Promise<void>;
     queryExchangeHealthStates(baseToken: Token, quoteToken: Token): Promise<ExchangeHealthState>;
+    queryOrders(): Promise<any>;
     /**
      * Get the semver of the relayer.
      */
@@ -77,6 +78,8 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     private _placeOrderTaskJob;
     modifyOrder(accountId: AccountId, oldOrderId: OrderId, newOrder: Order): Promise<void>;
     private _modifyOrderTaskJob;
+    modifyOrPlaceOrder(accountId: AccountId, newOrder: Order): Promise<void>;
+    private _modifyOrPlaceOrderTaskJob;
     cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void>;
     private _cancelOrderTaskJob;
     queryDesiredFee(): Promise<Fee>;
@@ -106,6 +109,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
         withdraw: (accountId: AccountId, mint: Token, amount: bigint) => Promise<[TaskId, Promise<void>]>;
         placeOrder: (accountId: AccountId, order: Order) => Promise<[TaskId, Promise<void>]>;
         modifyOrder: (accountId: AccountId, oldOrderId: OrderId, newOrder: Order) => Promise<[TaskId, Promise<void>]>;
+        modifyOrPlaceOrder: (accountId: AccountId, newOrder: Order) => Promise<[TaskId, Promise<void>]>;
         cancelOrder: (accountId: AccountId, orderId: OrderId) => Promise<[TaskId, Promise<void>]>;
     };
 }

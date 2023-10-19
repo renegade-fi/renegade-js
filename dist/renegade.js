@@ -56,6 +56,7 @@ export default class Renegade {
             withdraw: async (...args) => await this._withdrawTaskJob(...args),
             placeOrder: async (...args) => await this._placeOrderTaskJob(...args),
             modifyOrder: async (...args) => await this._modifyOrderTaskJob(...args),
+            modifyOrPlaceOrder: async (...args) => await this._modifyOrPlaceOrderTaskJob(...args),
             cancelOrder: async (...args) => await this._cancelOrderTaskJob(...args),
             // approveFee: async (
             //   ...args: Parameters<typeof this._approveFeeTaskJob>
@@ -147,10 +148,24 @@ export default class Renegade {
             await fetchWithZod(oldExchangeHealthStatesSchema, request).then((res) => (response = res));
         }
         catch (e) {
-            console.log("🚀 ~ e:", e);
             throw new RenegadeError(RenegadeErrorType.RelayerError);
         }
         return parseExchangeHealthStates(response);
+    }
+    async queryOrders() {
+        const request = {
+            method: "GET",
+            url: `${this.relayerHttpUrl}/v0/order_book/orders`,
+            validateStatus: () => true,
+        };
+        let response;
+        try {
+            await axios.request(request).then((res) => (response = res.data));
+        }
+        catch (e) {
+            throw new RenegadeError(RenegadeErrorType.RelayerError, String(e));
+        }
+        return response;
     }
     /**
      * Get the semver of the relayer.
@@ -265,6 +280,15 @@ export default class Renegade {
         const taskId = await account.modifyOrder(oldOrderId, newOrder);
         return [taskId, this.awaitTaskCompletion(taskId)];
     }
+    async modifyOrPlaceOrder(accountId, newOrder) {
+        const [, taskJob] = await this._modifyOrPlaceOrderTaskJob(accountId, newOrder);
+        return await taskJob;
+    }
+    async _modifyOrPlaceOrderTaskJob(accountId, newOrder) {
+        const account = this._lookupAccount(accountId);
+        const taskId = await account.modifyOrPlaceOrder(newOrder);
+        return [taskId, this.awaitTaskCompletion(taskId)];
+    }
     async cancelOrder(accountId, orderId) {
         const [, taskJob] = await this._cancelOrderTaskJob(accountId, orderId);
         return await taskJob;
@@ -333,6 +357,9 @@ __decorate([
 ], Renegade.prototype, "queryExchangeHealthStates", null);
 __decorate([
     assertNotTornDown
+], Renegade.prototype, "queryOrders", null);
+__decorate([
+    assertNotTornDown
 ], Renegade.prototype, "getVersion", null);
 __decorate([
     assertNotTornDown
@@ -373,6 +400,9 @@ __decorate([
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "modifyOrder", null);
+__decorate([
+    assertNotTornDown
+], Renegade.prototype, "modifyOrPlaceOrder", null);
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "cancelOrder", null);

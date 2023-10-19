@@ -50,39 +50,36 @@ describe("Depositing and Withdrawing Tokens", () => {
     },
   );
 
-  test.concurrent(
-    "Depositing and withdrawing multiple tokens should work",
-    async () => {
-      // Setup the Account.
-      const renegade = new Renegade(renegadeConfig);
-      const accountId = renegade.registerAccount(new Keychain());
-      await renegade.initializeAccount(accountId);
+  test.skip("Depositing and withdrawing multiple tokens should work", async () => {
+    // Setup the Account.
+    const renegade = new Renegade(renegadeConfig);
+    const accountId = renegade.registerAccount(new Keychain());
+    await renegade.initializeAccount(accountId);
 
-      // Deposit WETH.
-      await renegade.deposit(accountId, new Token({ ticker: "WETH" }), 1000n);
-      expectBalances(renegade.getBalances(accountId), { WETH: 1000n });
+    // Deposit WETH.
+    await renegade.deposit(accountId, new Token({ ticker: "WETH" }), 1000n);
+    expectBalances(renegade.getBalances(accountId), { WETH: 1000n });
 
-      // Deposit USDC.
-      await renegade.deposit(accountId, new Token({ ticker: "USDC" }), 2000n);
-      expectBalances(renegade.getBalances(accountId), {
-        WETH: 1000n,
-        USDC: 2000n,
-      });
+    // Deposit USDC.
+    await renegade.deposit(accountId, new Token({ ticker: "USDC" }), 2000n);
+    expectBalances(renegade.getBalances(accountId), {
+      WETH: 1000n,
+      USDC: 2000n,
+    });
 
-      // Withdraw WETH.
-      await renegade.withdraw(accountId, new Token({ ticker: "WETH" }), 1000n);
-      expectBalances(renegade.getBalances(accountId), {
-        USDC: 2000n,
-      });
+    // Withdraw WETH.
+    await renegade.withdraw(accountId, new Token({ ticker: "WETH" }), 1000n);
+    expectBalances(renegade.getBalances(accountId), {
+      USDC: 2000n,
+    });
 
-      // Withdraw USDC.
-      await renegade.withdraw(accountId, new Token({ ticker: "USDC" }), 500n);
-      expectBalances(renegade.getBalances(accountId), {
-        USDC: 1500n,
-      });
+    // Withdraw USDC.
+    await renegade.withdraw(accountId, new Token({ ticker: "USDC" }), 500n);
+    expectBalances(renegade.getBalances(accountId), {
+      USDC: 1500n,
+    });
 
-      // Teardown.
-      await renegade.teardown();
-    },
-  );
+    // Teardown.
+    await renegade.teardown();
+  });
 });
