@@ -253,6 +253,12 @@ export default class Renegade
     return response;
   }
 
+  async queryWallet(accountId: AccountId): Promise<void> {
+    const account = this._lookupAccount(accountId);
+    console.log("Fetching new wallet");
+    return await account.queryWallet();
+  }
+
   /**
    * Get the semver of the relayer.
    */
