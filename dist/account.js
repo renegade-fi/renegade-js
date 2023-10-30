@@ -193,6 +193,13 @@ export default class Account {
         }
     }
     /**
+     * Manually fetch the latest Wallet state from the relayer. This is useful if
+     * we want to force a refresh of the Wallet state.
+     */
+    async queryWallet() {
+        this._wallet = await this._queryRelayerForWallet();
+    }
+    /**
      * Query the on-chain state to lookup the Wallet corresponding to this
      * AccountId.
      *

@@ -66,6 +66,11 @@ export default class Account {
      */
     private _queryRelayerForWallet;
     /**
+     * Manually fetch the latest Wallet state from the relayer. This is useful if
+     * we want to force a refresh of the Wallet state.
+     */
+    queryWallet(): Promise<void>;
+    /**
      * Query the on-chain state to lookup the Wallet corresponding to this
      * AccountId.
      *

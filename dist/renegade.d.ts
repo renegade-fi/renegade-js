@@ -54,6 +54,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     ping(): Promise<void>;
     queryExchangeHealthStates(baseToken: Token, quoteToken: Token): Promise<ExchangeHealthState>;
     queryOrders(): Promise<any>;
+    queryWallet(accountId: AccountId): Promise<void>;
     /**
      * Get the semver of the relayer.
      */
