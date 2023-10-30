@@ -411,17 +411,16 @@ export default class Account {
       return acc;
     }, {} as Record<OrderId, Order>);
     const zeroOrders = findZeroOrders(orders);
-    if (Object.keys(this.orders).length === 5 && zeroOrders.length === 0) {
-      return new Promise((_, reject) => {
-        reject(new RenegadeError(RenegadeErrorType.MaxOrders));
-      });
-    }
-    if (zeroOrders.length > 0) {
+    if (Object.keys(this.orders).length < 5) {
+      return await this.placeOrder(order);
+    } else if (zeroOrders.length > 0) {
       const randomOrderId =
         zeroOrders[Math.floor(Math.random() * zeroOrders.length)];
       return await this.modifyOrder(randomOrderId, order);
     } else {
-      return await this.placeOrder(order);
+      return new Promise((_, reject) => {
+        reject(new RenegadeError(RenegadeErrorType.MaxOrders));
+      });
     }
   }
 
