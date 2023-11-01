@@ -358,7 +358,7 @@ export default class Account {
             return acc;
         }, {});
         const zeroOrders = findZeroOrders(orders);
-        if (Object.keys(this.orders).length < 5) {
+        if (Object.keys(orders).length < 5) {
             return await this.placeOrder(order);
         }
         else if (zeroOrders.length > 0) {
