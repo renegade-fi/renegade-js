@@ -255,7 +255,6 @@ export default class Renegade
 
   async queryWallet(accountId: AccountId): Promise<void> {
     const account = this._lookupAccount(accountId);
-    console.log("Fetching new wallet");
     return await account.queryWallet();
   }
 
