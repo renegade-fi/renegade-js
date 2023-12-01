@@ -1,8 +1,9 @@
+import { F } from "../utils/field";
 import Balance from "./balance";
 import Fee from "./fee";
 import Keychain from "./keychain";
 import Order from "./order";
-import { PoseidonCSPRNG, bigIntToLimbsLE, generateId, limbsToBigIntLE, F, } from "./utils";
+import { PoseidonCSPRNG, bigIntToLimbsLE, generateId, limbsToBigIntLE, } from "./utils";
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
 const MAX_ORDERS = 5;

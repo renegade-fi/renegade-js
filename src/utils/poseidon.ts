@@ -1,4 +1,5 @@
-import { F1Field, utils } from "ffjavascript";
+import { utils } from "ffjavascript";
+import { F } from "./field";
 import op from "./poseidon-constants.json";
 
 export const OPT = utils.unstringifyBigInts(op);
@@ -8,9 +9,6 @@ const N_ROUNDS_P = [56, 56];
 const SPONGE_INPUTS = 16;
 const SPONGE_CHUNK_SIZE = 31;
 
-const F = new F1Field(
-  3618502788666131213697322783095070105526743751716087489154079457884512865583n,
-);
 const pow5 = (a: bigint): bigint => F.mul(a, F.square(F.square(a, a)));
 
 // circomlibjs Poseidon bn128

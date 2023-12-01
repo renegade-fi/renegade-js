@@ -1,4 +1,5 @@
 import { WalletId } from "../types";
+import { F } from "../utils/field";
 import Balance from "./balance";
 import Fee from "./fee";
 import Keychain from "./keychain";
@@ -8,7 +9,6 @@ import {
   bigIntToLimbsLE,
   generateId,
   limbsToBigIntLE,
-  F,
 } from "./utils";
 
 // The maximum number of balances, orders, and fees that can be stored in a wallet
