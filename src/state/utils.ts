@@ -1,7 +1,7 @@
-import { F1Field } from "ffjavascript";
 import keccak256 from "keccak256";
 import * as uuid from "uuid";
 import { OrderId } from "../types";
+import { F } from "../utils/field";
 import { poseidon } from "../utils/poseidon";
 import Order from "./order";
 
@@ -12,10 +12,6 @@ export function generateId(data: Buffer): string {
   const dataHash = new Uint8Array(keccak256(data));
   return uuid.v4({ random: dataHash.slice(-16) });
 }
-
-export const F = new F1Field(
-  3618502788666131213697322783095070105526743751716087489154079457884512865583n,
-);
 
 export function bigIntToLimbsLE(
   number: bigint,
