@@ -25,6 +25,7 @@ const SHARES_PER_WALLET = MAX_BALANCES * SHARES_PER_BALANCE +
     1;
 export default class Wallet {
     constructor(params) {
+        this.updateLocked = false;
         this.walletId =
             params.id ||
                 generateId(Buffer.from(params.keychain.keyHierarchy.root.publicKey.buffer));
@@ -35,6 +36,7 @@ export default class Wallet {
         [this.blinder, this.privateBlinder, this.publicBlinder] =
             this.getBlinders();
         [this.blindedPublicShares, this.privateShares] = this.deriveShares();
+        this.updateLocked = params.updateLocked || false;
     }
     getBlinders() {
         // TODO: Generate seed from Ethereuem private key
@@ -122,7 +124,8 @@ export default class Wallet {
       "key_chain": ${this.keychain.serialize(asBigEndian)},
       "blinder": [${bigIntToLimbsLE(this.blinder).join(",")}],
       "blinded_public_shares": [${serializedBlindedPublicShares.join(",")}],
-      "private_shares": [${serializedPrivateShares.join(",")}]
+      "private_shares": [${serializedPrivateShares.join(",")}],
+      "update_locked": false
     }`.replace(/[\s\n]/g, "");
     }
     static deserialize(serializedWallet, asBigEndian) {
@@ -132,6 +135,15 @@ export default class Wallet {
         const fees = serializedWallet.fees.map((f) => Fee.deserialize(f));
         const keychain = Keychain.deserialize(serializedWallet.key_chain, asBigEndian);
         const blinder = limbsToBigIntLE(serializedWallet.blinder);
-        return new Wallet({ id, balances, orders, fees, keychain, blinder });
+        const updateLocked = serializedWallet.update_locked;
+        return new Wallet({
+            id,
+            balances,
+            orders,
+            fees,
+            keychain,
+            blinder,
+            updateLocked,
+        });
     }
 }

@@ -46,6 +46,7 @@ export default class Wallet {
   public readonly privateBlinder: bigint;
   public readonly blindedPublicShares: bigint[];
   public readonly privateShares: bigint[];
+  public readonly updateLocked: boolean = false;
   constructor(params: {
     id?: WalletId;
     balances: Balance[];
@@ -53,6 +54,7 @@ export default class Wallet {
     fees: Fee[];
     keychain: Keychain;
     blinder: bigint;
+    updateLocked?: boolean;
   }) {
     this.walletId =
       params.id ||
@@ -66,6 +68,7 @@ export default class Wallet {
     [this.blinder, this.privateBlinder, this.publicBlinder] =
       this.getBlinders();
     [this.blindedPublicShares, this.privateShares] = this.deriveShares();
+    this.updateLocked = params.updateLocked || false;
   }
 
   getBlinders(): [bigint, bigint, bigint] {
@@ -192,7 +195,8 @@ export default class Wallet {
       "key_chain": ${this.keychain.serialize(asBigEndian)},
       "blinder": [${bigIntToLimbsLE(this.blinder).join(",")}],
       "blinded_public_shares": [${serializedBlindedPublicShares.join(",")}],
-      "private_shares": [${serializedPrivateShares.join(",")}]
+      "private_shares": [${serializedPrivateShares.join(",")}],
+      "update_locked": false
     }`.replace(/[\s\n]/g, "");
   }
 
@@ -210,6 +214,15 @@ export default class Wallet {
       asBigEndian,
     );
     const blinder = limbsToBigIntLE(serializedWallet.blinder);
-    return new Wallet({ id, balances, orders, fees, keychain, blinder });
+    const updateLocked = serializedWallet.update_locked;
+    return new Wallet({
+      id,
+      balances,
+      orders,
+      fees,
+      keychain,
+      blinder,
+      updateLocked,
+    });
   }
 }

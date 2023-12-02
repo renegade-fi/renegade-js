@@ -365,6 +365,12 @@ export default class Renegade
     return account.keychain;
   }
 
+  @assertNotTornDown
+  getIsLocked(accountId: AccountId): boolean {
+    const account = this._lookupAccount(accountId);
+    return account.isLocked;
+  }
+
   // -----------------------------------
   // | IRenegadeBalance Implementation |
   // -----------------------------------

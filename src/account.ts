@@ -519,4 +519,11 @@ export default class Account {
   get ws(): RenegadeWs {
     return this._ws;
   }
+
+  /**
+   * Getter for the state of the update lock.
+   */
+  get isLocked(): boolean {
+    return this._wallet.updateLocked;
+  }
 }

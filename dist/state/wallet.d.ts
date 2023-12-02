@@ -14,6 +14,7 @@ export default class Wallet {
     readonly privateBlinder: bigint;
     readonly blindedPublicShares: bigint[];
     readonly privateShares: bigint[];
+    readonly updateLocked: boolean;
     constructor(params: {
         id?: WalletId;
         balances: Balance[];
@@ -21,6 +22,7 @@ export default class Wallet {
         fees: Fee[];
         keychain: Keychain;
         blinder: bigint;
+        updateLocked?: boolean;
     });
     getBlinders(): [bigint, bigint, bigint];
     packBalances(): bigint[];
