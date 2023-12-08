@@ -117,7 +117,7 @@ export default class Wallet {
         const serializedBlindedPublicShares = this.blindedPublicShares.map((share) => "[" + bigIntToLimbsLE(share).join(",") + "]");
         const serializedPrivateShares = this.privateShares.map((share) => "[" + bigIntToLimbsLE(share).join(",") + "]");
         return `{
-      "id": "${this.walletId}",
+      "wallet_id": "${this.walletId}",
       "balances": [${this.balances.map((b) => b.serialize()).join(",")}],
       "orders": [${this.orders.map((o) => o.serialize()).join(",")}],
       "fees": [${this.fees.map((f) => f.serialize()).join(",")}],
