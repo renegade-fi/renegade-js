@@ -188,7 +188,7 @@ export default class Wallet {
       (share) => "[" + bigIntToLimbsLE(share).join(",") + "]",
     );
     return `{
-      "id": "${this.walletId}",
+      "wallet_id": "${this.walletId}",
       "balances": [${this.balances.map((b) => b.serialize()).join(",")}],
       "orders": [${this.orders.map((o) => o.serialize()).join(",")}],
       "fees": [${this.fees.map((f) => f.serialize()).join(",")}],

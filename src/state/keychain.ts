@@ -1,5 +1,7 @@
-import * as ed from "@noble/ed25519";
-import { sha512 } from "@noble/hashes/sha512";
+// import * as ed from "@noble/ed25519";
+import * as secp from "@noble/secp256k1";
+// import { sha512 } from "@noble/hashes/sha512";
+import { sha256 } from "@noble/hashes/sha256";
 import * as crypto from "crypto";
 import * as fs from "fs";
 
@@ -9,7 +11,8 @@ export const BASEPOINT_ORDER =
 
 // Allow for synchronous ed25519 signing. See:
 // https://github.com/paulmillr/noble-ed25519/blob/main/README.md
-ed.utils.sha512Sync = (...m) => sha512(ed.utils.concatBytes(...m));
+// ed.utils.sha512Sync = (...m) => sha512(ed.utils.concatBytes(...m));
+secp.etc.hmacSha256Sync = (...m) => sha256(secp.etc.concatBytes(...m));
 
 const SIG_VALIDITY_WINDOW_MS = 10_000;
 
@@ -22,12 +25,16 @@ class SigningKey {
       throw new Error("SigningKey secretKey must be 32 bytes.");
     }
     this.secretKey = secretKey;
-    this.publicKey = ed.sync.getPublicKey(secretKey);
+    // this.publicKey = ed.sync.getPublicKey(secretKey);
+    this.publicKey = secp.getPublicKey(secretKey);
   }
 
+  // TODO: Test this
   signMessage(message: Uint8Array): Uint8Array {
-    const prehash = ed.utils.sha512Sync(message);
-    return ed.sync.signWithContext(prehash, this.secretKey);
+    // const prehash = ed.utils.sha512Sync(message);
+    const prehash = secp.etc.hmacSha256Sync(message);
+    // return ed.sync.signWithContext(prehash, this.secretKey);
+    return secp.sign(prehash, this.secretKey).toCompactRawBytes();
   }
 }
 
@@ -41,7 +48,9 @@ class IdentificationKey {
     }
     this.secretKey = secretKey;
     // TODO: Turn this into a Pedersen hash.
-    const secretKeyHash = ed.utils.sha512Sync(this.secretKey);
+    // const secretKeyHash = ed.utils.sha512Sync(this.secretKey);
+    const secretKeyHash = secp.etc.hmacSha256Sync(this.secretKey);
+    // const secretKeyHash = sha256(this.secretKey);
     const publicKey =
       BigInt("0x" + Buffer.from(secretKeyHash).toString("hex")) %
       BASEPOINT_ORDER;
@@ -107,9 +116,11 @@ export default class Keychain {
     // Extract skRoot from the inputs
     let skRoot: Uint8Array;
     if (options.seed) {
-      skRoot = ed.utils
-        .sha512Sync(Buffer.from(options.seed, "ascii"))
-        .slice(32);
+      // skRoot = ed.utils
+      //   .sha512Sync(Buffer.from(options.seed, "ascii"))
+      //   .slice(32);
+      // skRoot = sha256(Buffer.from(options.seed, "ascii")).slice(32);
+      skRoot = secp.etc.hmacSha256Sync(Buffer.from(options.seed, "ascii"));
     } else if (options.filePath) {
       this.loadFromFile(options.filePath);
       return;
@@ -136,11 +147,13 @@ export default class Keychain {
     const rootSignatureBytes = root.signMessage(
       Buffer.from(Keychain.CREATE_SK_MATCH_MESSAGE),
     );
-    const skMatch = ed.utils.sha512Sync(rootSignatureBytes).slice(32);
+    // const skMatch = ed.utils.sha512Sync(rootSignatureBytes).slice(32);
+    const skMatch = secp.etc.hmacSha256Sync(rootSignatureBytes);
     const match = new IdentificationKey(skMatch);
 
     // Derive the settle key.
-    const skSettle = ed.utils.sha512Sync(match.secretKey).slice(32);
+    // const skSettle = ed.utils.sha512Sync(match.secretKey).slice(32);
+    const skSettle = secp.etc.hmacSha256Sync(match.secretKey);
     const settle = new SigningKey(skSettle);
 
     // Save the key hierarchy.
