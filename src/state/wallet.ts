@@ -1,3 +1,4 @@
+import { sha256 } from "@noble/hashes/sha256";
 import { WalletId } from "../types";
 import { F } from "../utils/field";
 import Balance from "./balance";
@@ -5,10 +6,13 @@ import Fee from "./fee";
 import Keychain from "./keychain";
 import Order from "./order";
 import {
-  PoseidonCSPRNG,
   bigIntToLimbsLE,
+  createWalletSharesWithRandomness,
+  evaluateHashChain,
   generateId,
   limbsToBigIntLE,
+  splitBigIntIntoWords,
+  uint8ArrayToBigInt,
 } from "./utils";
 
 // The maximum number of balances, orders, and fees that can be stored in a wallet
@@ -22,18 +26,21 @@ const SHARES_PER_ORDER = 6;
 const SHARES_PER_FEE = 4;
 
 // The number of felt words to represent pk_root
-const NUM_ROOT_KEY_WORDS = 2;
+// Stored as the affine coordinates of the point
+const NUM_ROOT_KEY_WORDS = 4;
 
 // The number of shares to represent the keychain. Equal to the number of shares
 // to represent pk_root, plus one for pk_match
 const SHARES_PER_KEYCHAIN = NUM_ROOT_KEY_WORDS + 1;
+
+const SHARES_PER_BLINDER = 1;
 // The total number of shares per wallet
 const SHARES_PER_WALLET =
   MAX_BALANCES * SHARES_PER_BALANCE +
   MAX_ORDERS * SHARES_PER_ORDER +
   MAX_FEES * SHARES_PER_FEE +
   SHARES_PER_KEYCHAIN +
-  1;
+  SHARES_PER_BLINDER;
 
 export default class Wallet {
   public readonly walletId: WalletId;
@@ -73,15 +80,15 @@ export default class Wallet {
 
   getBlinders(): [bigint, bigint, bigint] {
     // TODO: Generate seed from Ethereuem private key
-    const blinderStream = PoseidonCSPRNG(
-      Buffer.from(
-        this.keychain.keyHierarchy.root.secretKey.buffer,
-      ).readBigInt64BE(),
+    const blinderSeed = uint8ArrayToBigInt(
+      sha256(
+        "renegade blinder seed creation" +
+          this.keychain.keyHierarchy.root.secretKey,
+      ),
     );
-    const blinder = blinderStream.next().value;
-    const privateBlinder = blinderStream.next().value;
-    const publicBlinder = F.sub(blinder, privateBlinder);
-    return [blinder, privateBlinder, publicBlinder];
+    const [blinder, blinderPrivateShare] = evaluateHashChain(blinderSeed, 2);
+    const blinderPublicShare = F.sub(blinder, blinderPrivateShare);
+    return [blinder, blinderPrivateShare, blinderPublicShare];
   }
 
   packBalances(): bigint[] {
@@ -109,21 +116,16 @@ export default class Wallet {
   }
 
   packKeychain(): bigint[] {
-    const pkRoot = BigInt(
-      "0x" +
-        Buffer.from(this.keychain.keyHierarchy.root.publicKey)
-          .reverse()
-          .toString("hex"),
+    const pkRootX = splitBigIntIntoWords(this.keychain.keyHierarchy.root.x);
+    const pkRootY = splitBigIntIntoWords(this.keychain.keyHierarchy.root.y);
+
+    // Only use 1 share for pkMatch
+    const pkMatch = splitBigIntIntoWords(
+      uint8ArrayToBigInt(this.keychain.keyHierarchy.match.publicKey),
+      1,
     );
-    const pkMatch = BigInt(
-      "0x" +
-        Buffer.from(this.keychain.keyHierarchy.match.publicKey)
-          .reverse()
-          .toString("hex"),
-    );
-    const packedPkRoot = [pkRoot, (pkRoot >> 251n) % 2n ** 251n];
-    const packedPkMatch = [pkMatch];
-    return packedPkRoot.concat(packedPkMatch);
+
+    return [...pkRootX, ...pkRootY, ...pkMatch];
   }
 
   packBlinder(): bigint[] {
@@ -146,29 +148,22 @@ export default class Wallet {
    * Derive blinded public shares and private shares for the wallet.
    */
   deriveShares(): [bigint[], bigint[]] {
-    const packedWallet = this.packWallet();
-    const publicShares = packedWallet;
-    const blindedPublicShares = publicShares;
-
     // TODO: Generate seed from Ethereuem private key
-    const secretShareStream = PoseidonCSPRNG(
-      Buffer.from(
-        this.keychain.keyHierarchy.root.secretKey.buffer,
-      ).readBigInt64LE(),
+    const shareStreamSeed = uint8ArrayToBigInt(
+      sha256(
+        "renegade share stream seed creation" +
+          this.keychain.keyHierarchy.root.secretKey,
+      ),
     );
+    const secretShares = evaluateHashChain(shareStreamSeed, SHARES_PER_WALLET);
 
-    const privateShares: bigint[] = Array(packedWallet.length).fill(0n);
-    for (let i = 0; i < SHARES_PER_WALLET; i++) {
-      privateShares[i] = secretShareStream.next().value;
-    }
-
-    for (let i = 0; i < SHARES_PER_WALLET; i++) {
-      const blinded = F.add(F.e(blindedPublicShares[i]), this.blinder);
-      blindedPublicShares[i] = F.sub(blinded, privateShares[i]);
-    }
-
-    blindedPublicShares[blindedPublicShares.length - 1] = this.publicBlinder;
-    privateShares[privateShares.length - 1] = this.privateBlinder;
+    const [privateShares, blindedPublicShares] =
+      createWalletSharesWithRandomness(
+        this.packWallet(),
+        this.blinder,
+        this.privateBlinder,
+        secretShares,
+      );
 
     if (
       blindedPublicShares.length !== SHARES_PER_WALLET ||
@@ -188,7 +183,7 @@ export default class Wallet {
       (share) => "[" + bigIntToLimbsLE(share).join(",") + "]",
     );
     return `{
-      "wallet_id": "${this.walletId}",
+      "id": "${this.walletId}",
       "balances": [${this.balances.map((b) => b.serialize()).join(",")}],
       "orders": [${this.orders.map((o) => o.serialize()).join(",")}],
       "fees": [${this.fees.map((f) => f.serialize()).join(",")}],

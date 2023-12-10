@@ -7,9 +7,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import axios from "axios";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
-import { BASEPOINT_ORDER } from "./state/keychain";
-import { bigIntToLimbsLE, findZeroOrders, RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, } from "./state/utils";
+import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, } from "./state/utils";
 import { RenegadeWs } from "./utils";
+import { F } from "./utils/field";
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
  * Wallet is now managed by the relayer and wallet update events are actively
@@ -69,7 +69,7 @@ export default class Account {
             orders: [],
             fees: [],
             keychain: keychain || this._wallet.keychain,
-            blinder: blinder % BASEPOINT_ORDER,
+            blinder: F.e(blinder),
         });
         // Reset the sync status.
         this._isSynced = false;
@@ -221,10 +221,10 @@ export default class Account {
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet`,
-            data: `{"wallet":${this._wallet.serialize(true)}}`,
+            // Little endian otherwise EC point encoding error in relayer
+            data: `{"wallet":${this._wallet.serialize(false)}}`,
             validateStatus: () => true,
         };
-        console.log("🚀 ~ Account ~ _createNewWallet ~ request:", request.data);
         let response;
         try {
             response = await this._transmitHttpRequest(request, true);

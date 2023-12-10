@@ -5,6 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
+import loadPoseidon2 from "renegade-fi-poseidon2";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { oldExchangeHealthStatesSchema, parseExchangeHealthStates, } from "./types/schema";
@@ -85,6 +86,8 @@ export default class Renegade {
         this._ws = new RenegadeWs(this.relayerWsUrl, this._verbose);
         this._registeredAccounts = {};
         this._isTornDown = false;
+        // Load the Poseidon2 wasm module into memory
+        loadPoseidon2();
     }
     /**
      * Construct a URL from the given parameters.

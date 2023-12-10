@@ -1,14 +1,12 @@
-import * as ed from "@noble/ed25519";
-import * as secp from "@noble/secp256k1";
-import { sha512 } from "@noble/hashes/sha512";
 import { sha256 } from "@noble/hashes/sha256";
+import * as secp from "@noble/secp256k1";
 import * as crypto from "crypto";
 import * as fs from "fs";
-// https://doc.dalek.rs/curve25519_dalek/constants/constant.BASEPOINT_ORDER.html
-export const BASEPOINT_ORDER = BigInt(2) ** BigInt(252) + BigInt("0x14def9dea2f79cd65812631a5cf5d3ed");
-// Allow for synchronous ed25519 signing. See:
-// https://github.com/paulmillr/noble-ed25519/blob/main/README.md
-ed.utils.sha512Sync = (...m) => sha512(ed.utils.concatBytes(...m));
+// TODO: Use for bigints throughout keychain
+import { F } from "../utils/field";
+import { bigIntToUint8Array, uint8ArrayToBigInt } from "./utils";
+// Allow for synchronous secp256 signing. See:
+// https://github.com/paulmillr/noble-secp256k1/blob/main/README.md
 secp.etc.hmacSha256Sync = (...m) => sha256(secp.etc.concatBytes(...m));
 const SIG_VALIDITY_WINDOW_MS = 10000;
 class SigningKey {
@@ -17,14 +15,14 @@ class SigningKey {
             throw new Error("SigningKey secretKey must be 32 bytes.");
         }
         this.secretKey = secretKey;
-        this.publicKey = ed.sync.getPublicKey(secretKey);
-        // this.publicKey = secp.getPublicKey(secretKey);
+        this.publicKey = secp.getPublicKey(secretKey);
+        const point = secp.ProjectivePoint.fromHex(this.publicKey);
+        this.x = point.x;
+        this.y = point.y;
     }
     // TODO: Test this
     signMessage(message) {
-        // const prehash = ed.utils.sha512Sync(message);
         const prehash = secp.etc.hmacSha256Sync(message);
-        // return ed.sync.signWithContext(prehash, this.secretKey);
         return secp.sign(prehash, this.secretKey).toCompactRawBytes();
     }
 }
@@ -34,13 +32,11 @@ class IdentificationKey {
             throw new Error("IdentificationKey secretKey must be 32 bytes.");
         }
         this.secretKey = secretKey;
-        // TODO: Turn this into a Pedersen hash.
-        // const secretKeyHash = ed.utils.sha512Sync(this.secretKey);
+        // TODO: Turn this into a Poseidon2 hash.
+        // TODO: Simply use sha256 to hash
         const secretKeyHash = secp.etc.hmacSha256Sync(this.secretKey);
-        // const secretKeyHash = sha256(this.secretKey);
-        const publicKey = BigInt("0x" + Buffer.from(secretKeyHash).toString("hex")) %
-            BASEPOINT_ORDER;
-        this.publicKey = new Uint8Array(Buffer.from(publicKey.toString(16), "hex"));
+        const publicKey = F.e(uint8ArrayToBigInt(secretKeyHash));
+        this.publicKey = bigIntToUint8Array(publicKey);
     }
 }
 /**
@@ -66,10 +62,6 @@ class Keychain {
         // Extract skRoot from the inputs
         let skRoot;
         if (options.seed) {
-            // skRoot = ed.utils
-            //   .sha512Sync(Buffer.from(options.seed, "ascii"))
-            //   .slice(32);
-            // skRoot = sha256(Buffer.from(options.seed, "ascii")).slice(32);
             skRoot = secp.etc.hmacSha256Sync(Buffer.from(options.seed, "ascii"));
         }
         else if (options.filePath) {
@@ -96,15 +88,10 @@ class Keychain {
         const root = new SigningKey(skRoot);
         // Derive the match key.
         const rootSignatureBytes = root.signMessage(Buffer.from(Keychain.CREATE_SK_MATCH_MESSAGE));
-        // const skMatch = ed.utils.sha512Sync(rootSignatureBytes).slice(32);
         const skMatch = secp.etc.hmacSha256Sync(rootSignatureBytes);
         const match = new IdentificationKey(skMatch);
-        // Derive the settle key.
-        // const skSettle = ed.utils.sha512Sync(match.secretKey).slice(32);
-        const skSettle = secp.etc.hmacSha256Sync(match.secretKey);
-        const settle = new SigningKey(skSettle);
         // Save the key hierarchy.
-        this.keyHierarchy = { root, match, settle };
+        this.keyHierarchy = { root, match };
     }
     /**
      * Sign a data buffer (concretely, a request's body) with an expiring
@@ -141,7 +128,7 @@ class Keychain {
         this.keyHierarchy = keychainDeserialized.keyHierarchy;
     }
     /**
-     * Serialize the keychain to a string. Note that @noble/ed25519 uses little
+     * Serialize the keychain to a string. Note that @noble/secp256k1 uses little
      * endian byte order for all EC points, so we reverse the byte order for big
      * endian encodings.
      *
@@ -153,13 +140,11 @@ class Keychain {
         return `{
       "public_keys": {
         "pk_root": "0x${orderBytes(Buffer.from(this.keyHierarchy.root.publicKey)).toString("hex")}",
-        "pk_match": "0x${orderBytes(Buffer.from(this.keyHierarchy.match.publicKey)).toString("hex")}",
-        "pk_settle": "0x${orderBytes(Buffer.from(this.keyHierarchy.settle.publicKey)).toString("hex")}"
+        "pk_match": "0x${orderBytes(Buffer.from(this.keyHierarchy.match.publicKey)).toString("hex")}"
       },
-      "secret_keys": {
+      "private_keys": {
         "sk_root": "0x${orderBytes(Buffer.from(this.keyHierarchy.root.secretKey)).toString("hex")}",
-        "sk_match": "0x${orderBytes(Buffer.from(this.keyHierarchy.match.secretKey)).toString("hex")}",
-        "sk_settle": "0x${orderBytes(Buffer.from(this.keyHierarchy.settle.secretKey)).toString("hex")}"
+        "sk_match": "0x${orderBytes(Buffer.from(this.keyHierarchy.match.secretKey)).toString("hex")}"
       }
     }`.replace(/[\s\n]/g, "");
     }

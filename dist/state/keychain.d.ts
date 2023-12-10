@@ -1,8 +1,9 @@
 /// <reference types="node" />
-export declare const BASEPOINT_ORDER: bigint;
 declare class SigningKey {
     secretKey: Uint8Array;
     publicKey: Uint8Array;
+    x: bigint;
+    y: bigint;
     constructor(secretKey: Uint8Array);
     signMessage(message: Uint8Array): Uint8Array;
 }
@@ -18,7 +19,6 @@ declare class IdentificationKey {
 interface KeyHierarchy {
     root: SigningKey;
     match: IdentificationKey;
-    settle: SigningKey;
 }
 /**
  * Options for creating a Keychain. If all options are undefined, then a random
@@ -73,7 +73,7 @@ export default class Keychain {
      */
     private loadFromFile;
     /**
-     * Serialize the keychain to a string. Note that @noble/ed25519 uses little
+     * Serialize the keychain to a string. Note that @noble/secp256k1 uses little
      * endian byte order for all EC points, so we reverse the byte order for big
      * endian encodings.
      *
