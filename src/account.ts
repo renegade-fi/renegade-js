@@ -2,15 +2,15 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
-import { BASEPOINT_ORDER } from "./state/keychain";
 import {
-  bigIntToLimbsLE,
-  findZeroOrders,
   RENEGADE_AUTH_EXPIRATION_HEADER,
   RENEGADE_AUTH_HEADER,
+  bigIntToLimbsLE,
+  findZeroOrders,
 } from "./state/utils";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
 import { RenegadeWs, TaskJob } from "./utils";
+import { F } from "./utils/field";
 
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -96,7 +96,7 @@ export default class Account {
       orders: [],
       fees: [],
       keychain: keychain || this._wallet.keychain,
-      blinder: blinder % BASEPOINT_ORDER,
+      blinder: F.e(blinder),
     });
 
     // Reset the sync status.
@@ -174,7 +174,6 @@ export default class Account {
       return ["DONE" as TaskId, Promise.resolve()];
     } else {
       // The Wallet is not present in on-chain state, so we need to create it.
-      console.log("Creating new wallet.");
       taskId = await this._createNewWallet();
       const taskPromise = new RenegadeWs(this._relayerWsUrl, this._verbose)
         .awaitTaskCompletion(taskId)
@@ -263,19 +262,17 @@ export default class Account {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet`,
-      data: `{"wallet":${this._wallet.serialize(true)}}`,
+      // Little endian otherwise EC point encoding error in relayer
+      data: `{"wallet":${this._wallet.serialize(false)}}`,
       validateStatus: () => true,
     };
-    console.log("🚀 ~ Account ~ _createNewWallet ~ request:", request.data);
     let response;
     try {
       response = await this._transmitHttpRequest(request, true);
     } catch (e) {
-      console.log("🚀 ~ Account ~ _createNewWallet ~ e:", e);
       throw new RenegadeError(RenegadeErrorType.RelayerError);
     }
     if (response.status !== 200) {
-      console.log("🚀 ~ Account ~ _createNewWallet ~ response:", response);
       throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
     }
     return response.data.task_id;

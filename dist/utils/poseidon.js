@@ -8,7 +8,7 @@ const SPONGE_INPUTS = 16;
 const SPONGE_CHUNK_SIZE = 31;
 const pow5 = (a) => F.mul(a, F.square(F.square(a, a)));
 // circomlibjs Poseidon bn128
-class Poseidon {
+export class Poseidon {
     static hash(inputs) {
         if (!(inputs.length > 0 && inputs.length <= N_ROUNDS_P.length)) {
             throw new Error("Invalid inputs");
@@ -127,5 +127,4 @@ class Poseidon {
     }
 }
 Poseidon.F = F;
-export { Poseidon };
 export const poseidon = Poseidon;

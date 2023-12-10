@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 
+import loadPoseidon2 from "renegade-fi-poseidon2";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import {
@@ -140,6 +141,9 @@ export default class Renegade
     this._ws = new RenegadeWs(this.relayerWsUrl, this._verbose);
     this._registeredAccounts = {} as Record<AccountId, Account>;
     this._isTornDown = false;
+
+    // Load the Poseidon2 wasm module into memory
+    loadPoseidon2();
   }
 
   /**
