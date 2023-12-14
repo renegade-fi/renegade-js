@@ -5,11 +5,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
-import loadPoseidon2 from "renegade-fi-poseidon2";
+import loadPoseidon2 from "../dist/poseidon2";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { oldExchangeHealthStatesSchema, parseExchangeHealthStates, } from "./types/schema";
-import { RenegadeWs, unimplemented, createZodFetcher, } from "./utils";
+import { RenegadeWs, createZodFetcher, unimplemented, } from "./utils";
 /**
  * A decorator that asserts that the relayer has not been torn down.
  *

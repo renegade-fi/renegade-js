@@ -17,7 +17,8 @@
   "type": "module",
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "build": "tsc",
+    "build": "yarn run build-rust && tsc",
+    "build-rust": "cd poseidon2 && ./build.sh",
     "prettier": "prettier --write {__tests__,src}/ --config ./.prettierrc",
     "eslint": "eslint {__tests__,src}/ --fix --config ./.eslintrc.cjs",
     "lint": "npm run prettier && npm run eslint"

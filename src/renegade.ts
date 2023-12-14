@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 
-import loadPoseidon2 from "renegade-fi-poseidon2";
+import loadPoseidon2 from "../dist/poseidon2";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import {
@@ -30,8 +30,8 @@ import {
   Priority,
   RenegadeWs,
   TaskJob,
-  unimplemented,
   createZodFetcher,
+  unimplemented,
 } from "./utils";
 
 /**

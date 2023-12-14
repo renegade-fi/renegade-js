@@ -139,7 +139,6 @@ export default class Account {
         }
         else {
             // The Wallet is not present in on-chain state, so we need to create it.
-            console.log("Creating new wallet.");
             taskId = await this._createNewWallet();
             const taskPromise = new RenegadeWs(this._relayerWsUrl, this._verbose)
                 .awaitTaskCompletion(taskId)
@@ -230,11 +229,9 @@ export default class Account {
             response = await this._transmitHttpRequest(request, true);
         }
         catch (e) {
-            console.log("🚀 ~ Account ~ _createNewWallet ~ e:", e);
             throw new RenegadeError(RenegadeErrorType.RelayerError);
         }
         if (response.status !== 200) {
-            console.log("🚀 ~ Account ~ _createNewWallet ~ response:", response);
             throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
         }
         return response.data.task_id;
