@@ -1,5 +1,5 @@
 import keccak256 from "keccak256";
-import { compute_poseidon_hash } from "renegade-fi-poseidon2";
+import { compute_poseidon_hash } from "../../dist/poseidon2";
 import * as uuid from "uuid";
 import { OrderId } from "../types";
 import { F } from "../utils/field";
