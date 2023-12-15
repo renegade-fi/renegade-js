@@ -1,6 +1,6 @@
-import keccak256 from "keccak256";
 import * as uuid from "uuid";
 
+import { sha256 } from "@noble/hashes/sha256";
 import { Keychain, Renegade } from "../src";
 import { globalKeychain, renegadeConfig } from "./utils";
 
@@ -26,9 +26,9 @@ describe("Populating Accounts", () => {
       const accountId = renegade.registerAccount(keychain);
       await renegade.initializeAccount(accountId);
 
-      // Assert that accountId = uuidV4(keccak256(pk_root)[-16:])
-      const publicKeyHash = new Uint8Array(
-        keccak256(Buffer.from(keychain.keyHierarchy.root.publicKey.buffer)),
+      // Assert that accountId = uuidV4(sha256(pk_root)[-16:])
+      const publicKeyHash = sha256(
+        Buffer.from(keychain.keyHierarchy.root.publicKey.buffer),
       );
       expect(accountId).toEqual(uuid.v4({ random: publicKeyHash.slice(-16) }));
 

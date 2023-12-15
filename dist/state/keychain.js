@@ -1,7 +1,7 @@
 import { sha256 } from "@noble/hashes/sha256";
 import * as secp from "@noble/secp256k1";
-import * as crypto from "crypto";
-import * as fs from "fs";
+import { randomBytes } from "crypto";
+import { readFileSync, writeFileSync } from "fs";
 // TODO: Use for bigints throughout keychain
 import { F } from "../utils/field";
 import { bigIntToUint8Array, uint8ArrayToBigInt } from "./utils";
@@ -75,7 +75,7 @@ class Keychain {
             skRoot = options.skRoot;
         }
         else {
-            skRoot = crypto.randomBytes(32);
+            skRoot = randomBytes(32);
         }
         // Populate the hierarchy.
         this.populateHierarchy(skRoot);
@@ -115,7 +115,7 @@ class Keychain {
      * @param filePath File path to save the keychain to.
      */
     saveToFile(filePath) {
-        fs.writeFileSync(filePath, this.serialize());
+        writeFileSync(filePath, this.serialize());
     }
     /**
      * Load the keychain from a file.
@@ -123,7 +123,7 @@ class Keychain {
      * @param filePath File path to load the keychain from.
      */
     loadFromFile(filePath) {
-        const keychainSerialized = fs.readFileSync(filePath, "utf8");
+        const keychainSerialized = readFileSync(filePath, "utf8");
         const keychainDeserialized = Keychain.deserialize(JSON.parse(keychainSerialized));
         this.keyHierarchy = keychainDeserialized.keyHierarchy;
     }
