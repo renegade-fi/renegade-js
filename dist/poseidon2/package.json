@@ -1,0 +1,15 @@
+{
+  "name": "poseidon2",
+  "description": "Poseidon2 hash function implementation from renegade-crypto",
+  "version": "0.1.10",
+  "files": [
+    "index_bg.wasm",
+    "index.js",
+    "index.d.ts"
+  ],
+  "module": "index.js",
+  "types": "index.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
