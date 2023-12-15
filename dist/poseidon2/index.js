@@ -109,7 +109,7 @@ function takeObject(idx) {
 * @returns {bigint}
 */
 export function compute_poseidon_hash(value) {
-    const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const ptr0 = passStringToWasm0(value, wasm.__wbindgen_export_0, wasm.__wbindgen_export_1);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.compute_poseidon_hash(ptr0, len0);
     return takeObject(ret);

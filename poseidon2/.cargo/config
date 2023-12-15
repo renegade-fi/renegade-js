@@ -1,0 +1,6 @@
+[target.wasm32-unknown-unknown]
+rustflags = [
+  "-C", "link-arg=-zstack-size=32768",
+  "-C", "inline-threshold=0",
+  "-Z", "location-detail=none",
+]
