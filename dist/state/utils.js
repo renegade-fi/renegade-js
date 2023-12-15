@@ -1,11 +1,11 @@
-import keccak256 from "keccak256";
-import { compute_poseidon_hash } from "../../dist/poseidon2";
+import { sha256 } from "@noble/hashes/sha256";
 import * as uuid from "uuid";
+import { compute_poseidon_hash } from "../../dist/poseidon2";
 import { F } from "../utils/field";
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
 export function generateId(data) {
-    const dataHash = new Uint8Array(keccak256(data));
+    const dataHash = sha256(data);
     return uuid.v4({ random: dataHash.slice(-16) });
 }
 export function bigIntToLimbsLE(number, bitsPerLimb, numLimbs) {
