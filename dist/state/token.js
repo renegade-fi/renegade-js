@@ -66,6 +66,7 @@ for (const addr in KATANA_ADDR_TO_TICKER) {
     KATANA_TICKER_TO_ADDR[KATANA_ADDR_TO_TICKER[addr]] = addr;
 }
 export default class Token {
+    address;
     /**
      * Create a new Token from either the ERC-20 address or ticker symbol.
      *

@@ -27,8 +27,18 @@ const SHARES_PER_WALLET = MAX_BALANCES * SHARES_PER_BALANCE +
     SHARES_PER_KEYCHAIN +
     SHARES_PER_BLINDER;
 export default class Wallet {
+    walletId;
+    balances;
+    orders;
+    fees;
+    keychain;
+    blinder;
+    publicBlinder;
+    privateBlinder;
+    blindedPublicShares;
+    privateShares;
+    updateLocked = false;
     constructor(params) {
-        this.updateLocked = false;
         this.walletId =
             params.id ||
                 generateId(Buffer.from(params.keychain.keyHierarchy.root.publicKey.buffer));

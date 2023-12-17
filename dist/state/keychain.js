@@ -8,8 +8,14 @@ import { bigIntToUint8Array, uint8ArrayToBigInt } from "./utils";
 // Allow for synchronous secp256 signing. See:
 // https://github.com/paulmillr/noble-secp256k1/blob/main/README.md
 secp.etc.hmacSha256Sync = (...m) => sha256(secp.etc.concatBytes(...m));
-const SIG_VALIDITY_WINDOW_MS = 10000;
+const SIG_VALIDITY_WINDOW_MS = 10_000;
 class SigningKey {
+    secretKey;
+    publicKey;
+    // Affine x coordinate of the public key
+    x;
+    // Affine y coordinate of the public key
+    y;
     constructor(secretKey) {
         if (secretKey.length !== 32) {
             throw new Error("SigningKey secretKey must be 32 bytes.");
@@ -27,6 +33,8 @@ class SigningKey {
     }
 }
 class IdentificationKey {
+    secretKey;
+    publicKey;
     constructor(secretKey) {
         if (secretKey.length !== 32) {
             throw new Error("IdentificationKey secretKey must be 32 bytes.");
@@ -42,7 +50,16 @@ class IdentificationKey {
 /**
  * The Keychain stores the entire KeyHierarchy for a Renegade Account.
  */
-class Keychain {
+export default class Keychain {
+    static CREATE_SK_ROOT_MESSAGE = "Unlock your Renegade account.\nTestnet v0";
+    static CREATE_SK_MATCH_MESSAGE = "Unlock your Renegade match key.\nTestnet v0";
+    /**
+     * The full renegade key hierarchy, including root, match, and settle
+     * keypairs. Note that the Keychain class always contains all three secret
+     * keys; for delegation to non-super-relayers, we support delegation without
+     * sk_root.
+     */
+    keyHierarchy;
     /**
      * Create a new Keychain.
      *
@@ -156,6 +173,3 @@ class Keychain {
         return new Keychain({ skRoot: asBigEndian ? skRoot.reverse() : skRoot });
     }
 }
-Keychain.CREATE_SK_ROOT_MESSAGE = "Unlock your Renegade account.\nTestnet v0";
-Keychain.CREATE_SK_MATCH_MESSAGE = "Unlock your Renegade match key.\nTestnet v0";
-export default Keychain;

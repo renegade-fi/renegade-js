@@ -29,6 +29,23 @@ function assertNotTornDown(_target, _propertyKey, descriptor) {
  * relayer.
  */
 export default class Renegade {
+    // --------------------------
+    // | State and Constructors |
+    // --------------------------
+    // Fully-qualified URL of the relayer HTTP API.
+    relayerHttpUrl;
+    // Fully-qualified URL of the relayer WebSocket API.
+    relayerWsUrl;
+    // Print verbose output.
+    _verbose;
+    // Number of milliseconds to sleep before returning from any task.
+    _taskDelay;
+    // The WebSocket connection to the relayer.
+    _ws;
+    // All Accounts that have been registered with the Renegade object.
+    _registeredAccounts;
+    // If true, the relayer has been torn down and is no longer usable.
+    _isTornDown;
     /**
      * Construct a new Renegade object.
      *
@@ -38,37 +55,6 @@ export default class Renegade {
      * @throws {InvalidPort} If the port is not a valid port.
      */
     constructor(config) {
-        // ---------------------------------
-        // | Task-Based API Implementation |
-        // ---------------------------------
-        /**
-         * The `task` object contains a subset of the Renegade API that contain
-         * long-running tasks to be performed by the relayer. Instead of awaiting
-         * entire task completion, these alternative implementations allow the caller
-         * to directly receive the TaskId, and later await the task as appropriate.
-         *
-         * This is useful for user-focused integrations, where we want to expose
-         * taskIds directly to the frontend, and allow the frontend to stream task
-         * events.
-         */
-        this.task = {
-            initializeAccount: async (...args) => await this._initializeAccountTaskJob(...args),
-            deposit: async (...args) => await this._depositTaskJob(...args),
-            withdraw: async (...args) => await this._withdrawTaskJob(...args),
-            placeOrder: async (...args) => await this._placeOrderTaskJob(...args),
-            modifyOrder: async (...args) => await this._modifyOrderTaskJob(...args),
-            modifyOrPlaceOrder: async (...args) => await this._modifyOrPlaceOrderTaskJob(...args),
-            cancelOrder: async (...args) => await this._cancelOrderTaskJob(...args),
-            // approveFee: async (
-            //   ...args: Parameters<typeof this._approveFeeTaskJob>
-            // ) => await this._approveFeeTaskJob(...args),
-            // modifyFee: async (
-            //   ...args: Parameters<typeof this._modifyFeeTaskJob>
-            // ) => await this._modifyFeeTaskJob(...args),
-            // revokeFee: async (
-            //   ...args: Parameters<typeof this._revokeFeeTaskJob>
-            // ) => await this._revokeFeeTaskJob(...args),
-        };
         // Set defaults, if not provided.
         config.relayerHttpPort =
             config.relayerHttpPort !== undefined ? config.relayerHttpPort : 3000;
@@ -359,6 +345,37 @@ export default class Renegade {
     async releaseCallback(callbackId) {
         await this._ws.releaseCallback(callbackId);
     }
+    // ---------------------------------
+    // | Task-Based API Implementation |
+    // ---------------------------------
+    /**
+     * The `task` object contains a subset of the Renegade API that contain
+     * long-running tasks to be performed by the relayer. Instead of awaiting
+     * entire task completion, these alternative implementations allow the caller
+     * to directly receive the TaskId, and later await the task as appropriate.
+     *
+     * This is useful for user-focused integrations, where we want to expose
+     * taskIds directly to the frontend, and allow the frontend to stream task
+     * events.
+     */
+    task = {
+        initializeAccount: async (...args) => await this._initializeAccountTaskJob(...args),
+        deposit: async (...args) => await this._depositTaskJob(...args),
+        withdraw: async (...args) => await this._withdrawTaskJob(...args),
+        placeOrder: async (...args) => await this._placeOrderTaskJob(...args),
+        modifyOrder: async (...args) => await this._modifyOrderTaskJob(...args),
+        modifyOrPlaceOrder: async (...args) => await this._modifyOrPlaceOrderTaskJob(...args),
+        cancelOrder: async (...args) => await this._cancelOrderTaskJob(...args),
+        // approveFee: async (
+        //   ...args: Parameters<typeof this._approveFeeTaskJob>
+        // ) => await this._approveFeeTaskJob(...args),
+        // modifyFee: async (
+        //   ...args: Parameters<typeof this._modifyFeeTaskJob>
+        // ) => await this._modifyFeeTaskJob(...args),
+        // revokeFee: async (
+        //   ...args: Parameters<typeof this._revokeFeeTaskJob>
+        // ) => await this._revokeFeeTaskJob(...args),
+    };
 }
 __decorate([
     assertNotTornDown
