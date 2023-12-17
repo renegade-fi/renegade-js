@@ -1,6 +1,9 @@
 import * as uuid from "uuid";
 import Token from "./token";
 export default class Balance {
+    balanceId;
+    mint;
+    amount;
     constructor(params) {
         this.balanceId = uuid.v4();
         this.mint = params.mint;

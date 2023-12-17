@@ -6,6 +6,15 @@ import { bigIntToLimbsLE, limbsToBigIntLE } from "./utils";
 // overflows large price values.
 const MAX_PRICE = 2 ** 20;
 export default class Order {
+    orderId;
+    baseToken;
+    quoteToken;
+    side;
+    type;
+    amount;
+    minimumAmount;
+    worstPrice;
+    timestamp;
     constructor(params) {
         if (params.type === "bidirectional") {
             throw new Error("Bidirectional LP orders are not yet supported.");

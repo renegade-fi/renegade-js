@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "outDir": "./dist/",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": "./",
+    "paths": { 
+      "@/*": ["src/*"]
+    },
     "declaration": true,
-    "lib": [
-      "es2020",
-      "dom"
-    ],
-    "target": "es2020",
-    "module": "es6",
+    "lib": ["ESNext", "dom"],
+    "module": "esnext",
+    "target": "esnext",
     "esModuleInterop": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,

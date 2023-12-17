@@ -7,6 +7,16 @@ export function unimplemented() {
     throw new Error("unimplemented");
 }
 export class RenegadeWs {
+    // The WebSocket itself.
+    _ws;
+    // If true, the WebSocket has sent an error event.
+    _wsError;
+    // For each topic, contains a list of callbackIds to send messages to.
+    _topicListeners;
+    // Lookup from callbackId to actual callback function.
+    _topicCallbacks;
+    // Print verbose output.
+    _verbose;
     constructor(relayerWsUrl, verbose) {
         this._ws = new WebSocket(relayerWsUrl);
         this._wsError = false;

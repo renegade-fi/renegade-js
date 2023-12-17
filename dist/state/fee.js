@@ -2,6 +2,11 @@ import * as uuid from "uuid";
 import Token from "./token";
 import { bigIntToLimbsLE } from "./utils";
 export default class Fee {
+    feeId;
+    recipientKey;
+    gasMint;
+    gasAmount;
+    percentageFee;
     constructor(params) {
         this.feeId = uuid.v4();
         this.recipientKey = params.recipientKey;

@@ -42,6 +42,18 @@ function assertSynced(_target, _propertyKey, descriptor) {
  * including streaming Wallet events in real-time from the relayer.
  */
 export default class Account {
+    // Fully-qualified URL of the relayer HTTP API.
+    _relayerHttpUrl;
+    // Fully-qualified URL of the relayer WebSocket API.
+    _relayerWsUrl;
+    // Print verbose output.
+    _verbose;
+    // The WebSocket connection to the relayer.
+    _ws;
+    // The current Wallet state.
+    _wallet;
+    // Has this Account been synced to the relayer?
+    _isSynced;
     constructor(keychain, relayerHttpUrl, relayerWsUrl, verbose) {
         this._relayerHttpUrl = relayerHttpUrl;
         this._relayerWsUrl = relayerWsUrl;
