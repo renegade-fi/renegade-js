@@ -5,7 +5,7 @@ declare class SigningKey {
     x: bigint;
     y: bigint;
     constructor(secretKey: Uint8Array);
-    signMessage(message: Uint8Array): Uint8Array;
+    signMessage(message: string): string;
 }
 declare class IdentificationKey {
     secretKey: Uint8Array;
@@ -59,7 +59,7 @@ export default class Keychain {
      * @returns A tuple consisting of an expiring signature and an expiration
      * timestamp, to be appended as headers to the request.
      */
-    generateExpiringSignature(dataBuffer: Buffer): [number[], number];
+    generateExpiringSignature(dataBuffer: Buffer): [string, number];
     /**
      * Save the keychain to a file.
      *

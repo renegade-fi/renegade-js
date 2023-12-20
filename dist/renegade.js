@@ -6,6 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 import axios from "axios";
 import loadPoseidon2 from "../dist/poseidon2";
+import loadSignature from "../dist/secp256k1";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { oldExchangeHealthStatesSchema, parseExchangeHealthStates, } from "./types/schema";
@@ -74,6 +75,8 @@ export default class Renegade {
         this._isTornDown = false;
         // Load the Poseidon2 wasm module into memory
         loadPoseidon2();
+        // Load the Signature wasm module into memory
+        loadSignature();
     }
     /**
      * Construct a URL from the given parameters.
@@ -243,8 +246,11 @@ export default class Renegade {
         return await taskJob;
     }
     async _depositTaskJob(accountId, mint, amount) {
+        console.log("in _depositTaskJob");
         const account = this._lookupAccount(accountId);
+        console.log("🚀 ~ account:", account);
         const taskId = await account.deposit(mint, amount);
+        console.log("🚀 ~ taskId:", taskId);
         return [taskId, this.awaitTaskCompletion(taskId)];
     }
     async withdraw(accountId, mint, amount) {

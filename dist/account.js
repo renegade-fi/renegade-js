@@ -7,9 +7,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import axios from "axios";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
-import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, } from "./state/utils";
+import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, uint8ArrayToBigInt, } from "./state/utils";
 import { RenegadeWs } from "./utils";
 import { F } from "./utils/field";
+import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, } from "./utils/sign";
+import { sign_http_request } from "../dist/secp256k1";
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
  * Wallet is now managed by the relayer and wallet update events are actively
@@ -100,12 +102,33 @@ export default class Account {
      */
     async _transmitHttpRequest(request, isAuthenticated) {
         if (isAuthenticated) {
-            const messageBuffer = request.data
-                ? Buffer.from(request.data.toString(), "ascii")
-                : Buffer.alloc(0);
-            const [renegadeAuth, renegadeAuthExpiration] = this._wallet.keychain.generateExpiringSignature(messageBuffer);
+            console.log("retrieved sk root: ", uint8ArrayToBigInt(this._wallet.keychain.keyHierarchy.root.secretKey).toString(16));
+            // TODO: Fix body encoding
+            console.log("request body: ", request.data);
+            const messageBuffer = request.data ?? "";
+            // const messageBuffer = request.data
+            //   ? Buffer.from(request.data.toString())
+            //   : Buffer.alloc(0);
+            const sk_root = Buffer.from(this.keychain.keyHierarchy.root.secretKey).toString("hex");
+            // TODO: SK ROOT IS DIFFERENT
+            console.log("🚀 ~ Account ~ sk_root:", sk_root);
+            const now = Date.now();
+            const validUntil = now + 10000;
+            const validUntilBuffer = Buffer.alloc(8);
+            validUntilBuffer.writeUInt32LE(validUntil % 2 ** 32, 0);
+            validUntilBuffer.writeUInt32LE(Math.floor(validUntil / 2 ** 32), 4);
+            const messageHex = Buffer.concat([
+                request.data ? Buffer.from(request.data) : Buffer.alloc(0),
+                validUntilBuffer,
+            ]).toString("hex");
+            console.log("🚀 ~ Account ~ messageHex:", messageHex);
+            // const renegadeAuth = hex_to_b64(sign_message(messageHex, sk_root));
+            const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(messageBuffer, BigInt(now), sk_root);
+            // const renegadeAuthExpiration = BigInt(validUntil).toString();
+            console.log("🚀 ~ Account ~ renegadeAuth:", renegadeAuth);
+            console.log("🚀 ~ Account ~ renegadeAuthExpiration:", renegadeAuthExpiration);
             request.headers = request.headers || {};
-            request.headers[RENEGADE_AUTH_HEADER] = JSON.stringify(renegadeAuth);
+            request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
             request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
         }
         return await axios.request(request);
@@ -185,6 +208,7 @@ export default class Account {
      * if it does not.
      */
     async _queryRelayerForWallet() {
+        console.log("Request: GET wallet");
         const request = {
             method: "GET",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`,
@@ -195,10 +219,12 @@ export default class Account {
             response = await this._transmitHttpRequest(request, true);
         }
         catch (e) {
+            console.log("🚀 ~ Account ~ _queryRelayerForWallet ~ e:", e);
             return undefined;
         }
         if (response.status === 200) {
-            return Wallet.deserialize(response.data.wallet, true);
+            console.log("🚀 ~ Account ~ _queryRelayerForWallet ~ response.data.wallet:", response.data.wallet);
+            return Wallet.deserialize(response.data.wallet, false);
         }
         else {
             return undefined;
@@ -238,9 +264,10 @@ export default class Account {
         };
         let response;
         try {
-            response = await this._transmitHttpRequest(request, true);
+            response = await this._transmitHttpRequest(request, false);
         }
         catch (e) {
+            console.error("Error creating wallet: ", e);
             throw new RenegadeError(RenegadeErrorType.RelayerError);
         }
         if (response.status !== 200) {
@@ -260,14 +287,17 @@ export default class Account {
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
-            data: `{"public_var_sig":[],"from_addr":"0x0","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(amount).join(",")}]}`,
+            // TODO: Type task request and stringify
+            data: `{"public_var_sig":[],"from_addr":"0x3f1eae7d46d88f08fc2f8ed27fcb2ab183eb2d0e","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(amount).join(",")}],"statement_sig":${signWalletDeposit(this._wallet, mint, amount)}}`,
             validateStatus: () => true,
         };
+        console.log("🚀 ~ Account ~ deposit ~ request:", request);
         let response;
         try {
             response = await this._transmitHttpRequest(request, true);
         }
         catch (e) {
+            console.error("Error depositing", e);
             throw new RenegadeError(RenegadeErrorType.RelayerError);
         }
         if (response.status !== 200) {
@@ -287,7 +317,7 @@ export default class Account {
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/${mint.serialize()}/withdraw`,
-            data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbsLE(amount).join(",")}]}`,
+            data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbsLE(amount).join(",")},"statement_sig":"${signWalletWithdraw(this._wallet, mint, amount)}"]}`,
             validateStatus: () => true,
         };
         let response;
@@ -314,7 +344,7 @@ export default class Account {
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders`,
-            data: `{"public_var_sig":[],"order":${order.serialize()}}`,
+            data: `{"public_var_sig":[],"order":${order.serialize()},"statement_sig":"${signWalletPlaceOrder(this._wallet, order)}"}`,
             validateStatus: () => true,
         };
         let response;
@@ -342,7 +372,7 @@ export default class Account {
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}/update`,
-            data: `{"public_var_sig":[],"order":${newOrder.serialize()}}`,
+            data: `{"public_var_sig":[],"order":${newOrder.serialize()},"statement_sig":"${signWalletModifyOrder(this._wallet, oldOrderId, newOrder)}"}`,
             validateStatus: () => true,
         };
         let response;
@@ -384,6 +414,7 @@ export default class Account {
             });
         }
     }
+    // TODO: Does cancelling an order require a signature of the wallet shares after the order is removed?
     /**
      * Cancel an outstanding order.
      *
@@ -396,6 +427,7 @@ export default class Account {
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${orderId}/cancel`,
+            data: `{"statement_sig":"${signWalletCancelOrder(this._wallet, orderId)}"}`,
             validateStatus: () => true,
         };
         let response;

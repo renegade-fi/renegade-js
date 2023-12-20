@@ -1,0 +1,17 @@
+[package]
+name = "secp256k1"
+description = "secp256k1"
+version = "0.1.1"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+base64 = "0.21"
+getrandom = { version = "0.2", features = ["js"] }
+hex = "0.4.3"
+k256 = { version = "0.13", features = ["expose-field"] }
+num-bigint = "0.4"
+num-traits = "0.2"
+wasm-bindgen = "0.2"
