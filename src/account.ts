@@ -12,6 +12,7 @@ import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
 import { RenegadeWs, TaskJob } from "./utils";
 import { F } from "./utils/field";
 import {
+  signWalletCancelOrder,
   signWalletDeposit,
   signWalletModifyOrder,
   signWalletPlaceOrder,
@@ -461,6 +462,10 @@ export default class Account {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${orderId}/cancel`,
+      data: `{"statement_sig:"${signWalletCancelOrder(
+        this._wallet,
+        orderId,
+      )}"}`,
       validateStatus: () => true,
     };
     let response;
