@@ -300,7 +300,7 @@ export default class Account {
       // TODO: Type task request and stringify
       data: `{"public_var_sig":[],"from_addr":"0x0","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")}],"wallet_update_signature:"${signWalletDeposit(
+      ).join(",")}],"statement_sig:"${signWalletDeposit(
         this._wallet,
         mint,
         amount,
@@ -336,7 +336,7 @@ export default class Account {
       }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")},"wallet_update_signature:"${signWalletWithdraw(
+      ).join(",")},"statement_sig:"${signWalletWithdraw(
         this._wallet,
         mint,
         amount,
@@ -368,7 +368,7 @@ export default class Account {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders`,
-      data: `{"public_var_sig":[],"order":${order.serialize()},"wallet_update_signature:"${signWalletPlaceOrder(
+      data: `{"public_var_sig":[],"order":${order.serialize()},"statement_sig:"${signWalletPlaceOrder(
         this._wallet,
         order,
       )}"}`,
@@ -400,7 +400,7 @@ export default class Account {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}/update`,
-      data: `{"public_var_sig":[],"order":${newOrder.serialize()},"wallet_update_signature:"${signWalletModifyOrder(
+      data: `{"public_var_sig":[],"order":${newOrder.serialize()},"statement_sig:"${signWalletModifyOrder(
         this._wallet,
         oldOrderId,
         newOrder,
