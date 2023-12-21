@@ -11,6 +11,12 @@ import {
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
 import { RenegadeWs, TaskJob } from "./utils";
 import { F } from "./utils/field";
+import {
+  signWalletDeposit,
+  signWalletModifyOrder,
+  signWalletPlaceOrder,
+  signWalletWithdraw,
+} from "./utils/sign";
 
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -291,9 +297,14 @@ export default class Account {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
+      // TODO: Type task request and stringify
       data: `{"public_var_sig":[],"from_addr":"0x0","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")}]}`,
+      ).join(",")}],"wallet_update_signature:"${signWalletDeposit(
+        this._wallet,
+        mint,
+        amount,
+      )}"}`,
       validateStatus: () => true,
     };
     let response;
@@ -325,7 +336,11 @@ export default class Account {
       }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")}]}`,
+      ).join(",")},"wallet_update_signature:"${signWalletWithdraw(
+        this._wallet,
+        mint,
+        amount,
+      )}"]}`,
       validateStatus: () => true,
     };
     let response;
@@ -353,7 +368,10 @@ export default class Account {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders`,
-      data: `{"public_var_sig":[],"order":${order.serialize()}}`,
+      data: `{"public_var_sig":[],"order":${order.serialize()},"wallet_update_signature:"${signWalletPlaceOrder(
+        this._wallet,
+        order,
+      )}"}`,
       validateStatus: () => true,
     };
     let response;
@@ -382,7 +400,11 @@ export default class Account {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}/update`,
-      data: `{"public_var_sig":[],"order":${newOrder.serialize()}}`,
+      data: `{"public_var_sig":[],"order":${newOrder.serialize()},"wallet_update_signature:"${signWalletModifyOrder(
+        this._wallet,
+        oldOrderId,
+        newOrder,
+      )}"}`,
       validateStatus: () => true,
     };
     let response;
@@ -425,6 +447,7 @@ export default class Account {
     }
   }
 
+  // TODO: Does cancelling an order require a signature of the wallet shares after the order is removed?
   /**
    * Cancel an outstanding order.
    *
