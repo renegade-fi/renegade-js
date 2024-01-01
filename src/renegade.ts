@@ -1,6 +1,7 @@
 import axios, { AxiosRequestConfig } from "axios";
 
 import loadPoseidon2 from "../dist/poseidon2";
+import loadSignature from "../dist/secp256k1";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import {
@@ -144,6 +145,8 @@ export default class Renegade
 
     // Load the Poseidon2 wasm module into memory
     loadPoseidon2();
+    // Load the Signature wasm module into memory
+    loadSignature();
   }
 
   /**
@@ -394,8 +397,11 @@ export default class Renegade
     mint: Token,
     amount: bigint,
   ): TaskJob<void> {
+    console.log("in _depositTaskJob");
     const account = this._lookupAccount(accountId);
+    console.log("🚀 ~ account:", account);
     const taskId = await account.deposit(mint, amount);
+    console.log("🚀 ~ taskId:", taskId);
     return [taskId, this.awaitTaskCompletion(taskId)];
   }
 

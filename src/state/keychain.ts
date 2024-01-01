@@ -2,14 +2,16 @@ import { sha256 } from "@noble/hashes/sha256";
 import * as secp from "@noble/secp256k1";
 import { randomBytes } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
-// TODO: Use for bigints throughout keychain
-import { F } from "../utils/field";
-import { bigIntToUint8Array, uint8ArrayToBigInt } from "./utils";
+import {
+  get_verifying_key,
+  sign_http_request,
+  sign_message,
+} from "../../dist/secp256k1";
+import { bigIntToUint8Array } from "./utils";
 
 // Allow for synchronous secp256 signing. See:
 // https://github.com/paulmillr/noble-secp256k1/blob/main/README.md
 secp.etc.hmacSha256Sync = (...m) => sha256(secp.etc.concatBytes(...m));
-
 const SIG_VALIDITY_WINDOW_MS = 10_000;
 
 class SigningKey {
@@ -32,10 +34,9 @@ class SigningKey {
     this.y = point.y;
   }
 
-  // TODO: Test this
-  signMessage(message: Uint8Array): Uint8Array {
-    const prehash = secp.etc.hmacSha256Sync(message);
-    return secp.sign(prehash, this.secretKey).toCompactRawBytes();
+  signMessage(message: string): string {
+    const skRootHex = Buffer.from(this.secretKey).toString("hex");
+    return sign_message(message, skRootHex);
   }
 }
 
@@ -48,11 +49,16 @@ class IdentificationKey {
       throw new Error("IdentificationKey secretKey must be 32 bytes.");
     }
     this.secretKey = secretKey;
-    // TODO: Turn this into a Poseidon2 hash.
-    // TODO: Simply use sha256 to hash
-    const secretKeyHash = secp.etc.hmacSha256Sync(this.secretKey);
-    const publicKey = F.e(uint8ArrayToBigInt(secretKeyHash));
-    this.publicKey = bigIntToUint8Array(publicKey);
+    // TODO: Use sha256 to hash
+    // const secretKeyHash = sha256(secretKey);
+    // const publicKey = F.e(uint8ArrayToBigInt(secretKeyHash));
+    // this.publicKey = bigIntToUint8Array(publicKey);
+    // this.publicKey = secp.getPublicKey(secretKey);
+    const hexPublicKey = get_verifying_key(
+      Buffer.from(secretKey).toString("hex"),
+    );
+    const bigIntPublicKey = BigInt(`0x${hexPublicKey}`);
+    this.publicKey = bigIntToUint8Array(bigIntPublicKey);
   }
 }
 
@@ -83,8 +89,7 @@ interface KeychainOptions {
  */
 export default class Keychain {
   static CREATE_SK_ROOT_MESSAGE = "Unlock your Renegade account.\nTestnet v0";
-  static CREATE_SK_MATCH_MESSAGE =
-    "Unlock your Renegade match key.\nTestnet v0";
+  static CREATE_SK_MATCH_MESSAGE = "Unlock your Renegade match key.";
 
   /**
    * The full renegade key hierarchy, including root, match, and settle
@@ -113,7 +118,7 @@ export default class Keychain {
     // Extract skRoot from the inputs
     let skRoot: Uint8Array;
     if (options.seed) {
-      skRoot = secp.etc.hmacSha256Sync(Buffer.from(options.seed, "ascii"));
+      skRoot = sha256(Buffer.from(options.seed));
     } else if (options.filePath) {
       this.loadFromFile(options.filePath);
       return;
@@ -133,14 +138,15 @@ export default class Keychain {
    * Given a seed buffer, computes the entire Renegade key hierarchy.
    */
   private populateHierarchy(skRoot: Uint8Array): void {
-    // Deive the root key.
+    // Derive the root key.
     const root = new SigningKey(skRoot);
 
     // Derive the match key.
     const rootSignatureBytes = root.signMessage(
-      Buffer.from(Keychain.CREATE_SK_MATCH_MESSAGE),
+      Keychain.CREATE_SK_MATCH_MESSAGE,
     );
-    const skMatch = secp.etc.hmacSha256Sync(rootSignatureBytes);
+
+    const skMatch = sha256(rootSignatureBytes);
     const match = new IdentificationKey(skMatch);
 
     // Save the key hierarchy.
@@ -154,14 +160,25 @@ export default class Keychain {
    * @returns A tuple consisting of an expiring signature and an expiration
    * timestamp, to be appended as headers to the request.
    */
-  generateExpiringSignature(dataBuffer: Buffer): [number[], number] {
-    const validUntil = Date.now() + SIG_VALIDITY_WINDOW_MS;
+  generateExpiringSignature(dataBuffer: Buffer): [string, number] {
+    const sk_root = Buffer.from(this.keyHierarchy.root.secretKey).toString(
+      "hex",
+    );
+
+    // TODO: Should message be hashed? No.
+    const message = Buffer.from(dataBuffer).toString("hex");
+    const now = Date.now();
+    const validUntil = now + SIG_VALIDITY_WINDOW_MS;
     const validUntilBuffer = Buffer.alloc(8);
     validUntilBuffer.writeUInt32LE(validUntil % 2 ** 32, 0);
     validUntilBuffer.writeUInt32LE(Math.floor(validUntil / 2 ** 32), 4);
-    const message = Buffer.concat([dataBuffer, validUntilBuffer]);
-    const signature = this.keyHierarchy.root.signMessage(message);
-    return [Array.from(signature), validUntil];
+    const [sig_header, expiration] = sign_http_request(
+      message,
+      BigInt(now),
+      sk_root,
+    );
+
+    return [sig_header, expiration];
   }
 
   /**
@@ -218,7 +235,7 @@ export default class Keychain {
 
   static deserialize(serializedKeychain: any, asBigEndian?: boolean): Keychain {
     let skRoot = Buffer.from(
-      serializedKeychain.secret_keys.sk_root.replace("0x", ""),
+      serializedKeychain.private_keys.sk_root.replace("0x", ""),
       "hex",
     );
     if (skRoot.length < 32) {

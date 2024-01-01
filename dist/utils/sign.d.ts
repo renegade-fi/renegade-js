@@ -7,7 +7,7 @@ import { OrderId } from "../types";
  * @param mint The Token to deposit.
  * @param amount The amount to deposit.
  */
-export declare function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint): Uint8Array;
+export declare function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint): string;
 /**
  * Sign a wallet withdrawal.
  *

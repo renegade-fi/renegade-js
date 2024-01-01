@@ -1,4 +1,5 @@
 import { Balance, Order, Token, Wallet } from "../state";
+import { bigIntToUint8Array } from "../state/utils";
 import { OrderId } from "../types";
 
 /**
@@ -7,10 +8,14 @@ import { OrderId } from "../types";
  * @param wallet The Wallet to sign the shares for.
  */
 function signWalletShares(wallet: Wallet) {
-  const messageBuffer = Buffer.from(wallet.serialize(), "ascii");
-  const walletSignatureBytes =
-    wallet.keychain.keyHierarchy.root.signMessage(messageBuffer);
-  return walletSignatureBytes;
+  // TODO: Should only sign blinded? public shares
+  const message = wallet.serialize();
+  const walletSignatureHex =
+    wallet.keychain.keyHierarchy.root.signMessage(message);
+  const walletSignatureBytes = bigIntToUint8Array(
+    BigInt("0x" + walletSignatureHex),
+  );
+  return `[${walletSignatureBytes}]`;
 }
 
 /**
@@ -21,18 +26,25 @@ function signWalletShares(wallet: Wallet) {
  * @param amount The amount to deposit.
  */
 export function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint) {
-  const newBalances = [...wallet.balances];
-  const index = newBalances.findIndex((balance) => balance.mint === mint);
-  const newBalance = newBalances[index].amount + amount;
-  newBalances[index] = new Balance({
-    mint,
-    amount: newBalance,
-  });
-  const newWallet = new Wallet({
-    ...wallet,
-    balances: newBalances,
-  });
-  return signWalletShares(newWallet);
+  try {
+    const newBalances = [...wallet.balances];
+    const index = newBalances.findIndex((balance) => balance.mint === mint);
+    if (index === -1) {
+      newBalances.push(new Balance({ mint, amount }));
+    } else {
+      newBalances[index] = new Balance({
+        mint,
+        amount: newBalances[index].amount + amount,
+      });
+    }
+    const newWallet = new Wallet({
+      ...wallet,
+      balances: newBalances,
+    });
+    return signWalletShares(newWallet);
+  } catch (error) {
+    console.error("Error signing wallet update: ", error);
+  }
 }
 
 /**

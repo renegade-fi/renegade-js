@@ -1,13 +1,19 @@
 import { Balance, Wallet } from "../state";
+import { bigIntToUint8Array } from "../state/utils";
 /**
  * Sign the shares of a wallet.
  *
  * @param wallet The Wallet to sign the shares for.
  */
 function signWalletShares(wallet) {
-    const messageBuffer = Buffer.from(wallet.serialize(), "ascii");
-    const walletSignatureBytes = wallet.keychain.keyHierarchy.root.signMessage(messageBuffer);
-    return walletSignatureBytes;
+    // TODO: If this doesn't work, change wallet serialization encoding method.
+    const serializedWallet = wallet.serialize();
+    // TODO: Should only sign blinded? public shares
+    const walletSignatureHex = wallet.keychain.keyHierarchy.root.signMessage(serializedWallet);
+    console.log("🚀 ~ signWalletShares ~ walletSignatureHex:", walletSignatureHex);
+    const walletSignatureBytes = bigIntToUint8Array(BigInt("0x" + walletSignatureHex));
+    // TODO: Should return bytes not string
+    return `[${walletSignatureBytes}]`;
 }
 /**
  * Sign the shares of a wallet after performing a deposit.
@@ -17,18 +23,27 @@ function signWalletShares(wallet) {
  * @param amount The amount to deposit.
  */
 export function signWalletDeposit(wallet, mint, amount) {
-    const newBalances = [...wallet.balances];
-    const index = newBalances.findIndex((balance) => balance.mint === mint);
-    const newBalance = newBalances[index].amount + amount;
-    newBalances[index] = new Balance({
-        mint,
-        amount: newBalance,
-    });
-    const newWallet = new Wallet({
-        ...wallet,
-        balances: newBalances,
-    });
-    return signWalletShares(newWallet);
+    try {
+        const newBalances = [...wallet.balances];
+        const index = newBalances.findIndex((balance) => balance.mint === mint);
+        if (index === -1) {
+            newBalances.push(new Balance({ mint, amount }));
+        }
+        else {
+            newBalances[index] = new Balance({
+                mint,
+                amount: newBalances[index].amount + amount,
+            });
+        }
+        const newWallet = new Wallet({
+            ...wallet,
+            balances: newBalances,
+        });
+        return signWalletShares(newWallet);
+    }
+    catch (error) {
+        console.error("Error signing wallet update: ", error);
+    }
 }
 /**
  * Sign a wallet withdrawal.
