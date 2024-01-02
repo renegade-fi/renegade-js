@@ -1,6 +1,6 @@
 import { sha256 } from "@noble/hashes/sha256";
 import * as uuid from "uuid";
-import { compute_poseidon_hash } from "../../dist/poseidon2";
+import { compute_poseidon_hash } from "../../dist/renegade-utils";
 import { F } from "../utils/field";
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";

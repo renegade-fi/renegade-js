@@ -5,8 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
-import loadPoseidon2 from "../dist/poseidon2";
-import loadSignature from "../dist/secp256k1";
+import loadSignature from "../dist/renegade-utils";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { oldExchangeHealthStatesSchema, parseExchangeHealthStates, } from "./types/schema";
@@ -73,8 +72,6 @@ export default class Renegade {
         this._ws = new RenegadeWs(this.relayerWsUrl, this._verbose);
         this._registeredAccounts = {};
         this._isTornDown = false;
-        // Load the Poseidon2 wasm module into memory
-        loadPoseidon2();
         // Load the Signature wasm module into memory
         loadSignature();
     }
@@ -241,25 +238,22 @@ export default class Renegade {
     // -----------------------------------
     // | IRenegadeBalance Implementation |
     // -----------------------------------
-    async deposit(accountId, mint, amount) {
-        const [, taskJob] = await this._depositTaskJob(accountId, mint, amount);
+    async deposit(accountId, mint, amount, fromAddr) {
+        const [, taskJob] = await this._depositTaskJob(accountId, mint, amount, fromAddr);
         return await taskJob;
     }
-    async _depositTaskJob(accountId, mint, amount) {
-        console.log("in _depositTaskJob");
+    async _depositTaskJob(accountId, mint, amount, fromAddr) {
         const account = this._lookupAccount(accountId);
-        console.log("🚀 ~ account:", account);
-        const taskId = await account.deposit(mint, amount);
-        console.log("🚀 ~ taskId:", taskId);
+        const taskId = await account.deposit(mint, amount, fromAddr);
         return [taskId, this.awaitTaskCompletion(taskId)];
     }
-    async withdraw(accountId, mint, amount) {
-        const [, taskJob] = await this._withdrawTaskJob(accountId, mint, amount);
+    async withdraw(accountId, mint, amount, destinationAddr) {
+        const [, taskJob] = await this._withdrawTaskJob(accountId, mint, amount, destinationAddr);
         return await taskJob;
     }
-    async _withdrawTaskJob(accountId, mint, amount) {
+    async _withdrawTaskJob(accountId, mint, amount, destinationAddr) {
         const account = this._lookupAccount(accountId);
-        const taskId = await account.withdraw(mint, amount);
+        const taskId = await account.withdraw(mint, amount, destinationAddr);
         return [taskId, this.awaitTaskCompletion(taskId)];
     }
     // -----------------------------------

@@ -90,8 +90,9 @@ export default class Account {
      *
      * @param mint The Token to deposit.
      * @param amount The amount to deposit.
+     * @param fromAddr The on-chain address to transfer from.
      */
-    deposit(mint: Token, amount: bigint): Promise<any>;
+    deposit(mint: Token, amount: bigint, fromAddr: string): Promise<any>;
     /**
      * Withdraw funds from an account.
      *
@@ -99,8 +100,9 @@ export default class Account {
      *
      * @param mint The Token to withdraw.
      * @param amount The amount to withdraw.
+     * @param destinationAddr The on-chain address to transfer to.
      */
-    withdraw(mint: Token, amount: bigint): Promise<any>;
+    withdraw(mint: Token, amount: bigint, destinationAddr: string): Promise<any>;
     /**
      * Place a new order.
      *

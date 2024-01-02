@@ -1,7 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 
-import loadPoseidon2 from "../dist/poseidon2";
-import loadSignature from "../dist/secp256k1";
+import loadUtils from "../dist/renegade-utils";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import {
@@ -143,10 +142,8 @@ export default class Renegade
     this._registeredAccounts = {} as Record<AccountId, Account>;
     this._isTornDown = false;
 
-    // Load the Poseidon2 wasm module into memory
-    loadPoseidon2();
     // Load the Signature wasm module into memory
-    loadSignature();
+    loadUtils();
   }
 
   /**
@@ -387,8 +384,14 @@ export default class Renegade
     accountId: AccountId,
     mint: Token,
     amount: bigint,
+    fromAddr: string,
   ): Promise<void> {
-    const [, taskJob] = await this._depositTaskJob(accountId, mint, amount);
+    const [, taskJob] = await this._depositTaskJob(
+      accountId,
+      mint,
+      amount,
+      fromAddr,
+    );
     return await taskJob;
   }
 
@@ -396,12 +399,10 @@ export default class Renegade
     accountId: AccountId,
     mint: Token,
     amount: bigint,
+    fromAddr: string,
   ): TaskJob<void> {
-    console.log("in _depositTaskJob");
     const account = this._lookupAccount(accountId);
-    console.log("🚀 ~ account:", account);
-    const taskId = await account.deposit(mint, amount);
-    console.log("🚀 ~ taskId:", taskId);
+    const taskId = await account.deposit(mint, amount, fromAddr);
     return [taskId, this.awaitTaskCompletion(taskId)];
   }
 
@@ -410,8 +411,14 @@ export default class Renegade
     accountId: AccountId,
     mint: Token,
     amount: bigint,
+    destinationAddr: string,
   ): Promise<void> {
-    const [, taskJob] = await this._withdrawTaskJob(accountId, mint, amount);
+    const [, taskJob] = await this._withdrawTaskJob(
+      accountId,
+      mint,
+      amount,
+      destinationAddr,
+    );
     return await taskJob;
   }
 
@@ -419,9 +426,10 @@ export default class Renegade
     accountId: AccountId,
     mint: Token,
     amount: bigint,
+    destinationAddr: string,
   ): TaskJob<void> {
     const account = this._lookupAccount(accountId);
-    const taskId = await account.withdraw(mint, amount);
+    const taskId = await account.withdraw(mint, amount, destinationAddr);
     return [taskId, this.awaitTaskCompletion(taskId)];
   }
 

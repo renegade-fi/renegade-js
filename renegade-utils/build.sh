@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OUTPUT_DIR="../dist/secp256k1"
+OUTPUT_DIR="../dist/renegade-utils"
 OUTPUT_NAME="index"
 
 # Build the WebAssembly package

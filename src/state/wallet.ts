@@ -1,4 +1,7 @@
 import { sha256 } from "@noble/hashes/sha256";
+import {
+  get_key_hierarchy_shares
+} from "../../dist/renegade-utils";
 import { WalletId } from "../types";
 import { F } from "../utils/field";
 import Balance from "./balance";
@@ -11,8 +14,7 @@ import {
   evaluateHashChain,
   generateId,
   limbsToBigIntLE,
-  splitBigIntIntoWords,
-  uint8ArrayToBigInt,
+  uint8ArrayToBigInt
 } from "./utils";
 
 // The maximum number of balances, orders, and fees that can be stored in a wallet
@@ -116,16 +118,9 @@ export default class Wallet {
   }
 
   packKeychain(): bigint[] {
-    const pkRootX = splitBigIntIntoWords(this.keychain.keyHierarchy.root.x);
-    const pkRootY = splitBigIntIntoWords(this.keychain.keyHierarchy.root.y);
-
-    // Only use 1 share for pkMatch
-    const pkMatch = splitBigIntIntoWords(
-      uint8ArrayToBigInt(this.keychain.keyHierarchy.match.publicKey),
-      1,
+    return get_key_hierarchy_shares(this.keychain.keyHierarchy.root.secretKeyHex).map((share: string) =>
+      BigInt(share),
     );
-
-    return [...pkRootX, ...pkRootY, ...pkMatch];
   }
 
   packBlinder(): bigint[] {

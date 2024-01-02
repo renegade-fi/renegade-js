@@ -6,13 +6,10 @@ import { bigIntToUint8Array } from "../state/utils";
  * @param wallet The Wallet to sign the shares for.
  */
 function signWalletShares(wallet) {
-    // TODO: If this doesn't work, change wallet serialization encoding method.
-    const serializedWallet = wallet.serialize();
-    // TODO: Should only sign blinded? public shares
-    const walletSignatureHex = wallet.keychain.keyHierarchy.root.signMessage(serializedWallet);
-    console.log("🚀 ~ signWalletShares ~ walletSignatureHex:", walletSignatureHex);
+    // TODO: Reflect contract expectation for signature here
+    const message = wallet.serialize();
+    const walletSignatureHex = wallet.keychain.keyHierarchy.root.signMessage(message);
     const walletSignatureBytes = bigIntToUint8Array(BigInt("0x" + walletSignatureHex));
-    // TODO: Should return bytes not string
     return `[${walletSignatureBytes}]`;
 }
 /**
@@ -23,9 +20,12 @@ function signWalletShares(wallet) {
  * @param amount The amount to deposit.
  */
 export function signWalletDeposit(wallet, mint, amount) {
+    console.log("🚀 ~ signWalletDeposit ~ mint:", mint);
+    const mintAddress = mint.address.replace("0x", "");
     try {
         const newBalances = [...wallet.balances];
-        const index = newBalances.findIndex((balance) => balance.mint === mint);
+        console.log("Balances before deposit", wallet.balances);
+        const index = newBalances.findIndex((balance) => balance.mint.address === mintAddress);
         if (index === -1) {
             newBalances.push(new Balance({ mint, amount }));
         }
@@ -35,6 +35,7 @@ export function signWalletDeposit(wallet, mint, amount) {
                 amount: newBalances[index].amount + amount,
             });
         }
+        console.log("Balances after deposit", newBalances);
         const newWallet = new Wallet({
             ...wallet,
             balances: newBalances,
@@ -53,18 +54,33 @@ export function signWalletDeposit(wallet, mint, amount) {
  * @param amount The amount to withdraw.
  */
 export function signWalletWithdraw(wallet, mint, amount) {
+    console.log("🚀 ~ signWalletDeposit ~ mint:", mint);
+    const mintAddress = mint.address.replace("0x", "");
+    console.log("Balances before withdraw", wallet.balances);
     const newBalances = [...wallet.balances];
-    const index = newBalances.findIndex((balance) => balance.mint === mint);
+    console.log("Balances after withdraw", newBalances);
+    const index = newBalances.findIndex((balance) => balance.mint.address === mintAddress);
+    if (index === -1) {
+        throw new Error("No balance to withdraw");
+    }
     const newBalance = newBalances[index].amount - amount;
-    newBalances[index] = new Balance({
-        mint,
-        amount: newBalance,
-    });
+    if (newBalance < 0) {
+        throw new Error("Insufficient balance to withdraw");
+    }
+    else if (newBalance === 0n) {
+        newBalances.splice(index, 1);
+    }
+    else {
+        newBalances[index] = new Balance({
+            mint,
+            amount: newBalance,
+        });
+    }
     const newWallet = new Wallet({
         ...wallet,
         balances: newBalances,
     });
-    return this.signWalletShares(newWallet);
+    return signWalletShares(newWallet);
 }
 /**
  * Sign wallet to place an order.
@@ -75,12 +91,17 @@ export function signWalletWithdraw(wallet, mint, amount) {
  * Assumes this function is called after verifying wallet orderbook has space.
  */
 export function signWalletPlaceOrder(wallet, order) {
-    const newOrders = [...wallet.orders].concat(order);
-    const newWallet = new Wallet({
-        ...wallet,
-        orders: newOrders,
-    });
-    return this.signWalletShares(newWallet);
+    try {
+        const newOrders = [...wallet.orders].concat(order);
+        const newWallet = new Wallet({
+            ...wallet,
+            orders: newOrders,
+        });
+        return signWalletShares(newWallet);
+    }
+    catch (error) {
+        console.error("Error signing wallet update: ", error);
+    }
 }
 /**
  * Sign wallet to modify an order.
@@ -91,14 +112,16 @@ export function signWalletPlaceOrder(wallet, order) {
  *
  */
 export function signWalletModifyOrder(wallet, oldOrderId, newOrder) {
+    console.log("Orders before modify", wallet.orders);
     const newOrders = [...wallet.orders];
     const index = newOrders.findIndex((order) => order.orderId === oldOrderId);
     newOrders[index] = newOrder;
+    console.log("Orders after modify", newOrders);
     const newWallet = new Wallet({
         ...wallet,
         orders: newOrders,
     });
-    return this.signWalletShares(newWallet);
+    return signWalletShares(newWallet);
 }
 // TODO Verify this is same behavrior as relayer.
 /**
@@ -115,5 +138,5 @@ export function signWalletCancelOrder(wallet, orderId) {
         ...wallet,
         orders: newOrders,
     });
-    return this.signWalletShares(newWallet);
+    return signWalletShares(newWallet);
 }
