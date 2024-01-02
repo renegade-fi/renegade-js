@@ -18,9 +18,8 @@
   "type": "module",
   "scripts": {
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
-    "build": "yarn run build-poseidon2 && yarn run build-secp256k1 && tsc",
-    "build-poseidon2": "cd poseidon2 && ./build.sh",
-    "build-secp256k1": "cd secp256k1 && ./build.sh",
+    "build": "yarn run build-utils && tsc",
+    "build-utils": "cd renegade-utils && ./build.sh",
     "prettier": "prettier --write {__tests__,src}/ --config ./.prettierrc",
     "eslint": "eslint {__tests__,src}/ --fix --config ./.eslintrc.cjs",
     "lint": "npm run prettier && npm run eslint"

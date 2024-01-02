@@ -125,10 +125,16 @@ export interface IRenegadeBalance {
    * @param accountId The AccountId of the Account to deposit into.
    * @param mint The Token to deposit.
    * @param amount The amount of the Token to deposit.
+   * @param fromAddr The on-chain address to transfer from.
    *
    * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
    */
-  deposit(accountId: AccountId, mint: Token, amount: bigint): Promise<void>;
+  deposit(
+    accountId: AccountId,
+    mint: Token,
+    amount: bigint,
+    fromAddr: string,
+  ): Promise<void>;
   /**
    * Withdraw an asset from an Account, triggering a L1 outbox transaction.
    *
@@ -142,7 +148,7 @@ export interface IRenegadeBalance {
     accountId: AccountId,
     mint: Token,
     amount: bigint,
-    l1Address: string,
+    destinationAddr: string,
   ): Promise<void>;
 }
 
