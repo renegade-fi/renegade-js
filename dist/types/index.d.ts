@@ -1,3 +1,4 @@
+import { Wallet } from "../state";
 type Uuid = string;
 type Brand<K, T> = K & {
     __brand: T;
@@ -23,4 +24,10 @@ export declare enum Exchange {
     Okx = "okx",
     Uniswapv3 = "uniswapv3"
 }
+/**
+ * Relayer HTTP API request types.
+ */
+export type CreateWalletRequest = {
+    wallet: Wallet;
+};
 export {};

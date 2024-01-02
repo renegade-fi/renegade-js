@@ -1,6 +1,6 @@
 [package]
-name = "secp256k1"
-description = "secp256k1"
+name = "relayer-utils"
+description = "Utility functions from the Renegade relayer"
 version = "0.1.1"
 edition = "2021"
 
@@ -8,10 +8,14 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
+ark-bn254 = "0.4.0"
+ark-ff = "0.4.2"
 base64 = "0.21"
 getrandom = { version = "0.2", features = ["js"] }
 hex = "0.4.3"
 k256 = { version = "0.13", features = ["expose-field"] }
 num-bigint = "0.4"
 num-traits = "0.2"
+renegade-crypto = { git = "https://github.com/renegade-fi/renegade.git", default-features = false }
+sha2 = "0.10.8"
 wasm-bindgen = "0.2"

@@ -102,46 +102,16 @@ function takeObject(idx) {
     return ret;
 }
 /**
-* Get the verifying key from a signing key
+* Computes the Poseidon2 hash of the input string and returns a BigInt.
 *
-* # Arguments
-*
-* * `key` - Hex representation of the signing key.
-*
-* # Returns
-*
-* * A `JsValue` containing the hexadecimal string representation of the verifying key.
-* @param {string} key
-* @returns {any}
+* Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.
+* @param {string} value
+* @returns {bigint}
 */
-export function get_verifying_key(key) {
-    const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+export function compute_poseidon_hash(value) {
+    const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.get_verifying_key(ptr0, len0);
-    return takeObject(ret);
-}
-
-/**
-* Sign a message with a given key
-*
-* # Arguments
-*
-* * `message` - The message to be signed. raw string (JSON.stringify)
-* * `key` - The key to sign the message with.
-*
-* # Returns
-*
-* * A `JsValue` containing the hexadecimal string representation of the signature.
-* @param {string} message
-* @param {string} key
-* @returns {any}
-*/
-export function sign_message(message, key) {
-    const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN;
-    const ret = wasm.sign_message(ptr0, len0, ptr1, len1);
+    const ret = wasm.compute_poseidon_hash(ptr0, len0);
     return takeObject(ret);
 }
 
@@ -174,11 +144,58 @@ function getArrayJsValueFromWasm0(ptr, len) {
     return result;
 }
 /**
+* Get the shares of the key hierarchy computed from `sk_root`
+*
+* # Arguments
+*
+* * `sk_root` - The root key to compute the hierarchy from.
+*
+* # Returns
+* * String representation of the shares of the key hierarchy.
+* @param {string} sk_root
+* @returns {any[]}
+*/
+export function get_key_hierarchy_shares(sk_root) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.get_key_hierarchy_shares(retptr, ptr0, len0);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var v2 = getArrayJsValueFromWasm0(r0, r1).slice();
+        wasm.__wbindgen_free(r0, r1 * 4, 4);
+        return v2;
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* Get the string representation of the key hierarchy computed from `sk_root`
+*
+* # Arguments
+*
+* * `sk_root` - The root key to compute the hierarchy from.
+*
+* # Returns
+* * String representation of the key hierarchy.
+* @param {string} sk_root
+* @returns {any}
+*/
+export function get_key_hierarchy(sk_root) {
+    const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_key_hierarchy(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
 * Sign the body of a request with `sk_root`
 *
 * # Arguments
 *
-* * `message` - Hex representation of the message to be signed
+* * `message` - The message to be signed.
 * * `expiration` - The expiration time of the signature TODO
 * * `key` - Hex representatino of the key to sign the message with.
 *
@@ -207,6 +224,50 @@ export function sign_http_request(message, timestamp, key) {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
+}
+
+/**
+* Sign a message with a given key
+*
+* # Arguments
+*
+* * `message` - The message to be signed.
+* * `key` - The key to sign the message with.
+*
+* # Returns
+*
+* * A `JsValue` containing the hexadecimal string representation of the signature.
+* @param {string} message
+* @param {string} key
+* @returns {any}
+*/
+export function sign_message(message, key) {
+    const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.sign_message(ptr0, len0, ptr1, len1);
+    return takeObject(ret);
+}
+
+/**
+* Get the verifying key from a signing key
+*
+* # Arguments
+*
+* * `key` - Hex representation of the signing key.
+*
+* # Returns
+*
+* * A `JsValue` containing the hexadecimal string representation of the verifying key.
+* @param {string} key
+* @returns {any}
+*/
+export function get_verifying_key(key) {
+    const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_verifying_key(ptr0, len0);
+    return takeObject(ret);
 }
 
 /**
