@@ -354,11 +354,11 @@ export default class Account {
       }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")},"statement_sig":"${signWalletWithdraw(
+      ).join(",")},"statement_sig":${signWalletWithdraw(
         this._wallet,
         mint,
         amount,
-      )}"]}`,
+      )}]}`,
       validateStatus: () => true,
     };
     let response;
@@ -420,11 +420,11 @@ export default class Account {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}/update`,
-      data: `{"public_var_sig":[],"order":${newOrder.serialize()},"statement_sig":"${signWalletModifyOrder(
+      data: `{"public_var_sig":[],"order":${newOrder.serialize()},"statement_sig":${signWalletModifyOrder(
         this._wallet,
         oldOrderId,
         newOrder,
-      )}"}`,
+      )}}`,
       validateStatus: () => true,
     };
     let response;
@@ -481,10 +481,7 @@ export default class Account {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${orderId}/cancel`,
-      data: `{"statement_sig":"${signWalletCancelOrder(
-        this._wallet,
-        orderId,
-      )}"}`,
+      data: `{"statement_sig":${signWalletCancelOrder(this._wallet, orderId)}}`,
       validateStatus: () => true,
     };
     let response;
