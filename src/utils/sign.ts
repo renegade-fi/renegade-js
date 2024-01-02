@@ -70,7 +70,7 @@ export function signWalletWithdraw(
     ...wallet,
     balances: newBalances,
   });
-  return this.signWalletShares(newWallet);
+  return signWalletShares(newWallet);
 }
 
 /**
@@ -82,12 +82,16 @@ export function signWalletWithdraw(
  * Assumes this function is called after verifying wallet orderbook has space.
  */
 export function signWalletPlaceOrder(wallet: Wallet, order: Order) {
-  const newOrders = [...wallet.orders].concat(order);
-  const newWallet = new Wallet({
-    ...wallet,
-    orders: newOrders,
-  });
-  return this.signWalletShares(newWallet);
+  try {
+    const newOrders = [...wallet.orders].concat(order);
+    const newWallet = new Wallet({
+      ...wallet,
+      orders: newOrders,
+    });
+    return signWalletShares(newWallet);
+  } catch (error) {
+    console.error("Error signing wallet update: ", error);
+  }
 }
 
 /**
@@ -110,7 +114,7 @@ export function signWalletModifyOrder(
     ...wallet,
     orders: newOrders,
   });
-  return this.signWalletShares(newWallet);
+  return signWalletShares(newWallet);
 }
 
 // TODO Verify this is same behavrior as relayer.
@@ -128,5 +132,5 @@ export function signWalletCancelOrder(wallet: Wallet, orderId: OrderId) {
     ...wallet,
     orders: newOrders,
   });
-  return this.signWalletShares(newWallet);
+  return signWalletShares(newWallet);
 }

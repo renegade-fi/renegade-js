@@ -97,7 +97,12 @@ export default class Account {
             request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
             request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
         }
-        return await axios.request(request);
+        try {
+            return await axios.request(request);
+        }
+        catch (error) {
+            console.error("Error in _transmitHttpRequest", error);
+        }
     }
     /**
      * Tear down the Account, including closing the WebSocket connection to the
@@ -311,14 +316,16 @@ export default class Account {
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders`,
-            data: `{"public_var_sig":[],"order":${order.serialize()},"statement_sig":"${signWalletPlaceOrder(this._wallet, order)}"}`,
+            data: `{"public_var_sig":[],"order":${order.serialize()},"statement_sig":${signWalletPlaceOrder(this._wallet, order)}}`,
             validateStatus: () => true,
         };
+        console.log("🚀 ~ Account ~ placeOrder ~ request:", request);
         let response;
         try {
             response = await this._transmitHttpRequest(request, true);
         }
         catch (e) {
+            console.error("Error placing order: ", e);
             throw new RenegadeError(RenegadeErrorType.RelayerError);
         }
         if (response.status !== 200) {
