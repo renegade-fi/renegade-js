@@ -5,13 +5,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
+import { sign_http_request } from "../dist/secp256k1";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
-import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, uint8ArrayToBigInt, } from "./state/utils";
+import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, } from "./state/utils";
 import { RenegadeWs } from "./utils";
 import { F } from "./utils/field";
 import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, } from "./utils/sign";
-import { sign_http_request } from "../dist/secp256k1";
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
  * Wallet is now managed by the relayer and wallet update events are actively
@@ -90,31 +90,9 @@ export default class Account {
      */
     async _transmitHttpRequest(request, isAuthenticated) {
         if (isAuthenticated) {
-            console.log("retrieved sk root: ", uint8ArrayToBigInt(this._wallet.keychain.keyHierarchy.root.secretKey).toString(16));
-            // TODO: Fix body encoding
-            console.log("request body: ", request.data);
             const messageBuffer = request.data ?? "";
-            // const messageBuffer = request.data
-            //   ? Buffer.from(request.data.toString())
-            //   : Buffer.alloc(0);
-            const sk_root = Buffer.from(this.keychain.keyHierarchy.root.secretKey).toString("hex");
-            // TODO: SK ROOT IS DIFFERENT
-            console.log("🚀 ~ Account ~ sk_root:", sk_root);
-            const now = Date.now();
-            const validUntil = now + 10000;
-            const validUntilBuffer = Buffer.alloc(8);
-            validUntilBuffer.writeUInt32LE(validUntil % 2 ** 32, 0);
-            validUntilBuffer.writeUInt32LE(Math.floor(validUntil / 2 ** 32), 4);
-            const messageHex = Buffer.concat([
-                request.data ? Buffer.from(request.data) : Buffer.alloc(0),
-                validUntilBuffer,
-            ]).toString("hex");
-            console.log("🚀 ~ Account ~ messageHex:", messageHex);
-            // const renegadeAuth = hex_to_b64(sign_message(messageHex, sk_root));
-            const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(messageBuffer, BigInt(now), sk_root);
-            // const renegadeAuthExpiration = BigInt(validUntil).toString();
-            console.log("🚀 ~ Account ~ renegadeAuth:", renegadeAuth);
-            console.log("🚀 ~ Account ~ renegadeAuthExpiration:", renegadeAuthExpiration);
+            const skRootHex = Buffer.from(this.keychain.keyHierarchy.root.secretKey).toString("hex");
+            const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(messageBuffer, BigInt(Date.now()), skRootHex);
             request.headers = request.headers || {};
             request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
             request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
@@ -207,11 +185,11 @@ export default class Account {
             response = await this._transmitHttpRequest(request, true);
         }
         catch (e) {
-            console.log("🚀 ~ Account ~ _queryRelayerForWallet ~ e:", e);
+            console.error("Error querying relayer for wallet: ", e);
             return undefined;
         }
         if (response.status === 200) {
-            console.log("🚀 ~ Account ~ _queryRelayerForWallet ~ response.data.wallet:", response.data.wallet);
+            // Relayer returns keys in big endian byte order, so no need to reverse
             return Wallet.deserialize(response.data.wallet, false);
         }
         else {
@@ -270,13 +248,14 @@ export default class Account {
      *
      * @param mint The Token to deposit.
      * @param amount The amount to deposit.
+     * @param fromAddr The on-chain address to transfer from.
      */
-    async deposit(mint, amount) {
+    async deposit(mint, amount, fromAddr) {
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
             // TODO: Type task request and stringify
-            data: `{"public_var_sig":[],"from_addr":"0x3f1eae7d46d88f08fc2f8ed27fcb2ab183eb2d0e","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(amount).join(",")}],"statement_sig":${signWalletDeposit(this._wallet, mint, amount)}}`,
+            data: `{"public_var_sig":[],"from_addr":"${fromAddr}","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(amount).join(",")}],"statement_sig":${signWalletDeposit(this._wallet, mint, amount)}}`,
             validateStatus: () => true,
         };
         console.log("🚀 ~ Account ~ deposit ~ request:", request);

@@ -139,11 +139,6 @@ export default class Account {
         skRootHex,
       );
 
-      console.log("🚀 ~ Account ~ renegadeAuth:", renegadeAuth);
-      console.log(
-        "🚀 ~ Account ~ renegadeAuthExpiration:",
-        renegadeAuthExpiration,
-      );
       request.headers = request.headers || {};
       request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
       request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
@@ -307,14 +302,15 @@ export default class Account {
    *
    * @param mint The Token to deposit.
    * @param amount The amount to deposit.
+   * @param fromAddr The on-chain address to transfer from.
    */
   @assertSynced
-  async deposit(mint: Token, amount: bigint) {
+  async deposit(mint: Token, amount: bigint, fromAddr: string) {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
       // TODO: Type task request and stringify
-      data: `{"public_var_sig":[],"from_addr":"0x3f1eae7d46d88f08fc2f8ed27fcb2ab183eb2d0e","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(
+      data: `{"public_var_sig":[],"from_addr":"${fromAddr}","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(
         amount,
       ).join(",")}],"statement_sig":${signWalletDeposit(
         this._wallet,

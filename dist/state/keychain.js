@@ -4,11 +4,9 @@ import { randomBytes } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
 import { get_verifying_key, sign_http_request, sign_message, } from "../../dist/secp256k1";
 import { bigIntToUint8Array } from "./utils";
-// TODO: Use for bigints throughout keychain
 // Allow for synchronous secp256 signing. See:
 // https://github.com/paulmillr/noble-secp256k1/blob/main/README.md
 secp.etc.hmacSha256Sync = (...m) => sha256(secp.etc.concatBytes(...m));
-// secp.etc.hmacSha256Sync = (...m) => secp.etc.concatBytes(...m);
 const SIG_VALIDITY_WINDOW_MS = 10000;
 class SigningKey {
     constructor(secretKey) {
@@ -21,11 +19,7 @@ class SigningKey {
         this.x = point.x;
         this.y = point.y;
     }
-    // Confirmed consistent with Rust implementation
-    // message is string, returns hex string representation of signature
     signMessage(message) {
-        // const prehash = secp.etc.hmacSha256Sync(message);
-        // return secp.sign(message, this.secretKey).toCompactRawBytes();
         const skRootHex = Buffer.from(this.secretKey).toString("hex");
         return sign_message(message, skRootHex);
     }

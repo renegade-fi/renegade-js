@@ -387,8 +387,14 @@ export default class Renegade
     accountId: AccountId,
     mint: Token,
     amount: bigint,
+    fromAddr: string,
   ): Promise<void> {
-    const [, taskJob] = await this._depositTaskJob(accountId, mint, amount);
+    const [, taskJob] = await this._depositTaskJob(
+      accountId,
+      mint,
+      amount,
+      fromAddr,
+    );
     return await taskJob;
   }
 
@@ -396,12 +402,10 @@ export default class Renegade
     accountId: AccountId,
     mint: Token,
     amount: bigint,
+    fromAddr: string,
   ): TaskJob<void> {
-    console.log("in _depositTaskJob");
     const account = this._lookupAccount(accountId);
-    console.log("🚀 ~ account:", account);
-    const taskId = await account.deposit(mint, amount);
-    console.log("🚀 ~ taskId:", taskId);
+    const taskId = await account.deposit(mint, amount, fromAddr);
     return [taskId, this.awaitTaskCompletion(taskId)];
   }
 

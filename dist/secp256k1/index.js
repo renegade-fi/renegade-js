@@ -88,63 +88,6 @@ function passStringToWasm0(arg, malloc, realloc) {
     return ptr;
 }
 
-function getObject(idx) { return heap[idx]; }
-
-function dropObject(idx) {
-    if (idx < 132) return;
-    heap[idx] = heap_next;
-    heap_next = idx;
-}
-
-function takeObject(idx) {
-    const ret = getObject(idx);
-    dropObject(idx);
-    return ret;
-}
-/**
-* Get the verifying key from a signing key
-*
-* # Arguments
-*
-* * `key` - Hex representation of the signing key.
-*
-* # Returns
-*
-* * A `JsValue` containing the hexadecimal string representation of the verifying key.
-* @param {string} key
-* @returns {any}
-*/
-export function get_verifying_key(key) {
-    const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.get_verifying_key(ptr0, len0);
-    return takeObject(ret);
-}
-
-/**
-* Sign a message with a given key
-*
-* # Arguments
-*
-* * `message` - The message to be signed. raw string (JSON.stringify)
-* * `key` - The key to sign the message with.
-*
-* # Returns
-*
-* * A `JsValue` containing the hexadecimal string representation of the signature.
-* @param {string} message
-* @param {string} key
-* @returns {any}
-*/
-export function sign_message(message, key) {
-    const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len1 = WASM_VECTOR_LEN;
-    const ret = wasm.sign_message(ptr0, len0, ptr1, len1);
-    return takeObject(ret);
-}
-
 let cachedInt32Memory0 = null;
 
 function getInt32Memory0() {
@@ -163,6 +106,20 @@ function getUint32Memory0() {
     return cachedUint32Memory0;
 }
 
+function getObject(idx) { return heap[idx]; }
+
+function dropObject(idx) {
+    if (idx < 132) return;
+    heap[idx] = heap_next;
+    heap_next = idx;
+}
+
+function takeObject(idx) {
+    const ret = getObject(idx);
+    dropObject(idx);
+    return ret;
+}
+
 function getArrayJsValueFromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     const mem = getUint32Memory0();
@@ -178,7 +135,7 @@ function getArrayJsValueFromWasm0(ptr, len) {
 *
 * # Arguments
 *
-* * `message` - Hex representation of the message to be signed
+* * `message` - The message to be signed.
 * * `expiration` - The expiration time of the signature TODO
 * * `key` - Hex representatino of the key to sign the message with.
 *
@@ -207,6 +164,50 @@ export function sign_http_request(message, timestamp, key) {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
+}
+
+/**
+* Sign a message with a given key
+*
+* # Arguments
+*
+* * `message` - The message to be signed.
+* * `key` - The key to sign the message with.
+*
+* # Returns
+*
+* * A `JsValue` containing the hexadecimal string representation of the signature.
+* @param {string} message
+* @param {string} key
+* @returns {any}
+*/
+export function sign_message(message, key) {
+    const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.sign_message(ptr0, len0, ptr1, len1);
+    return takeObject(ret);
+}
+
+/**
+* Get the verifying key from a signing key
+*
+* # Arguments
+*
+* * `key` - Hex representation of the signing key.
+*
+* # Returns
+*
+* * A `JsValue` containing the hexadecimal string representation of the verifying key.
+* @param {string} key
+* @returns {any}
+*/
+export function get_verifying_key(key) {
+    const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_verifying_key(ptr0, len0);
+    return takeObject(ret);
 }
 
 /**

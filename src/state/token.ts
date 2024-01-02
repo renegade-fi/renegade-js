@@ -59,6 +59,11 @@ const KATANA_ADDR_TO_TICKER = {
   "8e3feea13add88dce4439bc1d02a662ab4c4cb6dca4639dccba89b4e594680": "USDC",
 };
 
+const STYLUS_ADDR_TO_TICKER = {
+  ...ADDR_TO_TICKER,
+  "408da76e87511429485c32e4ad647dd14823fdc4": "WETH",
+};
+
 const TICKER_TO_ADDR = {};
 for (const addr in ADDR_TO_TICKER) {
   TICKER_TO_ADDR[ADDR_TO_TICKER[addr]] = addr;
@@ -67,6 +72,11 @@ for (const addr in ADDR_TO_TICKER) {
 const KATANA_TICKER_TO_ADDR = {};
 for (const addr in KATANA_ADDR_TO_TICKER) {
   KATANA_TICKER_TO_ADDR[KATANA_ADDR_TO_TICKER[addr]] = addr;
+}
+
+const STYLUS_TICKER_TO_ADDR = {};
+for (const addr in STYLUS_ADDR_TO_TICKER) {
+  STYLUS_TICKER_TO_ADDR[STYLUS_ADDR_TO_TICKER[addr]] = addr;
 }
 
 export default class Token {
@@ -86,8 +96,12 @@ export default class Token {
       throw new Error("Exactly one of address or ticker must be specified.");
     }
     if (params.ticker) {
-      const REMAPPED_TICKER_TO_ADDR =
-        params.network === "katana" ? KATANA_TICKER_TO_ADDR : TICKER_TO_ADDR;
+      let REMAPPED_TICKER_TO_ADDR = TICKER_TO_ADDR;
+      if (params.network === "katana") {
+        REMAPPED_TICKER_TO_ADDR = KATANA_TICKER_TO_ADDR;
+      } else if (params.network === "stylus") {
+        REMAPPED_TICKER_TO_ADDR = STYLUS_TICKER_TO_ADDR;
+      }
       params.ticker = params.ticker.toUpperCase();
       if (params.ticker in REMAPPED_TICKER_TO_ADDR) {
         params.address = REMAPPED_TICKER_TO_ADDR[params.ticker];

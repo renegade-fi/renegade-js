@@ -6,13 +6,10 @@ import { bigIntToUint8Array } from "../state/utils";
  * @param wallet The Wallet to sign the shares for.
  */
 function signWalletShares(wallet) {
-    // TODO: If this doesn't work, change wallet serialization encoding method.
-    const serializedWallet = wallet.serialize();
     // TODO: Should only sign blinded? public shares
-    const walletSignatureHex = wallet.keychain.keyHierarchy.root.signMessage(serializedWallet);
-    console.log("🚀 ~ signWalletShares ~ walletSignatureHex:", walletSignatureHex);
+    const message = wallet.serialize();
+    const walletSignatureHex = wallet.keychain.keyHierarchy.root.signMessage(message);
     const walletSignatureBytes = bigIntToUint8Array(BigInt("0x" + walletSignatureHex));
-    // TODO: Should return bytes not string
     return `[${walletSignatureBytes}]`;
 }
 /**

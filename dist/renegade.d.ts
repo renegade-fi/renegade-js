@@ -72,7 +72,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     getFees(accountId: AccountId): Record<FeeId, Fee>;
     getKeychain(accountId: AccountId): Keychain;
     getIsLocked(accountId: AccountId): boolean;
-    deposit(accountId: AccountId, mint: Token, amount: bigint): Promise<void>;
+    deposit(accountId: AccountId, mint: Token, amount: bigint, fromAddr: string): Promise<void>;
     private _depositTaskJob;
     withdraw(accountId: AccountId, mint: Token, amount: bigint): Promise<void>;
     private _withdrawTaskJob;
@@ -107,7 +107,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
      */
     task: {
         initializeAccount: (accountId: AccountId) => Promise<[TaskId, Promise<void>]>;
-        deposit: (accountId: AccountId, mint: Token, amount: bigint) => Promise<[TaskId, Promise<void>]>;
+        deposit: (accountId: AccountId, mint: Token, amount: bigint, fromAddr: string) => Promise<[TaskId, Promise<void>]>;
         withdraw: (accountId: AccountId, mint: Token, amount: bigint) => Promise<[TaskId, Promise<void>]>;
         placeOrder: (accountId: AccountId, order: Order) => Promise<[TaskId, Promise<void>]>;
         modifyOrder: (accountId: AccountId, oldOrderId: OrderId, newOrder: Order) => Promise<[TaskId, Promise<void>]>;
