@@ -66,7 +66,9 @@ export default class Wallet {
     }
     packKeychain() {
         const pkRootX = splitBigIntIntoWords(this.keychain.keyHierarchy.root.x);
+        console.log("PK ROOT X: ", pkRootX);
         const pkRootY = splitBigIntIntoWords(this.keychain.keyHierarchy.root.y);
+        console.log("PK ROOT Y: ", pkRootY);
         // Only use 1 share for pkMatch
         const pkMatch = splitBigIntIntoWords(uint8ArrayToBigInt(this.keychain.keyHierarchy.match.publicKey), 1);
         return [...pkRootX, ...pkRootY, ...pkMatch];

@@ -116,7 +116,7 @@ export interface IRenegadeBalance {
      *
      * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
      */
-    withdraw(accountId: AccountId, mint: Token, amount: bigint, l1Address: string): Promise<void>;
+    withdraw(accountId: AccountId, mint: Token, amount: bigint, destinationAddr: string): Promise<void>;
 }
 /**
  * Interface for manipulation of Accounts (placing orders, depositing, etc.).

@@ -6,7 +6,7 @@ import { bigIntToUint8Array } from "../state/utils";
  * @param wallet The Wallet to sign the shares for.
  */
 function signWalletShares(wallet) {
-    // TODO: Should only sign blinded? public shares
+    // TODO: Reflect contract expectation for signature here
     const message = wallet.serialize();
     const walletSignatureHex = wallet.keychain.keyHierarchy.root.signMessage(message);
     const walletSignatureBytes = bigIntToUint8Array(BigInt("0x" + walletSignatureHex));
@@ -20,9 +20,12 @@ function signWalletShares(wallet) {
  * @param amount The amount to deposit.
  */
 export function signWalletDeposit(wallet, mint, amount) {
+    console.log("🚀 ~ signWalletDeposit ~ mint:", mint);
+    const mintAddress = mint.address.replace("0x", "");
     try {
         const newBalances = [...wallet.balances];
-        const index = newBalances.findIndex((balance) => balance.mint === mint);
+        console.log("Balances before deposit", wallet.balances);
+        const index = newBalances.findIndex((balance) => balance.mint.address === mintAddress);
         if (index === -1) {
             newBalances.push(new Balance({ mint, amount }));
         }
@@ -32,6 +35,7 @@ export function signWalletDeposit(wallet, mint, amount) {
                 amount: newBalances[index].amount + amount,
             });
         }
+        console.log("Balances after deposit", newBalances);
         const newWallet = new Wallet({
             ...wallet,
             balances: newBalances,
@@ -50,13 +54,28 @@ export function signWalletDeposit(wallet, mint, amount) {
  * @param amount The amount to withdraw.
  */
 export function signWalletWithdraw(wallet, mint, amount) {
+    console.log("🚀 ~ signWalletDeposit ~ mint:", mint);
+    const mintAddress = mint.address.replace("0x", "");
+    console.log("Balances before withdraw", wallet.balances);
     const newBalances = [...wallet.balances];
-    const index = newBalances.findIndex((balance) => balance.mint === mint);
+    console.log("Balances after withdraw", newBalances);
+    const index = newBalances.findIndex((balance) => balance.mint.address === mintAddress);
+    if (index === -1) {
+        throw new Error("No balance to withdraw");
+    }
     const newBalance = newBalances[index].amount - amount;
-    newBalances[index] = new Balance({
-        mint,
-        amount: newBalance,
-    });
+    if (newBalance < 0) {
+        throw new Error("Insufficient balance to withdraw");
+    }
+    else if (newBalance === 0n) {
+        newBalances.splice(index, 1);
+    }
+    else {
+        newBalances[index] = new Balance({
+            mint,
+            amount: newBalance,
+        });
+    }
     const newWallet = new Wallet({
         ...wallet,
         balances: newBalances,

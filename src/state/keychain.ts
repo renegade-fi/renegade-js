@@ -2,12 +2,13 @@ import { sha256 } from "@noble/hashes/sha256";
 import * as secp from "@noble/secp256k1";
 import { randomBytes } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
+import { compute_poseidon_hash } from "../../dist/poseidon2";
+import { sign_http_request, sign_message } from "../../dist/secp256k1";
 import {
-  get_verifying_key,
-  sign_http_request,
-  sign_message,
-} from "../../dist/secp256k1";
-import { bigIntToUint8Array } from "./utils";
+  bigIntToUint8Array,
+  splitBigIntIntoWords,
+  uint8ArrayToBigInt,
+} from "./utils";
 
 // Allow for synchronous secp256 signing. See:
 // https://github.com/paulmillr/noble-secp256k1/blob/main/README.md
@@ -28,6 +29,8 @@ class SigningKey {
     }
     this.secretKey = secretKey;
     this.publicKey = secp.getPublicKey(secretKey);
+
+    console.log("SK ROOT: ", Buffer.from(this.secretKey).toString("hex"));
 
     const point = secp.ProjectivePoint.fromHex(this.publicKey);
     this.x = point.x;
@@ -51,14 +54,19 @@ class IdentificationKey {
     this.secretKey = secretKey;
     // TODO: Use sha256 to hash
     // const secretKeyHash = sha256(secretKey);
-    // const publicKey = F.e(uint8ArrayToBigInt(secretKeyHash));
+    // const secretKeyBigInt = F.e(uint8ArrayToBigInt(secretKey));
+    const secretKeyHex = Buffer.from(secretKey).toString("hex");
     // this.publicKey = bigIntToUint8Array(publicKey);
     // this.publicKey = secp.getPublicKey(secretKey);
-    const hexPublicKey = get_verifying_key(
-      Buffer.from(secretKey).toString("hex"),
-    );
-    const bigIntPublicKey = BigInt(`0x${hexPublicKey}`);
-    this.publicKey = bigIntToUint8Array(bigIntPublicKey);
+    // const hexPublicKey = get_verifying_key(
+    //   Buffer.from(secretKey).toString("hex"),
+    // );
+    // const bigIntPublicKey = BigInt(`0x${hexPublicKey}`);
+    // this.publicKey = bigIntToUint8Array(bigIntPublicKey);
+    const publicKeyBigInt = compute_poseidon_hash(secretKeyHex);
+    this.publicKey = bigIntToUint8Array(publicKeyBigInt);
+    console.log("SK MATCH: ", Buffer.from(this.secretKey).toString("hex"));
+    console.log("PK MATCH: ", publicKeyBigInt.toString(16));
   }
 }
 
@@ -89,7 +97,8 @@ interface KeychainOptions {
  */
 export default class Keychain {
   static CREATE_SK_ROOT_MESSAGE = "Unlock your Renegade account.\nTestnet v0";
-  static CREATE_SK_MATCH_MESSAGE = "Unlock your Renegade match key.";
+  static CREATE_SK_MATCH_MESSAGE =
+    "Unlock your Renegade match key.\nTestnet v0";
 
   /**
    * The full renegade key hierarchy, including root, match, and settle

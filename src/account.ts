@@ -231,7 +231,6 @@ export default class Account {
    * if it does not.
    */
   private async _queryRelayerForWallet(): Promise<Wallet | undefined> {
-    console.log("Request: GET wallet");
     const request: AxiosRequestConfig = {
       method: "GET",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`,
@@ -240,6 +239,10 @@ export default class Account {
     let response;
     try {
       response = await this._transmitHttpRequest(request, true);
+      console.log(
+        "🚀 ~ Account ~ _queryRelayerForWallet ~ response:",
+        response.data.wallet,
+      );
     } catch (e) {
       console.error("Error querying relayer for wallet: ", e);
       return undefined;
@@ -344,23 +347,26 @@ export default class Account {
    *
    * @param mint The Token to withdraw.
    * @param amount The amount to withdraw.
+   * @param destinationAddr The on-chain address to transfer to.
    */
   @assertSynced
-  async withdraw(mint: Token, amount: bigint) {
+  async withdraw(mint: Token, amount: bigint, destinationAddr: string) {
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${
         this.accountId
+        // TODO: Mint should be the address
       }/balances/${mint.serialize()}/withdraw`,
-      data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbsLE(
+      data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")},"statement_sig":${signWalletWithdraw(
+      ).join(",")}],"statement_sig":${signWalletWithdraw(
         this._wallet,
         mint,
         amount,
-      )}]}`,
+      )}}`,
       validateStatus: () => true,
     };
+    console.log("🚀 ~ Account ~ withdraw ~ request:", request);
     let response;
     try {
       response = await this._transmitHttpRequest(request, true);
@@ -393,6 +399,7 @@ export default class Account {
       validateStatus: () => true,
     };
     console.log("🚀 ~ Account ~ placeOrder ~ request:", request);
+    const wallet = bigIntToLimbsLE(this._wallet.blinder).join(",");
     let response;
     try {
       response = await this._transmitHttpRequest(request, true);

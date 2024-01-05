@@ -148,7 +148,7 @@ export interface IRenegadeBalance {
     accountId: AccountId,
     mint: Token,
     amount: bigint,
-    l1Address: string,
+    destinationAddr: string,
   ): Promise<void>;
 }
 

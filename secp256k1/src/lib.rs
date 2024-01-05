@@ -1,10 +1,80 @@
 use base64::engine::{general_purpose as b64_general_purpose, Engine};
+// use circuit_types::{
+//     keychain::{PublicKeyChain, PublicSigningKey, SecretIdentificationKey},
+//     traits::BaseType,
+//     SizedWalletShare,
+// };
+// use constants::Scalar;
 use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 use num_bigint::BigUint;
 use num_traits::Num;
+use sha2::{Digest, Sha256, Sha512};
+
 use wasm_bindgen::prelude::*;
 
 const SIG_VALIDITY_WINDOW_MS: u64 = 10_000; // 10 seconds
+const CREATE_SK_MATCH_MESSAGE: &str = "Unlock your Renegade match key.\nTestnet v0";
+
+// /// Get the shares of the key hierarchy computed from `sk_root`
+// ///
+// /// # Arguments
+// ///
+// /// * `sk_root` - The root key to compute the hierarchy from.
+// ///
+// /// # Returns
+// /// * String representation of the shares of the key hierarchy.
+// pub fn get_key_hierarchy_shares(sk_root: &str) -> Vec<JsValue> {
+//     let signing_key = get_key(sk_root);
+//     let public_signing_key = PublicSigningKey::from(signing_key.verifying_key());
+
+//     let signed_msg: Signature = signing_key.sign(CREATE_SK_MATCH_MESSAGE.as_bytes());
+//     let hashed_signed_msg = compute_sha256_hash(&signed_msg.to_bytes());
+//     let sk_match = SecretIdentificationKey::from(Scalar::from_biguint(&BigUint::from_bytes_be(
+//         &hashed_signed_msg,
+//     )));
+//     let pk_match = sk_match.get_public_key();
+
+//     let x = public_signing_key.x.scalar_words;
+//     let y = public_signing_key.y.scalar_words;
+//     let pk_match_words = pk_match.key;
+
+//     vec![
+//         JsValue::from_str(&x.to_scalars()),
+//         JsValue::from_str(&y.to_string()),
+//         JsValue::from_str(&pk_match_words.to_string()),
+//     ]
+// }
+
+// /// Get the string representation of the key hierarchy computed from `sk_root`
+// ///
+// /// # Arguments
+// ///
+// /// * `sk_root` - The root key to compute the hierarchy from.
+// ///
+// /// # Returns
+// /// * String representation of the key hierarchy.
+// #[wasm_bindgen]
+// pub fn get_key_hierarchy(sk_root: &str) -> JsValue {
+//     let signing_key = get_key(sk_root);
+//     let verifying_key = signing_key.verifying_key();
+
+//     let signed_msg: Signature = signing_key.sign(CREATE_SK_MATCH_MESSAGE.as_bytes());
+//     let hashed_signed_msg = compute_sha256_hash(&signed_msg.to_bytes());
+
+//     let sk_match = SecretIdentificationKey::from(Scalar::from_biguint(&BigUint::from_bytes_be(
+//         &hashed_signed_msg,
+//     )));
+//     let pk_match = sk_match.get_public_key();
+
+//     let key_hierarchy = format!(
+//         r#"{{"public_keys":{{"pk_root":"{}","pk_match":"{}"}},"private_keys":{{"sk_root":"{}","sk_match":"{}"}}}}"#,
+//         hex::encode(verifying_key.to_encoded_point(false).as_bytes()), // pk_root
+//         hex::encode(pk_match.key.to_bytes_be()),                       // pk_match
+//         hex::encode(signing_key.to_bytes()),                           // sk_root
+//         hex::encode(sk_match.key.to_bytes_be())                        // sk_match
+//     );
+//     JsValue::from_str(&key_hierarchy)
+// }
 
 /// Sign the body of a request with `sk_root`
 ///
@@ -81,6 +151,12 @@ pub fn hex_to_b64(hex: &str) -> JsValue {
 pub fn get_key(key: &str) -> SigningKey {
     let key_bigint = biguint_from_hex_string(&key);
     SigningKey::from_slice(&key_bigint.to_bytes_be()).unwrap()
+}
+
+fn compute_sha256_hash(message: &[u8]) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    hasher.update(message);
+    hasher.finalize().to_vec()
 }
 
 /// Parse a biguint from a hex string

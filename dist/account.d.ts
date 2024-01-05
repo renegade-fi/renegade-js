@@ -100,8 +100,9 @@ export default class Account {
      *
      * @param mint The Token to withdraw.
      * @param amount The amount to withdraw.
+     * @param destinationAddr The on-chain address to transfer to.
      */
-    withdraw(mint: Token, amount: bigint): Promise<any>;
+    withdraw(mint: Token, amount: bigint, destinationAddr: string): Promise<any>;
     /**
      * Place a new order.
      *

@@ -264,13 +264,13 @@ export default class Renegade {
         const taskId = await account.deposit(mint, amount, fromAddr);
         return [taskId, this.awaitTaskCompletion(taskId)];
     }
-    async withdraw(accountId, mint, amount) {
-        const [, taskJob] = await this._withdrawTaskJob(accountId, mint, amount);
+    async withdraw(accountId, mint, amount, destinationAddr) {
+        const [, taskJob] = await this._withdrawTaskJob(accountId, mint, amount, destinationAddr);
         return await taskJob;
     }
-    async _withdrawTaskJob(accountId, mint, amount) {
+    async _withdrawTaskJob(accountId, mint, amount, destinationAddr) {
         const account = this._lookupAccount(accountId);
-        const taskId = await account.withdraw(mint, amount);
+        const taskId = await account.withdraw(mint, amount, destinationAddr);
         return [taskId, this.awaitTaskCompletion(taskId)];
     }
     // -----------------------------------

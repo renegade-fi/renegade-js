@@ -179,7 +179,6 @@ export default class Account {
      * if it does not.
      */
     async _queryRelayerForWallet() {
-        console.log("Request: GET wallet");
         const request = {
             method: "GET",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`,
@@ -188,6 +187,7 @@ export default class Account {
         let response;
         try {
             response = await this._transmitHttpRequest(request, true);
+            console.log("🚀 ~ Account ~ _queryRelayerForWallet ~ response:", response.data.wallet);
         }
         catch (e) {
             console.error("Error querying relayer for wallet: ", e);
@@ -284,14 +284,18 @@ export default class Account {
      *
      * @param mint The Token to withdraw.
      * @param amount The amount to withdraw.
+     * @param destinationAddr The on-chain address to transfer to.
      */
-    async withdraw(mint, amount) {
+    async withdraw(mint, amount, destinationAddr) {
         const request = {
             method: "POST",
-            url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/${mint.serialize()}/withdraw`,
-            data: `{"public_var_sig":[],"destination_addr":"0x0","amount":[${bigIntToLimbsLE(amount).join(",")},"statement_sig":${signWalletWithdraw(this._wallet, mint, amount)}]}`,
+            url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId
+            // TODO: Mint should be the address
+            }/balances/${mint.serialize()}/withdraw`,
+            data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(amount).join(",")}],"statement_sig":${signWalletWithdraw(this._wallet, mint, amount)}}`,
             validateStatus: () => true,
         };
+        console.log("🚀 ~ Account ~ withdraw ~ request:", request);
         let response;
         try {
             response = await this._transmitHttpRequest(request, true);
@@ -320,6 +324,7 @@ export default class Account {
             validateStatus: () => true,
         };
         console.log("🚀 ~ Account ~ placeOrder ~ request:", request);
+        const wallet = bigIntToLimbsLE(this._wallet.blinder).join(",");
         let response;
         try {
             response = await this._transmitHttpRequest(request, true);
