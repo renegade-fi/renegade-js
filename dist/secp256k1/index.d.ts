@@ -1,6 +1,32 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+* Get the shares of the key hierarchy computed from `sk_root`
+*
+* # Arguments
+*
+* * `sk_root` - The root key to compute the hierarchy from.
+*
+* # Returns
+* * String representation of the shares of the key hierarchy.
+* @param {string} sk_root
+* @returns {any[]}
+*/
+export function get_key_hierarchy_shares(sk_root: string): any[];
+/**
+* Get the string representation of the key hierarchy computed from `sk_root`
+*
+* # Arguments
+*
+* * `sk_root` - The root key to compute the hierarchy from.
+*
+* # Returns
+* * String representation of the key hierarchy.
+* @param {string} sk_root
+* @returns {any}
+*/
+export function get_key_hierarchy(sk_root: string): any;
+/**
 * Sign the body of a request with `sk_root`
 *
 * # Arguments
@@ -59,6 +85,8 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly get_key_hierarchy_shares: (a: number, b: number, c: number) => void;
+  readonly get_key_hierarchy: (a: number, b: number) => number;
   readonly sign_http_request: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
   readonly sign_message: (a: number, b: number, c: number, d: number) => number;
   readonly get_verifying_key: (a: number, b: number) => number;

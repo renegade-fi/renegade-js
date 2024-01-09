@@ -14,6 +14,10 @@ import {
   splitBigIntIntoWords,
   uint8ArrayToBigInt,
 } from "./utils";
+import {
+  get_key_hierarchy,
+  get_key_hierarchy_shares,
+} from "../../dist/secp256k1";
 
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
@@ -116,18 +120,24 @@ export default class Wallet {
   }
 
   packKeychain(): bigint[] {
-    const pkRootX = splitBigIntIntoWords(this.keychain.keyHierarchy.root.x);
-    console.log("PK ROOT X: ", pkRootX);
-    const pkRootY = splitBigIntIntoWords(this.keychain.keyHierarchy.root.y);
-    console.log("PK ROOT Y: ", pkRootY);
+    // const pkRootX = splitBigIntIntoWords(this.keychain.keyHierarchy.root.x);
+    // const pkRootY = splitBigIntIntoWords(this.keychain.keyHierarchy.root.y);
 
-    // Only use 1 share for pkMatch
-    const pkMatch = splitBigIntIntoWords(
-      uint8ArrayToBigInt(this.keychain.keyHierarchy.match.publicKey),
-      1,
+    // // Only use 1 share for pkMatch
+    // const pkMatch = splitBigIntIntoWords(
+    //   uint8ArrayToBigInt(this.keychain.keyHierarchy.match.publicKey),
+    //   1,
+    // );
+
+    // console.log("Packed keychain: ", [...pkRootX, ...pkRootY, ...pkMatch]);
+
+    // return [...pkRootX, ...pkRootY, ...pkMatch];
+    const secretKeyHex = Buffer.from(
+      this.keychain.keyHierarchy.root.secretKey,
+    ).toString("hex");
+    return get_key_hierarchy_shares(secretKeyHex).map((share: string) =>
+      BigInt(share),
     );
-
-    return [...pkRootX, ...pkRootY, ...pkMatch];
   }
 
   packBlinder(): bigint[] {
@@ -178,6 +188,17 @@ export default class Wallet {
   }
 
   serialize(asBigEndian?: boolean): string {
+    const secretKeyHex = Buffer.from(
+      this.keychain.keyHierarchy.root.secretKey,
+    ).toString("hex");
+    console.log("WASM Keychain: ", get_key_hierarchy(secretKeyHex));
+    console.log(
+      "WASM Packed Keychain: ",
+      get_key_hierarchy_shares(secretKeyHex).map((share: string) =>
+        BigInt(share),
+      ),
+    );
+    console.log("Keychain Shares: ", this.keychain.serialize(asBigEndian));
     const serializedBlindedPublicShares = this.blindedPublicShares.map(
       (share) => "[" + bigIntToLimbsLE(share).join(",") + "]",
     );

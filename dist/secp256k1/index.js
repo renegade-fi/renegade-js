@@ -131,6 +131,53 @@ function getArrayJsValueFromWasm0(ptr, len) {
     return result;
 }
 /**
+* Get the shares of the key hierarchy computed from `sk_root`
+*
+* # Arguments
+*
+* * `sk_root` - The root key to compute the hierarchy from.
+*
+* # Returns
+* * String representation of the shares of the key hierarchy.
+* @param {string} sk_root
+* @returns {any[]}
+*/
+export function get_key_hierarchy_shares(sk_root) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.get_key_hierarchy_shares(retptr, ptr0, len0);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var v2 = getArrayJsValueFromWasm0(r0, r1).slice();
+        wasm.__wbindgen_free(r0, r1 * 4, 4);
+        return v2;
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* Get the string representation of the key hierarchy computed from `sk_root`
+*
+* # Arguments
+*
+* * `sk_root` - The root key to compute the hierarchy from.
+*
+* # Returns
+* * String representation of the key hierarchy.
+* @param {string} sk_root
+* @returns {any}
+*/
+export function get_key_hierarchy(sk_root) {
+    const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_key_hierarchy(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
 * Sign the body of a request with `sk_root`
 *
 * # Arguments

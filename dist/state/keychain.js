@@ -3,7 +3,7 @@ import * as secp from "@noble/secp256k1";
 import { randomBytes } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
 import { compute_poseidon_hash } from "../../dist/poseidon2";
-import { sign_http_request, sign_message } from "../../dist/secp256k1";
+import { get_key_hierarchy, sign_http_request, sign_message, } from "../../dist/secp256k1";
 import { bigIntToUint8Array, } from "./utils";
 // Allow for synchronous secp256 signing. See:
 // https://github.com/paulmillr/noble-secp256k1/blob/main/README.md
@@ -16,7 +16,6 @@ class SigningKey {
         }
         this.secretKey = secretKey;
         this.publicKey = secp.getPublicKey(secretKey);
-        console.log("SK ROOT: ", Buffer.from(this.secretKey).toString("hex"));
         const point = secp.ProjectivePoint.fromHex(this.publicKey);
         this.x = point.x;
         this.y = point.y;
@@ -45,8 +44,6 @@ class IdentificationKey {
         // this.publicKey = bigIntToUint8Array(bigIntPublicKey);
         const publicKeyBigInt = compute_poseidon_hash(secretKeyHex);
         this.publicKey = bigIntToUint8Array(publicKeyBigInt);
-        console.log("SK MATCH: ", Buffer.from(this.secretKey).toString("hex"));
-        console.log("PK MATCH: ", publicKeyBigInt.toString(16));
     }
 }
 /**
@@ -149,17 +146,27 @@ class Keychain {
      * @returns The serialized keychain.
      */
     serialize(asBigEndian) {
-        const orderBytes = (x) => (asBigEndian ? x.reverse() : x);
-        return `{
-      "public_keys": {
-        "pk_root": "0x${orderBytes(Buffer.from(this.keyHierarchy.root.publicKey)).toString("hex")}",
-        "pk_match": "0x${orderBytes(Buffer.from(this.keyHierarchy.match.publicKey)).toString("hex")}"
-      },
-      "private_keys": {
-        "sk_root": "0x${orderBytes(Buffer.from(this.keyHierarchy.root.secretKey)).toString("hex")}",
-        "sk_match": "0x${orderBytes(Buffer.from(this.keyHierarchy.match.secretKey)).toString("hex")}"
-      }
-    }`.replace(/[\s\n]/g, "");
+        // const orderBytes = (x: Buffer) => (asBigEndian ? x.reverse() : x);
+        // return `{
+        //   "public_keys": {
+        //     "pk_root": "0x${orderBytes(
+        //       Buffer.from(this.keyHierarchy.root.publicKey),
+        //     ).toString("hex")}",
+        //     "pk_match": "0x${orderBytes(
+        //       Buffer.from(this.keyHierarchy.match.publicKey),
+        //     ).toString("hex")}"
+        //   },
+        //   "private_keys": {
+        //     "sk_root": "0x${orderBytes(
+        //       Buffer.from(this.keyHierarchy.root.secretKey),
+        //     ).toString("hex")}",
+        //     "sk_match": "0x${orderBytes(
+        //       Buffer.from(this.keyHierarchy.match.secretKey),
+        //     ).toString("hex")}"
+        //   }
+        // }`.replace(/[\s\n]/g, "");
+        const secretKeyHex = Buffer.from(this.keyHierarchy.root.secretKey).toString("hex");
+        return get_key_hierarchy(secretKeyHex);
     }
     static deserialize(serializedKeychain, asBigEndian) {
         let skRoot = Buffer.from(serializedKeychain.private_keys.sk_root.replace("0x", ""), "hex");
