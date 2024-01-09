@@ -1,37 +1,15 @@
 use base64::engine::{general_purpose as b64_general_purpose, Engine};
-use helpers::{get_match_key, get_root_key, split_biguint_into_words};
+use helpers::{get_match_key, get_root_key, point_coord_to_string};
 use k256::{
     ecdsa::{signature::Signer, Signature},
     elliptic_curve::sec1::ToEncodedPoint,
 };
-use num_bigint::BigUint;
 use wasm_bindgen::prelude::*;
 
 mod helpers;
 mod types;
 
 const SIG_VALIDITY_WINDOW_MS: u64 = 10_000; // 10 seconds
-
-/// Converts a point coordinate to a vector of strings representing the coordinate's scalar field elements.
-///
-/// # Arguments
-///
-/// * `coord_bytes` - A byte slice representing the coordinate to be converted.
-///
-/// # Returns
-///
-/// * A `Vec<String>` where each string is a scalar field element of the coordinate.
-fn point_coord_to_string(coord_bytes: &[u8]) -> Vec<String> {
-    let coord_bigint = BigUint::from_bytes_be(coord_bytes);
-    let coord = split_biguint_into_words(coord_bigint);
-    coord
-        .iter()
-        .map(|&scalar_field_element| {
-            let bigint: BigUint = scalar_field_element.into(); // Convert ScalarField to BigUint
-            bigint.to_string() // Convert BigUint to String
-        })
-        .collect::<Vec<String>>()
-}
 
 /// Get the shares of the key hierarchy computed from `sk_root`
 ///
@@ -99,18 +77,19 @@ pub fn get_key_hierarchy(sk_root: &str) -> JsValue {
 ///   and the second element is the expiration time of the signature.
 #[wasm_bindgen]
 pub fn sign_http_request(message: &str, timestamp: u64, key: &str) -> Vec<JsValue> {
-    let (signing_key, _) = get_root_key(key);
     let message_bytes = message.as_bytes();
     let expiration = timestamp + SIG_VALIDITY_WINDOW_MS;
     let payload = [message_bytes, &expiration.to_le_bytes()].concat();
+
+    let (signing_key, _) = get_root_key(key);
     let sig: Signature = signing_key.sign(&payload);
     let sig_bytes = sig.to_bytes().to_vec();
     let sig_header = b64_general_purpose::STANDARD_NO_PAD.encode(sig_bytes);
+
     vec![
         JsValue::from_str(&sig_header),
         JsValue::from_str(&expiration.to_string()),
     ]
-    // vec![JsValue::from_str(message), JsValue::from_str("2")]
 }
 
 /// Sign a message with a given key
@@ -125,11 +104,12 @@ pub fn sign_http_request(message: &str, timestamp: u64, key: &str) -> Vec<JsValu
 /// * A `JsValue` containing the hexadecimal string representation of the signature.
 #[wasm_bindgen]
 pub fn sign_message(message: &str, key: &str) -> JsValue {
-    // let message_bytes = hex::decode(message).unwrap();
     let message_bytes = message.as_bytes();
+
     let (signing_key, _) = get_root_key(key);
     let sig: Signature = signing_key.sign(&message_bytes);
     let sig_hex = hex::encode(sig.to_bytes());
+
     JsValue::from_str(&sig_hex)
 }
 
@@ -146,6 +126,7 @@ pub fn sign_message(message: &str, key: &str) -> JsValue {
 pub fn get_verifying_key(key: &str) -> JsValue {
     let (_, verifying_key) = get_root_key(key);
     let verifying_key_hex = hex::encode(verifying_key.to_encoded_point(false).as_bytes());
+
     JsValue::from_str(&verifying_key_hex)
 }
 
@@ -153,6 +134,7 @@ pub fn get_verifying_key(key: &str) -> JsValue {
 pub fn hex_to_b64(hex: &str) -> JsValue {
     let bytes = hex::decode(hex).unwrap();
     let b64 = b64_general_purpose::STANDARD_NO_PAD.encode(bytes);
+
     JsValue::from_str(&b64)
 }
 

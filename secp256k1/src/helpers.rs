@@ -8,12 +8,32 @@ use sha2::{Digest, Sha256};
 
 const CREATE_SK_MATCH_MESSAGE: &str = "Unlock your Renegade match key.\nTestnet v0";
 
-/// Computes the Poseidon2 hash of the input string and returns a BigInt.
+/// Converts a point coordinate to a vector of strings representing the coordinate's scalar field elements.
 ///
-/// Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.
+/// # Arguments
+///
+/// * `coord_bytes` - A byte slice representing the coordinate to be converted.
+///
+/// # Returns
+///
+/// * A `Vec<String>` where each string is a scalar field element of the coordinate.
+pub fn point_coord_to_string(coord_bytes: &[u8]) -> Vec<String> {
+    let coord_bigint = BigUint::from_bytes_be(coord_bytes);
+    let coord_words = split_biguint_into_words(coord_bigint);
+    coord_words
+        .iter()
+        .map(|&scalar_field_element| {
+            let bigint: BigUint = scalar_field_element.into(); // Convert ScalarField to BigUint
+            bigint.to_string() // Convert BigUint to String
+        })
+        .collect::<Vec<String>>()
+}
+
+/// Computes the Poseidon2 hash of the input
 pub fn compute_poseidon_hash(values: &[ScalarField]) -> ScalarField {
     let mut hasher = Poseidon2Sponge::new();
     let res = hasher.hash(values);
+
     ScalarField::from(res)
 }
 
@@ -40,6 +60,7 @@ pub fn get_root_key(key: &str) -> (SigningKey, VerifyingKey) {
     let key_bigint = biguint_from_hex_string(&key);
     let signing_key = SigningKey::from_slice(&key_bigint.to_bytes_be()).unwrap();
     let verifying_key = signing_key.clone().verifying_key().to_owned();
+
     (signing_key, verifying_key)
 }
 
@@ -63,6 +84,7 @@ pub fn get_match_key(sk_root: SigningKey) -> (SecretIdentificationKey, PublicIde
     (sk_match, pk_match)
 }
 
+/// Computes the SHA256 hash of the input
 pub fn compute_sha256_hash(message: &[u8]) -> Vec<u8> {
     let mut hasher = Sha256::new();
     hasher.update(message);
