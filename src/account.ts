@@ -129,16 +129,10 @@ export default class Account {
   ): Promise<AxiosResponse> {
     if (isAuthenticated) {
       const messageBuffer = request.data ?? "";
-      const skRootHex = Buffer.from(
-        this.keychain.keyHierarchy.root.secretKey,
-      ).toString("hex");
+      const [renegadeAuth, renegadeAuthExpiration] =
+        this.keychain.generateExpiringSignature(messageBuffer);
 
-      const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
-        messageBuffer,
-        BigInt(Date.now()),
-        skRootHex,
-      );
-
+      // TODO: What does this line do
       request.headers = request.headers || {};
       request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
       request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
@@ -351,7 +345,7 @@ export default class Account {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${
         this.accountId
-        // TODO: Mint should be the address
+        // TODO: mint is address
       }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(
         amount,
@@ -362,7 +356,7 @@ export default class Account {
       )}}`,
       validateStatus: () => true,
     };
-    console.log("Wallet: ", this._wallet.serialize())
+    console.log("Wallet: ", this._wallet.serialize());
     console.log("🚀 ~ Account ~ withdraw ~ request:", request);
     let response;
     try {
@@ -395,7 +389,7 @@ export default class Account {
       )}}`,
       validateStatus: () => true,
     };
-    console.log("WALLET: ", this._wallet.serialize())
+    console.log("WALLET: ", this._wallet.serialize());
     console.log("PLACING ORDER: ", order.serialize());
     let response;
     try {

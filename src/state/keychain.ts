@@ -8,17 +8,15 @@ import {
   sign_http_request,
   sign_message,
 } from "../../dist/renegade-utils";
-import {
-  bigIntToUint8Array
-} from "./utils";
+import { bigIntToUint8Array } from "./utils";
 
 // Allow for synchronous secp256 signing. See:
 // https://github.com/paulmillr/noble-secp256k1/blob/main/README.md
 secp.etc.hmacSha256Sync = (...m) => sha256(secp.etc.concatBytes(...m));
-const SIG_VALIDITY_WINDOW_MS = 10_000;
 
 class SigningKey {
   secretKey: Uint8Array;
+  secretKeyHex: string
   publicKey: Uint8Array;
   // Affine x coordinate of the public key
   x: bigint;
@@ -30,6 +28,7 @@ class SigningKey {
       throw new Error("SigningKey secretKey must be 32 bytes.");
     }
     this.secretKey = secretKey;
+    this.secretKeyHex = Buffer.from(secretKey).toString("hex");
     this.publicKey = secp.getPublicKey(secretKey);
 
     const point = secp.ProjectivePoint.fromHex(this.publicKey);
@@ -38,8 +37,7 @@ class SigningKey {
   }
 
   signMessage(message: string): string {
-    const skRootHex = Buffer.from(this.secretKey).toString("hex");
-    return sign_message(message, skRootHex);
+    return sign_message(message, this.secretKeyHex);
   }
 }
 
@@ -52,17 +50,7 @@ class IdentificationKey {
       throw new Error("IdentificationKey secretKey must be 32 bytes.");
     }
     this.secretKey = secretKey;
-    // TODO: Use sha256 to hash
-    // const secretKeyHash = sha256(secretKey);
-    // const secretKeyBigInt = F.e(uint8ArrayToBigInt(secretKey));
     const secretKeyHex = Buffer.from(secretKey).toString("hex");
-    // this.publicKey = bigIntToUint8Array(publicKey);
-    // this.publicKey = secp.getPublicKey(secretKey);
-    // const hexPublicKey = get_verifying_key(
-    //   Buffer.from(secretKey).toString("hex"),
-    // );
-    // const bigIntPublicKey = BigInt(`0x${hexPublicKey}`);
-    // this.publicKey = bigIntToUint8Array(bigIntPublicKey);
     const publicKeyBigInt = compute_poseidon_hash(secretKeyHex);
     this.publicKey = bigIntToUint8Array(publicKeyBigInt);
   }
@@ -167,25 +155,13 @@ export default class Keychain {
    * @returns A tuple consisting of an expiring signature and an expiration
    * timestamp, to be appended as headers to the request.
    */
-  generateExpiringSignature(dataBuffer: Buffer): [string, number] {
-    const sk_root = Buffer.from(this.keyHierarchy.root.secretKey).toString(
-      "hex",
+  generateExpiringSignature(dataBuffer: string): [string, number] {
+    const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
+      dataBuffer,
+      BigInt(Date.now()),
+      this.keyHierarchy.root.secretKeyHex,
     );
-
-    // TODO: Should message be hashed? No.
-    const message = Buffer.from(dataBuffer).toString("hex");
-    const now = Date.now();
-    const validUntil = now + SIG_VALIDITY_WINDOW_MS;
-    const validUntilBuffer = Buffer.alloc(8);
-    validUntilBuffer.writeUInt32LE(validUntil % 2 ** 32, 0);
-    validUntilBuffer.writeUInt32LE(Math.floor(validUntil / 2 ** 32), 4);
-    const [sig_header, expiration] = sign_http_request(
-      message,
-      BigInt(now),
-      sk_root,
-    );
-
-    return [sig_header, expiration];
+    return [renegadeAuth, renegadeAuthExpiration];
   }
 
   /**
@@ -219,29 +195,7 @@ export default class Keychain {
    * @returns The serialized keychain.
    */
   serialize(asBigEndian?: boolean): string {
-    // const orderBytes = (x: Buffer) => (asBigEndian ? x.reverse() : x);
-    // return `{
-    //   "public_keys": {
-    //     "pk_root": "0x${orderBytes(
-    //       Buffer.from(this.keyHierarchy.root.publicKey),
-    //     ).toString("hex")}",
-    //     "pk_match": "0x${orderBytes(
-    //       Buffer.from(this.keyHierarchy.match.publicKey),
-    //     ).toString("hex")}"
-    //   },
-    //   "private_keys": {
-    //     "sk_root": "0x${orderBytes(
-    //       Buffer.from(this.keyHierarchy.root.secretKey),
-    //     ).toString("hex")}",
-    //     "sk_match": "0x${orderBytes(
-    //       Buffer.from(this.keyHierarchy.match.secretKey),
-    //     ).toString("hex")}"
-    //   }
-    // }`.replace(/[\s\n]/g, "");
-    const secretKeyHex = Buffer.from(this.keyHierarchy.root.secretKey).toString(
-      "hex",
-    );
-    return get_key_hierarchy(secretKeyHex);
+    return get_key_hierarchy(this.keyHierarchy.root.secretKeyHex);
   }
 
   static deserialize(serializedKeychain: any, asBigEndian?: boolean): Keychain {

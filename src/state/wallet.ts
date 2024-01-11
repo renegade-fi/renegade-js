@@ -1,7 +1,6 @@
 import { sha256 } from "@noble/hashes/sha256";
 import {
-  get_key_hierarchy,
-  get_key_hierarchy_shares,
+  get_key_hierarchy_shares
 } from "../../dist/renegade-utils";
 import { WalletId } from "../types";
 import { F } from "../utils/field";
@@ -119,22 +118,7 @@ export default class Wallet {
   }
 
   packKeychain(): bigint[] {
-    // const pkRootX = splitBigIntIntoWords(this.keychain.keyHierarchy.root.x);
-    // const pkRootY = splitBigIntIntoWords(this.keychain.keyHierarchy.root.y);
-
-    // // Only use 1 share for pkMatch
-    // const pkMatch = splitBigIntIntoWords(
-    //   uint8ArrayToBigInt(this.keychain.keyHierarchy.match.publicKey),
-    //   1,
-    // );
-
-    // console.log("Packed keychain: ", [...pkRootX, ...pkRootY, ...pkMatch]);
-
-    // return [...pkRootX, ...pkRootY, ...pkMatch];
-    const secretKeyHex = Buffer.from(
-      this.keychain.keyHierarchy.root.secretKey,
-    ).toString("hex");
-    return get_key_hierarchy_shares(secretKeyHex).map((share: string) =>
+    return get_key_hierarchy_shares(this.keychain.keyHierarchy.root.secretKeyHex).map((share: string) =>
       BigInt(share),
     );
   }
@@ -187,17 +171,6 @@ export default class Wallet {
   }
 
   serialize(asBigEndian?: boolean): string {
-    const secretKeyHex = Buffer.from(
-      this.keychain.keyHierarchy.root.secretKey,
-    ).toString("hex");
-    console.log("WASM Keychain: ", get_key_hierarchy(secretKeyHex));
-    console.log(
-      "WASM Packed Keychain: ",
-      get_key_hierarchy_shares(secretKeyHex).map((share: string) =>
-        BigInt(share),
-      ),
-    );
-    console.log("Keychain Shares: ", this.keychain.serialize(asBigEndian));
     const serializedBlindedPublicShares = this.blindedPublicShares.map(
       (share) => "[" + bigIntToLimbsLE(share).join(",") + "]",
     );
