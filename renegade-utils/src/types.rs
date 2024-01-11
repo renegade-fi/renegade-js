@@ -1,4 +1,4 @@
-use crate::helpers::compute_poseidon_hash;
+use crate::helpers::_compute_poseidon_hash;
 use ark_bn254::Fr;
 use num_bigint::BigUint;
 
@@ -19,7 +19,7 @@ impl From<ScalarField> for SecretIdentificationKey {
 impl SecretIdentificationKey {
     /// Get the public key corresponding to this secret key
     pub fn get_public_key(&self) -> PublicIdentificationKey {
-        let key = compute_poseidon_hash(&[self.key]);
+        let key = _compute_poseidon_hash(&[self.key]);
         PublicIdentificationKey { key }
     }
     pub fn serialize_to_hex(&self) -> String {

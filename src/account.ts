@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import { sign_http_request } from "../dist/secp256k1";
+import { sign_http_request } from "../dist/renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
 import {
@@ -239,10 +239,6 @@ export default class Account {
     let response;
     try {
       response = await this._transmitHttpRequest(request, true);
-      console.log(
-        "🚀 ~ Account ~ _queryRelayerForWallet ~ response:",
-        response.data.wallet,
-      );
     } catch (e) {
       console.error("Error querying relayer for wallet: ", e);
       return undefined;
@@ -366,6 +362,7 @@ export default class Account {
       )}}`,
       validateStatus: () => true,
     };
+    console.log("Wallet: ", this._wallet.serialize())
     console.log("🚀 ~ Account ~ withdraw ~ request:", request);
     let response;
     try {
@@ -398,8 +395,8 @@ export default class Account {
       )}}`,
       validateStatus: () => true,
     };
-    console.log("🚀 ~ Account ~ placeOrder ~ request:", request);
-    const wallet = bigIntToLimbsLE(this._wallet.blinder).join(",");
+    console.log("WALLET: ", this._wallet.serialize())
+    console.log("PLACING ORDER: ", order.serialize());
     let response;
     try {
       response = await this._transmitHttpRequest(request, true);

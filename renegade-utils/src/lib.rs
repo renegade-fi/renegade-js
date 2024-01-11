@@ -1,15 +1,42 @@
 use base64::engine::{general_purpose as b64_general_purpose, Engine};
-use helpers::{get_match_key, get_root_key, point_coord_to_string};
+use helpers::{
+    _compute_poseidon_hash, biguint_from_hex_string, get_match_key, get_root_key,
+    point_coord_to_string,
+};
 use k256::{
     ecdsa::{signature::Signer, Signature},
     elliptic_curve::sec1::ToEncodedPoint,
 };
+use types::ScalarField;
 use wasm_bindgen::prelude::*;
 
 mod helpers;
 mod types;
 
 const SIG_VALIDITY_WINDOW_MS: u64 = 10_000; // 10 seconds
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "bigint")]
+    pub type BigInt;
+}
+
+/// Computes the Poseidon2 hash of the input string and returns a BigInt.
+///
+/// Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.
+#[wasm_bindgen]
+pub fn compute_poseidon_hash(value: &str) -> BigInt {
+    // let input_seq = ScalarField::from(biguint_from_hex_string(value).unwrap());
+    // let mut hasher = Poseidon2Sponge::new();
+    // let res = hasher.hash(&[input_seq]);
+
+    let input = [ScalarField::from(biguint_from_hex_string(value))];
+    let res = _compute_poseidon_hash(&input);
+
+    // Convert the hash result to a JavaScript BigInt
+    let js_bigint: JsValue = res.to_string().into();
+    js_bigint.unchecked_into::<BigInt>()
+}
 
 /// Get the shares of the key hierarchy computed from `sk_root`
 ///

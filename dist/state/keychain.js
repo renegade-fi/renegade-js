@@ -2,9 +2,8 @@ import { sha256 } from "@noble/hashes/sha256";
 import * as secp from "@noble/secp256k1";
 import { randomBytes } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
-import { compute_poseidon_hash } from "../../dist/poseidon2";
-import { get_key_hierarchy, sign_http_request, sign_message, } from "../../dist/secp256k1";
-import { bigIntToUint8Array, } from "./utils";
+import { compute_poseidon_hash, get_key_hierarchy, sign_http_request, sign_message, } from "../../dist/renegade-utils";
+import { bigIntToUint8Array } from "./utils";
 // Allow for synchronous secp256 signing. See:
 // https://github.com/paulmillr/noble-secp256k1/blob/main/README.md
 secp.etc.hmacSha256Sync = (...m) => sha256(secp.etc.concatBytes(...m));

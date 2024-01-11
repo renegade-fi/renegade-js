@@ -128,9 +128,11 @@ export function signWalletModifyOrder(
   oldOrderId: OrderId,
   newOrder: Order,
 ) {
+  console.log("Orders before modify", wallet.orders)
   const newOrders = [...wallet.orders];
   const index = newOrders.findIndex((order) => order.orderId === oldOrderId);
   newOrders[index] = newOrder;
+  console.log("Orders after modify", newOrders)
   const newWallet = new Wallet({
     ...wallet,
     orders: newOrders,

@@ -5,8 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
-import loadPoseidon2 from "../dist/poseidon2";
-import loadSignature from "../dist/secp256k1";
+import loadSignature from "../dist/renegade-utils";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { oldExchangeHealthStatesSchema, parseExchangeHealthStates, } from "./types/schema";
@@ -87,8 +86,6 @@ export default class Renegade {
         this._ws = new RenegadeWs(this.relayerWsUrl, this._verbose);
         this._registeredAccounts = {};
         this._isTornDown = false;
-        // Load the Poseidon2 wasm module into memory
-        loadPoseidon2();
         // Load the Signature wasm module into memory
         loadSignature();
     }

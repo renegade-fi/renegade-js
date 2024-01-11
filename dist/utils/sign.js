@@ -112,9 +112,11 @@ export function signWalletPlaceOrder(wallet, order) {
  *
  */
 export function signWalletModifyOrder(wallet, oldOrderId, newOrder) {
+    console.log("Orders before modify", wallet.orders);
     const newOrders = [...wallet.orders];
     const index = newOrders.findIndex((order) => order.orderId === oldOrderId);
     newOrders[index] = newOrder;
+    console.log("Orders after modify", newOrders);
     const newWallet = new Wallet({
         ...wallet,
         orders: newOrders,

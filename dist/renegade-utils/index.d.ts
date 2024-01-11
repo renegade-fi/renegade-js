@@ -1,6 +1,14 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+* Computes the Poseidon2 hash of the input string and returns a BigInt.
+*
+* Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.
+* @param {string} value
+* @returns {bigint}
+*/
+export function compute_poseidon_hash(value: string): bigint;
+/**
 * Get the shares of the key hierarchy computed from `sk_root`
 *
 * # Arguments
@@ -85,15 +93,16 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly compute_poseidon_hash: (a: number, b: number) => number;
   readonly get_key_hierarchy_shares: (a: number, b: number, c: number) => void;
   readonly get_key_hierarchy: (a: number, b: number) => number;
   readonly sign_http_request: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
   readonly sign_message: (a: number, b: number, c: number, d: number) => number;
   readonly get_verifying_key: (a: number, b: number) => number;
   readonly hex_to_b64: (a: number, b: number) => number;
-  readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+  readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
 }
 

@@ -1,4 +1,8 @@
 import { sha256 } from "@noble/hashes/sha256";
+import {
+  get_key_hierarchy,
+  get_key_hierarchy_shares,
+} from "../../dist/renegade-utils";
 import { WalletId } from "../types";
 import { F } from "../utils/field";
 import Balance from "./balance";
@@ -11,13 +15,8 @@ import {
   evaluateHashChain,
   generateId,
   limbsToBigIntLE,
-  splitBigIntIntoWords,
-  uint8ArrayToBigInt,
+  uint8ArrayToBigInt
 } from "./utils";
-import {
-  get_key_hierarchy,
-  get_key_hierarchy_shares,
-} from "../../dist/secp256k1";
 
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;

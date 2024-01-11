@@ -109,9 +109,175 @@ function takeObject(idx) {
 * @returns {bigint}
 */
 export function compute_poseidon_hash(value) {
-    const ptr0 = passStringToWasm0(value, wasm.__wbindgen_export_0, wasm.__wbindgen_export_1);
+    const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.compute_poseidon_hash(ptr0, len0);
+    return takeObject(ret);
+}
+
+let cachedInt32Memory0 = null;
+
+function getInt32Memory0() {
+    if (cachedInt32Memory0 === null || cachedInt32Memory0.byteLength === 0) {
+        cachedInt32Memory0 = new Int32Array(wasm.memory.buffer);
+    }
+    return cachedInt32Memory0;
+}
+
+let cachedUint32Memory0 = null;
+
+function getUint32Memory0() {
+    if (cachedUint32Memory0 === null || cachedUint32Memory0.byteLength === 0) {
+        cachedUint32Memory0 = new Uint32Array(wasm.memory.buffer);
+    }
+    return cachedUint32Memory0;
+}
+
+function getArrayJsValueFromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    const mem = getUint32Memory0();
+    const slice = mem.subarray(ptr / 4, ptr / 4 + len);
+    const result = [];
+    for (let i = 0; i < slice.length; i++) {
+        result.push(takeObject(slice[i]));
+    }
+    return result;
+}
+/**
+* Get the shares of the key hierarchy computed from `sk_root`
+*
+* # Arguments
+*
+* * `sk_root` - The root key to compute the hierarchy from.
+*
+* # Returns
+* * String representation of the shares of the key hierarchy.
+* @param {string} sk_root
+* @returns {any[]}
+*/
+export function get_key_hierarchy_shares(sk_root) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.get_key_hierarchy_shares(retptr, ptr0, len0);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var v2 = getArrayJsValueFromWasm0(r0, r1).slice();
+        wasm.__wbindgen_free(r0, r1 * 4, 4);
+        return v2;
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* Get the string representation of the key hierarchy computed from `sk_root`
+*
+* # Arguments
+*
+* * `sk_root` - The root key to compute the hierarchy from.
+*
+* # Returns
+* * String representation of the key hierarchy.
+* @param {string} sk_root
+* @returns {any}
+*/
+export function get_key_hierarchy(sk_root) {
+    const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_key_hierarchy(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
+* Sign the body of a request with `sk_root`
+*
+* # Arguments
+*
+* * `message` - The message to be signed.
+* * `expiration` - The expiration time of the signature TODO
+* * `key` - Hex representatino of the key to sign the message with.
+*
+* # Returns
+*
+* * A vector of JavaScript values. The first element is the signature header,
+*   and the second element is the expiration time of the signature.
+* @param {string} message
+* @param {bigint} timestamp
+* @param {string} key
+* @returns {any[]}
+*/
+export function sign_http_request(message, timestamp, key) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        wasm.sign_http_request(retptr, ptr0, len0, timestamp, ptr1, len1);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var v3 = getArrayJsValueFromWasm0(r0, r1).slice();
+        wasm.__wbindgen_free(r0, r1 * 4, 4);
+        return v3;
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* Sign a message with a given key
+*
+* # Arguments
+*
+* * `message` - The message to be signed.
+* * `key` - The key to sign the message with.
+*
+* # Returns
+*
+* * A `JsValue` containing the hexadecimal string representation of the signature.
+* @param {string} message
+* @param {string} key
+* @returns {any}
+*/
+export function sign_message(message, key) {
+    const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.sign_message(ptr0, len0, ptr1, len1);
+    return takeObject(ret);
+}
+
+/**
+* Get the verifying key from a signing key
+*
+* # Arguments
+*
+* * `key` - Hex representation of the signing key.
+*
+* # Returns
+*
+* * A `JsValue` containing the hexadecimal string representation of the verifying key.
+* @param {string} key
+* @returns {any}
+*/
+export function get_verifying_key(key) {
+    const ptr0 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_verifying_key(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
+* @param {string} hex
+* @returns {any}
+*/
+export function hex_to_b64(hex) {
+    const ptr0 = passStringToWasm0(hex, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.hex_to_b64(ptr0, len0);
     return takeObject(ret);
 }
 
@@ -153,6 +319,9 @@ function __wbg_get_imports() {
         const ret = getStringFromWasm0(arg0, arg1);
         return addHeapObject(ret);
     };
+    imports.wbg.__wbindgen_throw = function(arg0, arg1) {
+        throw new Error(getStringFromWasm0(arg0, arg1));
+    };
 
     return imports;
 }
@@ -164,6 +333,8 @@ function __wbg_init_memory(imports, maybe_memory) {
 function __wbg_finalize_init(instance, module) {
     wasm = instance.exports;
     __wbg_init.__wbindgen_wasm_module = module;
+    cachedInt32Memory0 = null;
+    cachedUint32Memory0 = null;
     cachedUint8Memory0 = null;
 
 

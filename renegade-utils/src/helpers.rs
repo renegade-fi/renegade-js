@@ -30,7 +30,7 @@ pub fn point_coord_to_string(coord_bytes: &[u8]) -> Vec<String> {
 }
 
 /// Computes the Poseidon2 hash of the input
-pub fn compute_poseidon_hash(values: &[ScalarField]) -> ScalarField {
+pub fn _compute_poseidon_hash(values: &[ScalarField]) -> ScalarField {
     let mut hasher = Poseidon2Sponge::new();
     let res = hasher.hash(values);
 

@@ -60,6 +60,7 @@ const KATANA_ADDR_TO_TICKER = {
 const STYLUS_ADDR_TO_TICKER = {
     ...ADDR_TO_TICKER,
     "408da76e87511429485c32e4ad647dd14823fdc4": "WETH",
+    "1bdce09dbc6fc66fb0f9c585c442a5a46eed7e7b": "USDC",
 };
 const TICKER_TO_ADDR = {};
 for (const addr in ADDR_TO_TICKER) {

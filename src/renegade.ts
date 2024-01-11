@@ -1,7 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 
-import loadPoseidon2 from "../dist/poseidon2";
-import loadSignature from "../dist/secp256k1";
+import loadSignature from "../dist/renegade-utils";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import {
@@ -143,8 +142,6 @@ export default class Renegade
     this._registeredAccounts = {} as Record<AccountId, Account>;
     this._isTornDown = false;
 
-    // Load the Poseidon2 wasm module into memory
-    loadPoseidon2();
     // Load the Signature wasm module into memory
     loadSignature();
   }

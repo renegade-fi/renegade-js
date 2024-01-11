@@ -1,11 +1,11 @@
 import { sha256 } from "@noble/hashes/sha256";
+import { get_key_hierarchy, get_key_hierarchy_shares, } from "../../dist/renegade-utils";
 import { F } from "../utils/field";
 import Balance from "./balance";
 import Fee from "./fee";
 import Keychain from "./keychain";
 import Order from "./order";
-import { bigIntToLimbsLE, createWalletSharesWithRandomness, evaluateHashChain, generateId, limbsToBigIntLE, uint8ArrayToBigInt, } from "./utils";
-import { get_key_hierarchy, get_key_hierarchy_shares, } from "../../dist/secp256k1";
+import { bigIntToLimbsLE, createWalletSharesWithRandomness, evaluateHashChain, generateId, limbsToBigIntLE, uint8ArrayToBigInt } from "./utils";
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
 const MAX_ORDERS = 5;
