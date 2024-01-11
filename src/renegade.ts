@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 
-import loadSignature from "../dist/renegade-utils";
+import loadUtils from "../dist/renegade-utils";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import {
@@ -143,7 +143,7 @@ export default class Renegade
     this._isTornDown = false;
 
     // Load the Signature wasm module into memory
-    loadSignature();
+    loadUtils();
   }
 
   /**
