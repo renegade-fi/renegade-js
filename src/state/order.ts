@@ -47,19 +47,19 @@ export default class Order {
       params.worstPrice !== undefined
         ? params.worstPrice
         : params.side === "buy"
-        ? MAX_PRICE
-        : 0;
+          ? MAX_PRICE
+          : 0;
     this.timestamp = params.timestamp || new Date().getTime();
   }
 
   pack(): bigint[] {
-    // TODO: Figure out correct price encoding.
     return [
       BigInt("0x" + this.quoteToken.address),
       BigInt("0x" + this.baseToken.address),
       this.side === "buy" ? 0n : 1n,
-      BigInt(Math.floor(this.worstPrice || 0)),
       this.amount,
+      // Relayer expects worstPrice to be a FixedPoint
+      BigInt(Math.floor(this.worstPrice * 2 ** 32 || 0)),
       BigInt(this.timestamp),
     ];
   }

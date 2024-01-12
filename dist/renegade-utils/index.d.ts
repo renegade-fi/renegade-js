@@ -1,6 +1,25 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+* Generates a signature for a wallet update operation.
+*
+* This function takes a serialized wallet and the root secret key as inputs,
+* generates a signature for the wallet update, and returns the signature as a hex-encoded string.
+*
+* # Arguments
+*
+* * `wallet_str` - A string slice that holds the serialized wallet data.
+* * `sk_root` - A string slice that holds the root secret key.
+*
+* # Returns
+*
+* A `JsValue` containing the hex-encoded signature string.
+* @param {string} wallet_str
+* @param {string} sk_root
+* @returns {any}
+*/
+export function generate_wallet_update_signature(wallet_str: string, sk_root: string): any;
+/**
 * Computes the Poseidon2 hash of the input string and returns a BigInt.
 *
 * Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.
@@ -93,6 +112,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly generate_wallet_update_signature: (a: number, b: number, c: number, d: number) => number;
   readonly compute_poseidon_hash: (a: number, b: number) => number;
   readonly get_key_hierarchy_shares: (a: number, b: number, c: number) => void;
   readonly get_key_hierarchy: (a: number, b: number) => number;
