@@ -5,10 +5,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
-import { sign_http_request } from "../dist/renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
 import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, } from "./state/utils";
+import { createPostRequest } from "./types/api";
 import { RenegadeWs } from "./utils";
 import { F } from "./utils/field";
 import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, } from "./utils/sign";
@@ -91,8 +91,8 @@ export default class Account {
     async _transmitHttpRequest(request, isAuthenticated) {
         if (isAuthenticated) {
             const messageBuffer = request.data ?? "";
-            const skRootHex = Buffer.from(this.keychain.keyHierarchy.root.secretKey).toString("hex");
-            const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(messageBuffer, BigInt(Date.now()), skRootHex);
+            const [renegadeAuth, renegadeAuthExpiration] = this.keychain.generateExpiringSignature(messageBuffer);
+            // TODO: What does this line do
             request.headers = request.headers || {};
             request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
             request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
@@ -224,14 +224,10 @@ export default class Account {
      */
     async _createNewWallet() {
         // TODO: Assert that Balances and Orders are empty.
-        // Query the relayer to create a new Wallet.
-        const request = {
-            method: "POST",
-            url: `${this._relayerHttpUrl}/v0/wallet`,
-            // Little endian otherwise EC point encoding error in relayer
-            data: `{"wallet":${this._wallet.serialize(false)}}`,
-            validateStatus: () => true,
+        const data = {
+            wallet: this._wallet,
         };
+        const request = createPostRequest(`${this._relayerHttpUrl}/v0/wallet`, data);
         let response;
         try {
             response = await this._transmitHttpRequest(request, false);
@@ -262,7 +258,6 @@ export default class Account {
             data: `{"public_var_sig":[],"from_addr":"${fromAddr}","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(amount).join(",")}],"statement_sig":${signWalletDeposit(this._wallet, mint, amount)}}`,
             validateStatus: () => true,
         };
-        console.log("🚀 ~ Account ~ deposit ~ request:", request);
         let response;
         try {
             response = await this._transmitHttpRequest(request, true);
@@ -289,7 +284,7 @@ export default class Account {
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId
-            // TODO: Mint should be the address
+            // TODO: mint is address
             }/balances/${mint.serialize()}/withdraw`,
             data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(amount).join(",")}],"statement_sig":${signWalletWithdraw(this._wallet, mint, amount)}}`,
             validateStatus: () => true,
@@ -323,8 +318,6 @@ export default class Account {
             data: `{"public_var_sig":[],"order":${order.serialize()},"statement_sig":${signWalletPlaceOrder(this._wallet, order)}}`,
             validateStatus: () => true,
         };
-        console.log("WALLET: ", this._wallet.serialize());
-        console.log("PLACING ORDER: ", order.serialize());
         let response;
         try {
             response = await this._transmitHttpRequest(request, true);

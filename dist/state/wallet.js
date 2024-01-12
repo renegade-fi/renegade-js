@@ -1,5 +1,5 @@
 import { sha256 } from "@noble/hashes/sha256";
-import { get_key_hierarchy, get_key_hierarchy_shares, } from "../../dist/renegade-utils";
+import { get_key_hierarchy_shares } from "../../dist/renegade-utils";
 import { F } from "../utils/field";
 import Balance from "./balance";
 import Fee from "./fee";
@@ -66,17 +66,7 @@ export default class Wallet {
         return packedFees.flat().concat(packedPadding.flat());
     }
     packKeychain() {
-        // const pkRootX = splitBigIntIntoWords(this.keychain.keyHierarchy.root.x);
-        // const pkRootY = splitBigIntIntoWords(this.keychain.keyHierarchy.root.y);
-        // // Only use 1 share for pkMatch
-        // const pkMatch = splitBigIntIntoWords(
-        //   uint8ArrayToBigInt(this.keychain.keyHierarchy.match.publicKey),
-        //   1,
-        // );
-        // console.log("Packed keychain: ", [...pkRootX, ...pkRootY, ...pkMatch]);
-        // return [...pkRootX, ...pkRootY, ...pkMatch];
-        const secretKeyHex = Buffer.from(this.keychain.keyHierarchy.root.secretKey).toString("hex");
-        return get_key_hierarchy_shares(secretKeyHex).map((share) => BigInt(share));
+        return get_key_hierarchy_shares(this.keychain.keyHierarchy.root.secretKeyHex).map((share) => BigInt(share));
     }
     packBlinder() {
         return [this.blinder];
@@ -108,10 +98,6 @@ export default class Wallet {
         return [blindedPublicShares, privateShares];
     }
     serialize(asBigEndian) {
-        const secretKeyHex = Buffer.from(this.keychain.keyHierarchy.root.secretKey).toString("hex");
-        console.log("WASM Keychain: ", get_key_hierarchy(secretKeyHex));
-        console.log("WASM Packed Keychain: ", get_key_hierarchy_shares(secretKeyHex).map((share) => BigInt(share)));
-        console.log("Keychain Shares: ", this.keychain.serialize(asBigEndian));
         const serializedBlindedPublicShares = this.blindedPublicShares.map((share) => "[" + bigIntToLimbsLE(share).join(",") + "]");
         const serializedPrivateShares = this.privateShares.map((share) => "[" + bigIntToLimbsLE(share).join(",") + "]");
         return `{

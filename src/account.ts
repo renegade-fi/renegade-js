@@ -1,5 +1,4 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import { sign_http_request } from "../dist/renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
 import {
@@ -9,6 +8,7 @@ import {
   findZeroOrders,
 } from "./state/utils";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
+import { CreateWalletRequest, createPostRequest } from "./types/api";
 import { RenegadeWs, TaskJob } from "./utils";
 import { F } from "./utils/field";
 import {
@@ -271,14 +271,13 @@ export default class Account {
    */
   private async _createNewWallet(): Promise<TaskId> {
     // TODO: Assert that Balances and Orders are empty.
-    // Query the relayer to create a new Wallet.
-    const request: AxiosRequestConfig = {
-      method: "POST",
-      url: `${this._relayerHttpUrl}/v0/wallet`,
-      // Little endian otherwise EC point encoding error in relayer
-      data: `{"wallet":${this._wallet.serialize(false)}}`,
-      validateStatus: () => true,
+    const data: CreateWalletRequest = {
+      wallet: this._wallet,
     };
+    const request = createPostRequest<CreateWalletRequest>(
+      `${this._relayerHttpUrl}/v0/wallet`,
+      data,
+    );
     let response;
     try {
       response = await this._transmitHttpRequest(request, false);
@@ -316,7 +315,6 @@ export default class Account {
       )}}`,
       validateStatus: () => true,
     };
-    console.log("🚀 ~ Account ~ deposit ~ request:", request);
     let response;
     try {
       response = await this._transmitHttpRequest(request, true);
@@ -389,8 +387,6 @@ export default class Account {
       )}}`,
       validateStatus: () => true,
     };
-    console.log("WALLET: ", this._wallet.serialize());
-    console.log("PLACING ORDER: ", order.serialize());
     let response;
     try {
       response = await this._transmitHttpRequest(request, true);

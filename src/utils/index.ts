@@ -75,9 +75,7 @@ export class RenegadeWs {
     };
     if (keychain) {
       const [renegadeAuth, renegadeAuthExpiration] =
-        keychain.generateExpiringSignature(
-          Buffer.from(JSON.stringify(message.body), "ascii"),
-        );
+        keychain.generateExpiringSignature(JSON.stringify(message.body));
       message.headers[RENEGADE_AUTH_HEADER] = JSON.stringify(renegadeAuth);
       message.headers[RENEGADE_AUTH_EXPIRATION_HEADER] =
         renegadeAuthExpiration.toString();

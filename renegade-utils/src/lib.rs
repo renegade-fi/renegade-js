@@ -26,10 +26,6 @@ extern "C" {
 /// Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.
 #[wasm_bindgen]
 pub fn compute_poseidon_hash(value: &str) -> BigInt {
-    // let input_seq = ScalarField::from(biguint_from_hex_string(value).unwrap());
-    // let mut hasher = Poseidon2Sponge::new();
-    // let res = hasher.hash(&[input_seq]);
-
     let input = [ScalarField::from(biguint_from_hex_string(value))];
     let res = _compute_poseidon_hash(&input);
 

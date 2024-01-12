@@ -5,7 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
-import loadSignature from "../dist/renegade-utils";
+import loadUtils from "../dist/renegade-utils";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { oldExchangeHealthStatesSchema, parseExchangeHealthStates, } from "./types/schema";
@@ -87,7 +87,7 @@ export default class Renegade {
         this._registeredAccounts = {};
         this._isTornDown = false;
         // Load the Signature wasm module into memory
-        loadSignature();
+        loadUtils();
     }
     /**
      * Construct a URL from the given parameters.
