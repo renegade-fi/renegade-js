@@ -31,6 +31,6 @@ export function createZodFetcher(
 ): ZodFetcher<any> {
   return async (schema, ...args) => {
     const response = await fetcher(...args);
-    return schema.parse(response.data);
+    return schema.parse(response);
   };
 }

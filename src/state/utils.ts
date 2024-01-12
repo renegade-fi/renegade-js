@@ -53,7 +53,6 @@ export function splitBigIntIntoWords(number: bigint, SCALAR_WORDS = 2) {
   return res;
 }
 
-// TODO
 export function combineWordsIntoBigInt(words: bigint[]) {
   let res = 0n;
   for (let i = words.length - 1; i >= 0; i--) {
@@ -100,7 +99,8 @@ export function createWalletSharesWithRandomness(
   privateBlinderShare: bigint,
   secretShares: bigint[],
 ) {
-  const publicShares: bigint[] = walletShares.map((share) => F.e(share));
+  // const publicShares: bigint[] = walletShares.map((share) => F.e(share));
+  const publicShares = walletShares;
   const walletPublicShares: bigint[] = publicShares.map((share, i) => {
     return F.sub(share, secretShares[i]);
   });

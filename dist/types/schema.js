@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AxiosResponse } from "./api";
 const ExchangeEnum = z.enum([
     "Binance",
     "Coinbase",
@@ -51,6 +52,9 @@ const allExchangesSchema = z.record(allExchangesNominalSchema.or(HealthStateEnum
 export const oldExchangeHealthStatesSchema = z.object({
     all_exchanges: allExchangesSchema,
     median: medianSchema,
+});
+export const GetExchangeHealthStatesResponse = AxiosResponse.extend({
+    data: oldExchangeHealthStatesSchema,
 });
 const exchangeHealthStatesSchema = z.record(priceReportSchema);
 function parseMedian(median) {

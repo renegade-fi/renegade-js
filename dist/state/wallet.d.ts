@@ -22,8 +22,14 @@ export default class Wallet {
         fees: Fee[];
         keychain: Keychain;
         blinder: bigint;
+        publicBlinder?: bigint;
+        privateBlinder?: bigint;
+        blindedPublicShares?: bigint[];
+        privateShares?: bigint[];
         updateLocked?: boolean;
+        exists?: boolean;
     });
+    static getBlindersFromShares(privateShares: bigint[], publicShares: bigint[]): [bigint, bigint, bigint];
     getBlinders(): [bigint, bigint, bigint];
     packBalances(): bigint[];
     packOrders(): bigint[];
@@ -39,6 +45,7 @@ export default class Wallet {
      * Derive blinded public shares and private shares for the wallet.
      */
     deriveShares(): [bigint[], bigint[]];
+    reblind(): Wallet;
     serialize(asBigEndian?: boolean): string;
     static deserialize(serializedWallet: any, asBigEndian?: boolean): Wallet;
 }
