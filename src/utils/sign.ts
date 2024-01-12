@@ -1,5 +1,5 @@
+import { generate_wallet_update_signature } from "../../dist/renegade-utils";
 import { Balance, Order, Token, Wallet } from "../state";
-import { bigIntToUint8Array } from "../state/utils";
 import { OrderId } from "../types";
 
 /**
@@ -8,14 +8,19 @@ import { OrderId } from "../types";
  * @param wallet The Wallet to sign the shares for.
  */
 function signWalletShares(wallet: Wallet) {
-  // TODO: Reflect contract expectation for signature here
-  const message = wallet.serialize();
-  const walletSignatureHex =
-    wallet.keychain.keyHierarchy.root.signMessage(message);
-  const walletSignatureBytes = bigIntToUint8Array(
-    BigInt("0x" + walletSignatureHex),
+  // Reblind the wallet, consuming the next set of blinders and secret shares
+  const reblindedWallet = wallet.reblind();
+  const serializedWallet = reblindedWallet.serialize();
+
+  const statement_sig_hex = generate_wallet_update_signature(
+    serializedWallet,
+    reblindedWallet.keychain.keyHierarchy.root.secretKeyHex
   );
-  return `[${walletSignatureBytes}]`;
+  const statement_sig_bytes = new Uint8Array(
+    Buffer.from(statement_sig_hex, "hex"),
+  );
+  const statement_sig = statement_sig_bytes.toString();
+  return `[${statement_sig}]`;
 }
 
 /**
@@ -26,11 +31,9 @@ function signWalletShares(wallet: Wallet) {
  * @param amount The amount to deposit.
  */
 export function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint) {
-  console.log("🚀 ~ signWalletDeposit ~ mint:", mint);
   const mintAddress = mint.address.replace("0x", "");
   try {
     const newBalances = [...wallet.balances];
-    console.log("Balances before deposit", wallet.balances);
     const index = newBalances.findIndex(
       (balance) => balance.mint.address === mintAddress,
     );
@@ -42,10 +45,10 @@ export function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint) {
         amount: newBalances[index].amount + amount,
       });
     }
-    console.log("Balances after deposit", newBalances);
     const newWallet = new Wallet({
       ...wallet,
       balances: newBalances,
+      exists: true,
     });
     return signWalletShares(newWallet);
   } catch (error) {
@@ -65,11 +68,8 @@ export function signWalletWithdraw(
   mint: Token,
   amount: bigint,
 ) {
-  console.log("🚀 ~ signWalletDeposit ~ mint:", mint);
   const mintAddress = mint.address.replace("0x", "");
-  console.log("Balances before withdraw", wallet.balances);
   const newBalances = [...wallet.balances];
-  console.log("Balances after withdraw", newBalances);
   const index = newBalances.findIndex(
     (balance) => balance.mint.address === mintAddress,
   );
@@ -90,6 +90,7 @@ export function signWalletWithdraw(
   const newWallet = new Wallet({
     ...wallet,
     balances: newBalances,
+    exists: true
   });
   return signWalletShares(newWallet);
 }
@@ -108,6 +109,7 @@ export function signWalletPlaceOrder(wallet: Wallet, order: Order) {
     const newWallet = new Wallet({
       ...wallet,
       orders: newOrders,
+      exists: true
     });
     return signWalletShares(newWallet);
   } catch (error) {
@@ -128,19 +130,17 @@ export function signWalletModifyOrder(
   oldOrderId: OrderId,
   newOrder: Order,
 ) {
-  console.log("Orders before modify", wallet.orders)
   const newOrders = [...wallet.orders];
   const index = newOrders.findIndex((order) => order.orderId === oldOrderId);
   newOrders[index] = newOrder;
-  console.log("Orders after modify", newOrders)
   const newWallet = new Wallet({
     ...wallet,
     orders: newOrders,
+    exists: true
   });
   return signWalletShares(newWallet);
 }
 
-// TODO Verify this is same behavrior as relayer.
 /**
  * Sign wallet to cancel an order.
  *
@@ -154,6 +154,7 @@ export function signWalletCancelOrder(wallet: Wallet, orderId: OrderId) {
   const newWallet = new Wallet({
     ...wallet,
     orders: newOrders,
+    exists: true
   });
   return signWalletShares(newWallet);
 }

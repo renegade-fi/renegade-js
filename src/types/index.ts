@@ -27,10 +27,3 @@ export enum Exchange {
   Okx = "okx",
   Uniswapv3 = "uniswapv3",
 }
-
-/**
- * Relayer HTTP API request types.
- */
-export type CreateWalletRequest = {
-  wallet: Wallet;
-};

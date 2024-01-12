@@ -1,6 +1,6 @@
-/// <reference types="node" />
 declare class SigningKey {
     secretKey: Uint8Array;
+    secretKeyHex: string;
     publicKey: Uint8Array;
     x: bigint;
     y: bigint;
@@ -59,7 +59,7 @@ export default class Keychain {
      * @returns A tuple consisting of an expiring signature and an expiration
      * timestamp, to be appended as headers to the request.
      */
-    generateExpiringSignature(dataBuffer: Buffer): [string, number];
+    generateExpiringSignature(dataBuffer: string): [string, number];
     /**
      * Save the keychain to a file.
      *

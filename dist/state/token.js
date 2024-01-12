@@ -59,8 +59,12 @@ const KATANA_ADDR_TO_TICKER = {
 };
 const STYLUS_ADDR_TO_TICKER = {
     ...ADDR_TO_TICKER,
-    "408da76e87511429485c32e4ad647dd14823fdc4": "WETH",
-    "1bdce09dbc6fc66fb0f9c585c442a5a46eed7e7b": "USDC",
+    // Local Stylus Devnet Addresses
+    // "75e0e92a79880bd81a69f72983d03c75e2b33dc8": "WETH",
+    // "4af567288e68cad4aa93a272fe6139ca53859c70": "USDC",
+    // EC2 Stylus Devnet Addresses
+    "7e32b54800705876d3b5cfbc7d9c226a211f7c1a": "WETH",
+    "85d9a8a4bd77b9b5559c1b7fcb8ec9635922ed49": "USDC",
 };
 const TICKER_TO_ADDR = {};
 for (const addr in ADDR_TO_TICKER) {

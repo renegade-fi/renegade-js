@@ -1,4 +1,3 @@
-import { sha256 } from "@noble/hashes/sha256";
 import {
   get_key_hierarchy_shares
 } from "../../dist/renegade-utils";
@@ -13,9 +12,9 @@ import {
   createWalletSharesWithRandomness,
   evaluateHashChain,
   generateId,
-  limbsToBigIntLE,
-  uint8ArrayToBigInt
+  limbsToBigIntLE
 } from "./utils";
+import * as crypto from 'crypto';
 
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
@@ -63,7 +62,13 @@ export default class Wallet {
     fees: Fee[];
     keychain: Keychain;
     blinder: bigint;
+    publicBlinder?: bigint;
+    privateBlinder?: bigint;
+    blindedPublicShares?: bigint[];
+    privateShares?: bigint[];
     updateLocked?: boolean;
+    // TODO: Rethink how existing wallets are instantiated in memory
+    exists?: boolean;
   }) {
     this.walletId =
       params.id ||
@@ -74,20 +79,32 @@ export default class Wallet {
     this.orders = params.orders;
     this.fees = params.fees;
     this.keychain = params.keychain;
-    [this.blinder, this.privateBlinder, this.publicBlinder] =
-      this.getBlinders();
-    [this.blindedPublicShares, this.privateShares] = this.deriveShares();
+    this.blinder = params.blinder;
+    this.publicBlinder = params.publicBlinder || 0n;
+    this.privateBlinder = params.privateBlinder || 0n;
+    this.blindedPublicShares = params.blindedPublicShares || [];
+    this.privateShares = params.privateShares || [];
+    if (!params.exists) {
+      [this.blinder, this.privateBlinder, this.publicBlinder] =
+        this.getBlinders();
+      [this.blindedPublicShares, this.privateShares] = this.deriveShares();
+    }
     this.updateLocked = params.updateLocked || false;
   }
 
+  static getBlindersFromShares(privateShares: bigint[], publicShares: bigint[]): [bigint, bigint, bigint] {
+    const blinderPrivateShare = privateShares[privateShares.length - 1];
+    const blinderPublicShare = publicShares[publicShares.length - 1];
+    const blinder = F.add(blinderPrivateShare, blinderPublicShare);
+    return [blinder, blinderPrivateShare, blinderPublicShare];
+  }
+
+
   getBlinders(): [bigint, bigint, bigint] {
-    // TODO: Generate seed from Ethereuem private key
-    const blinderSeed = uint8ArrayToBigInt(
-      sha256(
-        "renegade blinder seed creation" +
-          this.keychain.keyHierarchy.root.secretKey,
-      ),
-    );
+    // TODO: Generate blinder seed from Ethereum private key signature
+    // const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 1n
+    // TODO: Delete me, for testing only
+    const blinderSeed = BigInt(`0x${crypto.randomBytes(32).toString('hex')}`);
     const [blinder, blinderPrivateShare] = evaluateHashChain(blinderSeed, 2);
     const blinderPublicShare = F.sub(blinder, blinderPrivateShare);
     return [blinder, blinderPrivateShare, blinderPublicShare];
@@ -101,12 +118,14 @@ export default class Wallet {
     return packedBalances.flat().concat(packedPadding.flat());
   }
 
+
   packOrders(): bigint[] {
     const packedOrders = this.orders.map((order) => order.pack());
     const packedPadding = Array(MAX_ORDERS - this.orders.length).fill(
       Array(SHARES_PER_ORDER).fill(0n),
     );
-    return packedOrders.flat().concat(packedPadding.flat());
+    const res = packedOrders.flat().concat(packedPadding.flat());
+    return res
   }
 
   packFees(): bigint[] {
@@ -143,13 +162,8 @@ export default class Wallet {
    * Derive blinded public shares and private shares for the wallet.
    */
   deriveShares(): [bigint[], bigint[]] {
-    // TODO: Generate seed from Ethereuem private key
-    const shareStreamSeed = uint8ArrayToBigInt(
-      sha256(
-        "renegade share stream seed creation" +
-          this.keychain.keyHierarchy.root.secretKey,
-      ),
-    );
+    // TODO: Generate seed from Ethereuem private key signature
+    const shareStreamSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 2n
     const secretShares = evaluateHashChain(shareStreamSeed, SHARES_PER_WALLET);
 
     const [privateShares, blindedPublicShares] =
@@ -168,6 +182,38 @@ export default class Wallet {
     }
 
     return [blindedPublicShares, privateShares];
+  }
+
+  // Reblind the wallet, consuming the next set of blinders and secret shares
+  // Ensure that wallet is latest from relayer
+  reblind() {
+    const privateShares = this.privateShares;
+    const [newBlinder, newBlinderPrivateShare] = evaluateHashChain(privateShares[SHARES_PER_WALLET - 1], 2);
+
+    const secretShares = evaluateHashChain(privateShares[SHARES_PER_WALLET - 2], SHARES_PER_WALLET);
+
+    const [newPrivateShares, newPublicShares] =
+      createWalletSharesWithRandomness(
+        this.packWallet(),
+        newBlinder,
+        newBlinderPrivateShare,
+        secretShares,
+      );
+
+    return new Wallet({
+      id: this.walletId,
+      balances: this.balances,
+      orders: this.orders,
+      fees: this.fees,
+      keychain: this.keychain,
+      blinder: newBlinder,
+      privateBlinder: newBlinderPrivateShare,
+      publicBlinder: F.sub(newBlinder, newBlinderPrivateShare),
+      blindedPublicShares: newPublicShares,
+      privateShares: newPrivateShares,
+      exists: true
+    });
+
   }
 
   serialize(asBigEndian?: boolean): string {
@@ -203,16 +249,28 @@ export default class Wallet {
       serializedWallet.key_chain,
       asBigEndian,
     );
-    const blinder = limbsToBigIntLE(serializedWallet.blinder);
     const updateLocked = serializedWallet.update_locked;
+    const blindedPublicShares = serializedWallet.blinded_public_shares.map((share: number[]) => {
+      return limbsToBigIntLE(share)
+    })
+    const privateShares = serializedWallet.private_shares.map((share: number[]) => {
+      return limbsToBigIntLE(share)
+    });
+    const [derivedBlinder, privateBlinder, publicBlinder] = Wallet.getBlindersFromShares(privateShares, blindedPublicShares);
+
     return new Wallet({
       id,
       balances,
       orders,
       fees,
       keychain,
-      blinder,
+      blinder: derivedBlinder,
+      publicBlinder,
+      privateBlinder,
+      blindedPublicShares,
+      privateShares,
       updateLocked,
+      exists: true
     });
   }
 }

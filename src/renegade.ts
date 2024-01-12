@@ -23,7 +23,7 @@ import {
 } from "./types";
 import {
   ExchangeHealthState,
-  oldExchangeHealthStatesSchema,
+  GetExchangeHealthStatesResponse,
   parseExchangeHealthStates,
 } from "./types/schema";
 import {
@@ -232,13 +232,13 @@ export default class Renegade
     };
     let response;
     try {
-      await fetchWithZod(oldExchangeHealthStatesSchema, request).then(
+      await fetchWithZod(GetExchangeHealthStatesResponse, request).then(
         (res) => (response = res),
       );
     } catch (e) {
       throw new RenegadeError(RenegadeErrorType.RelayerError);
     }
-    return parseExchangeHealthStates(response);
+    return parseExchangeHealthStates(response.data);
   }
 
   @assertNotTornDown

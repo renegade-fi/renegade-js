@@ -86,8 +86,6 @@ export default class Account {
     /**
      * Deposit funds into the Account.
      *
-     * TODO: This is a mock function, and does not actually transfer any ERC-20s at the moment.
-     *
      * @param mint The Token to deposit.
      * @param amount The amount to deposit.
      * @param fromAddr The on-chain address to transfer from.
@@ -95,8 +93,6 @@ export default class Account {
     deposit(mint: Token, amount: bigint, fromAddr: string): Promise<any>;
     /**
      * Withdraw funds from an account.
-     *
-     * TODO: This is a mock function, and does not actually transfer any ERC-20s at the moment.
      *
      * @param mint The Token to withdraw.
      * @param amount The amount to withdraw.
