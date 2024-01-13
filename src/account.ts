@@ -279,12 +279,12 @@ export default class Account {
     const body: CreateWalletRequest = {
       wallet: this._wallet,
     };
-    const request = createPostRequest(
+    const response = createPostRequest(
       `${this._relayerHttpUrl}/v0/wallet`,
       body,
       CreateWalletResponse,
     );
-    return await request.then((res) => res.data.task_id as TaskId);
+    return await response.then((res) => res.data.task_id as TaskId);
   }
 
   /**
