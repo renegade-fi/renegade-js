@@ -8,7 +8,7 @@ import axios from "axios";
 import loadUtils from "../dist/renegade-utils";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
-import { oldExchangeHealthStatesSchema, parseExchangeHealthStates, } from "./types/schema";
+import { GetExchangeHealthStatesResponse, parseExchangeHealthStates, } from "./types/schema";
 import { RenegadeWs, createZodFetcher, unimplemented, } from "./utils";
 /**
  * A decorator that asserts that the relayer has not been torn down.
@@ -148,12 +148,12 @@ export default class Renegade {
         };
         let response;
         try {
-            await fetchWithZod(oldExchangeHealthStatesSchema, request).then((res) => (response = res));
+            await fetchWithZod(GetExchangeHealthStatesResponse, request).then((res) => (response = res));
         }
         catch (e) {
             throw new RenegadeError(RenegadeErrorType.RelayerError);
         }
-        return parseExchangeHealthStates(response);
+        return parseExchangeHealthStates(response.data);
     }
     async queryOrders() {
         const request = {

@@ -8,7 +8,7 @@ import axios from "axios";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
 import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, } from "./state/utils";
-import { createPostRequest } from "./types/api";
+import { CreateWalletResponse, createPostRequest, } from "./types/api";
 import { RenegadeWs } from "./utils";
 import { F } from "./utils/field";
 import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, } from "./utils/sign";
@@ -224,22 +224,11 @@ export default class Account {
      */
     async _createNewWallet() {
         // TODO: Assert that Balances and Orders are empty.
-        const data = {
+        const body = {
             wallet: this._wallet,
         };
-        const request = createPostRequest(`${this._relayerHttpUrl}/v0/wallet`, data);
-        let response;
-        try {
-            response = await this._transmitHttpRequest(request, false);
-        }
-        catch (e) {
-            console.error("Error creating wallet: ", e);
-            throw new RenegadeError(RenegadeErrorType.RelayerError);
-        }
-        if (response.status !== 200) {
-            throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
-        }
-        return response.data.task_id;
+        const request = createPostRequest(`${this._relayerHttpUrl}/v0/wallet`, body, CreateWalletResponse);
+        return await request.then((res) => res.data.task_id);
     }
     /**
      * Deposit funds into the Account.

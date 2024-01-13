@@ -8,7 +8,11 @@ import {
   findZeroOrders,
 } from "./state/utils";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
-import { CreateWalletRequest, createPostRequest } from "./types/api";
+import {
+  CreateWalletRequest,
+  CreateWalletResponse,
+  createPostRequest,
+} from "./types/api";
 import { RenegadeWs, TaskJob } from "./utils";
 import { F } from "./utils/field";
 import {
@@ -18,6 +22,7 @@ import {
   signWalletPlaceOrder,
   signWalletWithdraw,
 } from "./utils/sign";
+import { z } from "zod";
 
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -271,24 +276,15 @@ export default class Account {
    */
   private async _createNewWallet(): Promise<TaskId> {
     // TODO: Assert that Balances and Orders are empty.
-    const data: CreateWalletRequest = {
+    const body: CreateWalletRequest = {
       wallet: this._wallet,
     };
-    const request = createPostRequest<CreateWalletRequest>(
+    const request = createPostRequest(
       `${this._relayerHttpUrl}/v0/wallet`,
-      data,
+      body,
+      CreateWalletResponse,
     );
-    let response;
-    try {
-      response = await this._transmitHttpRequest(request, false);
-    } catch (e) {
-      console.error("Error creating wallet: ", e);
-      throw new RenegadeError(RenegadeErrorType.RelayerError);
-    }
-    if (response.status !== 200) {
-      throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
-    }
-    return response.data.task_id;
+    return await request.then((res) => res.data.task_id as TaskId);
   }
 
   /**

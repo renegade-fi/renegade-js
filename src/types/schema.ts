@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AxiosResponse } from "./api";
 
 export type PriceReport = z.infer<typeof priceReportSchema>;
 export type ExchangeHealthState = z.infer<typeof exchangeHealthStatesSchema>;
@@ -64,6 +65,10 @@ const allExchangesSchema = z.record(
 export const oldExchangeHealthStatesSchema = z.object({
   all_exchanges: allExchangesSchema,
   median: medianSchema,
+});
+
+export const GetExchangeHealthStatesResponse = AxiosResponse.extend({
+  data: oldExchangeHealthStatesSchema,
 });
 
 const exchangeHealthStatesSchema = z.record(priceReportSchema);
