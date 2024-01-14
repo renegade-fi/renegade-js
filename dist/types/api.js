@@ -4,13 +4,14 @@ import { createZodFetcher } from "../utils";
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
 /**
- * Creates an Axios POST request configuration after validating the data against the provided Zod schema.
+ * Creates and executes a POST request using the provided URL and data.
+ * The response is validated against a Zod schema and returns a typed result.
+ * If `isAuthenticated` is true, the request includes authentication headers.
  *
- * @param url The URL for the POST request.
- * @param data The data to be sent in the request.
- * @param schema The Zod schema to validate the data against.
- * @returns AxiosRequestConfig for the POST request.
- * @throws If the data validation fails.
+ * @param {string} url - The URL to send the POST request to.
+ * @param {any} data - The data to be sent in the request body. This data is serialized before sending.
+ * @param {S} schema - A Zod schema to validate the response. The function returns a promise of the schema's inferred type.
+ * @param {boolean} [isAuthenticated=false] - Optional. If true, authentication headers are added to the request.
  */
 export function createPostRequest(url, data, schema, isAuthenticated) {
     const serializedData = customSerializer(data);
@@ -33,6 +34,7 @@ export function createPostRequest(url, data, schema, isAuthenticated) {
     const fetchWithZod = createZodFetcher(axios.request);
     const response = fetchWithZod(schema, request)
         .then((response) => {
+        // TODO: Sync error messages with frontend expected errors
         if (response.status !== 200) {
             // Handle non-200 responses
             const errorMessage = response.statusText || "Error occurred during the request in.";

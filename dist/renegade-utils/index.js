@@ -102,6 +102,20 @@ function takeObject(idx) {
     return ret;
 }
 /**
+* @param {string} wallet_str
+* @param {string} sk_root
+* @returns {any}
+*/
+export function generate_wallet_update_signature(wallet_str, sk_root) {
+    const ptr0 = passStringToWasm0(wallet_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.generate_wallet_update_signature(ptr0, len0, ptr1, len1);
+    return takeObject(ret);
+}
+
+/**
 * Computes the Poseidon2 hash of the input string and returns a BigInt.
 *
 * Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.

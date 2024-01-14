@@ -22,7 +22,6 @@ import {
   signWalletPlaceOrder,
   signWalletWithdraw,
 } from "./utils/sign";
-import { z } from "zod";
 
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -298,17 +297,15 @@ export default class Account {
    */
   @assertSynced
   async deposit(mint: Token, amount: bigint, fromAddr: string) {
+    const statement_sig = signWalletDeposit(this._wallet, mint, amount);
+    console.log("🚀 ~ Account ~ deposit ~ statement_sig:", statement_sig)
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
       // TODO: Type task request and stringify
       data: `{"public_var_sig":[],"from_addr":"${fromAddr}","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")}],"statement_sig":${signWalletDeposit(
-        this._wallet,
-        mint,
-        amount,
-      )}}`,
+      ).join(",")}],"statement_sig":${statement_sig}}`,
       validateStatus: () => true,
     };
     let response;

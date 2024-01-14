@@ -1,6 +1,8 @@
+use crate::custom_serde::BytesSerializable;
 use base64::engine::{general_purpose as b64_general_purpose, Engine};
 use helpers::{
-    _compute_poseidon_hash, biguint_from_hex_string, get_match_key, get_root_key,
+    _compute_poseidon_hash, biguint_from_hex_string, compute_shares_commitment,
+    compute_total_wallet_shares, deserialize_wallet, get_match_key, get_root_key,
     point_coord_to_string,
 };
 use k256::{
@@ -10,15 +12,31 @@ use k256::{
 use types::ScalarField;
 use wasm_bindgen::prelude::*;
 
-mod helpers;
-mod types;
-
 const SIG_VALIDITY_WINDOW_MS: u64 = 10_000; // 10 seconds
 
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "bigint")]
     pub type BigInt;
+}
+
+pub mod custom_serde;
+pub mod helpers;
+pub mod types;
+
+#[wasm_bindgen]
+//     generate_statement_sig
+pub fn generate_wallet_update_signature(wallet_str: &str, sk_root: &str) -> JsValue {
+    let wallet = deserialize_wallet(wallet_str);
+    let total_shares = compute_total_wallet_shares(wallet);
+    let shares_commitment = compute_shares_commitment(&total_shares);
+
+    let (signing_key, _) = get_root_key(sk_root);
+
+    // TODO: How to convert Vec<ScalarField> to Vec<u8>?
+    let sig: Signature = signing_key.sign(&shares_commitment.serialize_to_bytes());
+    let sig_bytes = sig.to_bytes().to_vec();
+    JsValue::from_str(&hex::encode(sig_bytes))
 }
 
 /// Computes the Poseidon2 hash of the input string and returns a BigInt.
@@ -162,62 +180,4 @@ pub fn hex_to_b64(hex: &str) -> JsValue {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use k256::ecdsa::signature::Verifier;
-
-    #[test]
-    fn test_body_signing() {
-        let body_str = r#"{"public_var_sig":[],"from_addr":"0x3f1eae7d46d88f08fc2f8ed27fcb2ab183eb2d0e","mint":"0x408da76e87511429485c32e4ad647dd14823fdc4","amount":[1,0,0,0,0,0,0,0],"statement_sig:"fc62709d6b35f9ea968b9165642e90efd495058d290ef3093d4fcd24f722170a1e3536da5c75e8a78581c3f806fad9f7722fe1f0ee173ee0be9ab73ed861433a"}"#;
-        let body_bytes = body_str.as_bytes();
-        let expiration: u64 = 1704134587149;
-        let payload = [body_bytes, &expiration.to_le_bytes()].concat();
-        let payload_hex = hex::encode(&payload);
-        println!("payload_hex: {}", payload_hex);
-        let hex_key = "80ab14e9ac1abc104e2347d1040d9c22e0b1561cac5199faa6a9662925672f68"; // Replace with an actual valid key hex string
-        let (signing_key, _) = get_root_key(hex_key);
-        let sig: Signature = signing_key.sign(&payload);
-        let sig_bytes = sig.to_bytes().to_vec();
-        let sig_header = b64_general_purpose::STANDARD_NO_PAD.encode(sig_bytes);
-        println!("sig_header: {}", sig_header);
-    }
-
-    #[test]
-    fn test_hex_to_b64() {
-        let hex_key = "80ab14e9ac1abc104e2347d1040d9c22e0b1561cac5199faa6a9662925672f68"; // Replace with an actual valid key hex string
-        let hex = "7b227075626c69635f7661725f736967223a5b5d2c2266726f6d5f61646472223a22307833663165616537643436643838663038666332663865643237666362326162313833656232643065222c226d696e74223a22307834303864613736653837353131343239343835633332653461643634376464313438323366646334222c22616d6f756e74223a5b312c302c302c302c302c302c302c305d2c2273746174656d656e745f7369673a226632353266363631383539343433356438646161303461356263383333373830323262316431316539386435636537633338393164313465386634656335383137353134336335396231386261666565373739356164313932306166663535626361343239353939643764666231353438386430336638346436386435613736227d318b30b78c010000";
-        let bytes = hex::decode(hex).unwrap();
-        let (signing_key, _) = get_root_key(hex_key);
-        let sig: Signature = signing_key.sign(&bytes);
-        let b64 = b64_general_purpose::STANDARD_NO_PAD.encode(sig.to_bytes());
-        println!("b64: {}", b64);
-    }
-
-    #[test]
-    fn test_verify_hex_message() {
-        // Example hex string representing a key
-        let hex_key = "80ab14e9ac1abc104e2347d1040d9c22e0b1561cac5199faa6a9662925672f68"; // Replace with an actual valid key hex string
-
-        // Generate a SigningKey from the hex string
-        let (signing_key, verifying_key) = get_root_key(hex_key);
-
-        // Example message
-        let message_hex = r#"227b227075626c69635f7661725f736967223a5b5d2c2266726f6d5f61646472223a22307833663165616537643436643838663038666332663865643237666362326162313833656232643065222c226d696e74223a22307834303864613736653837353131343239343835633332653461643634376464313438323366646334222c22616d6f756e74223a5b312c302c302c302c302c302c302c305d2c2273746174656d656e745f7369673a226632353266363631383539343433356438646161303461356263383333373830323262316431316539386435636537633338393164313465386634656335383137353134336335396231386261666565373739356164313932306166663535626361343239353939643764666231353438386430336638346436386435613736227d22008e58b78c010000"#;
-        let message = hex::decode(message_hex).unwrap();
-
-        // Sign the message
-        // let hex_signature = "bdd5dd87e6fa7c3e7022872e03c24c02e23657d8b5248e45c5f9dda00b95582942aa5500a9595ff6c4ddd76a628d3f996b26bfc63cc03421a036cfac51ecf0fc";
-        // let sig = hex::decode(hex_signature).unwrap();
-        // let sig: Signature = signing_key.sign(message.as_bytes());
-        // let sig_bytes = sig.to_bytes().to_vec();
-        // let sig_header = b64_general_purpose::STANDARD_NO_PAD.encode(sig_bytes);
-        let b64_signature = "I6Nmd3e5wyEc2V0JEz1nV40kX2r/RvweTp5MfBTjLuphL6Ljs2q7ZAQnh0B5IXqoC4F4Uzhhc9rni71ZIYlPGg1";
-        let sig = b64_general_purpose::STANDARD_NO_PAD
-            .decode(b64_signature)
-            .unwrap();
-        let sig = Signature::from_slice(&sig).unwrap();
-
-        // Verify the signature
-        assert!(verifying_key.verify(&message, &sig).is_ok())
-    }
-}
+mod tests {}

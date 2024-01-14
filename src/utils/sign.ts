@@ -1,5 +1,5 @@
+import { generate_wallet_update_signature } from "../../dist/renegade-utils";
 import { Balance, Order, Token, Wallet } from "../state";
-import { bigIntToUint8Array } from "../state/utils";
 import { OrderId } from "../types";
 
 /**
@@ -8,14 +8,18 @@ import { OrderId } from "../types";
  * @param wallet The Wallet to sign the shares for.
  */
 function signWalletShares(wallet: Wallet) {
-  // TODO: Reflect contract expectation for signature here
-  const message = wallet.serialize();
-  const walletSignatureHex =
-    wallet.keychain.keyHierarchy.root.signMessage(message);
-  const walletSignatureBytes = bigIntToUint8Array(
-    BigInt("0x" + walletSignatureHex),
+  console.log("Updated Wallet: ", wallet)
+  const statement_sig_hex = generate_wallet_update_signature(
+    wallet.serialize(false),
+    wallet.keychain.keyHierarchy.root.secretKeyHex
   );
-  return `[${walletSignatureBytes}]`;
+  console.log("🚀 ~ signWalletShares ~ statement_sig_hex:", statement_sig_hex)
+  const statement_sig_bytes = new Uint8Array(
+    Buffer.from(statement_sig_hex, "hex"),
+  );
+  console.log("🚀 ~ signWalletShares ~ statement_sig_bytes:", statement_sig_bytes)
+  const statement_sig = statement_sig_bytes.toString();
+  return `[${statement_sig}]`;
 }
 
 /**

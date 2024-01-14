@@ -1,4 +1,6 @@
-use crate::types::{PublicIdentificationKey, ScalarField, SecretIdentificationKey};
+use crate::types::{
+    ApiWallet, PublicIdentificationKey, ScalarField, SecretIdentificationKey, Wallet,
+};
 use ark_ff::PrimeField;
 use k256::ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey};
 use num_bigint::BigUint;
@@ -7,6 +9,34 @@ use renegade_crypto::hash::Poseidon2Sponge;
 use sha2::{Digest, Sha256};
 
 const CREATE_SK_MATCH_MESSAGE: &str = "Unlock your Renegade match key.\nTestnet v0";
+
+// -----------------------------------
+// | Wallet Update Signature Helpers |
+// -----------------------------------
+
+pub fn deserialize_wallet(wallet_str: &str) -> Wallet {
+    let wallet_bytes = wallet_str.as_bytes();
+    let deserialized_wallet: ApiWallet = serde_json::from_reader(wallet_bytes).unwrap();
+    deserialized_wallet.try_into().unwrap()
+}
+
+pub fn compute_total_wallet_shares(wallet: Wallet) -> Vec<ScalarField> {
+    // Concatenate the public shares and the private share commitment
+    let public_shares = wallet.clone().blinded_public_shares;
+    let private_shares_commitment = wallet.get_private_share_commitment();
+    let mut concatenated_shares = public_shares;
+    concatenated_shares.extend(private_shares_commitment);
+    concatenated_shares
+}
+
+pub fn compute_shares_commitment(shares: &[ScalarField]) -> ScalarField {
+    _compute_poseidon_hash(shares)
+}
+
+/// Convert a BigUint to a scalar
+pub fn biguint_to_scalar(a: &BigUint) -> ScalarField {
+    ScalarField::from(a.clone())
+}
 
 /// Converts a point coordinate to a vector of strings representing the coordinate's scalar field elements.
 ///
@@ -29,12 +59,18 @@ pub fn point_coord_to_string(coord_bytes: &[u8]) -> Vec<String> {
         .collect::<Vec<String>>()
 }
 
-/// Computes the Poseidon2 hash of the input
-pub fn _compute_poseidon_hash(values: &[ScalarField]) -> ScalarField {
-    let mut hasher = Poseidon2Sponge::new();
-    let res = hasher.hash(values);
+// /// Computes the Poseidon2 hash of the input
+// pub fn _compute_poseidon_hash(values: &[ScalarField]) -> ScalarField {
+//     let mut hasher = Poseidon2Sponge::new();
+//     let res = hasher.hash(values);
 
-    ScalarField::from(res)
+//     ScalarField::from(res)
+// }
+
+/// Computes the Poseidon2 hash of the given scalar inputs, squeezing a single-element output
+pub fn _compute_poseidon_hash(inputs: &[ScalarField]) -> ScalarField {
+    let mut sponge = Poseidon2Sponge::new();
+    sponge.hash(inputs)
 }
 
 /// Return the modulus `p` of the `Scalar` ($Z_p$) field as a `BigUint`

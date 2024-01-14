@@ -227,8 +227,8 @@ export default class Account {
         const body = {
             wallet: this._wallet,
         };
-        const request = createPostRequest(`${this._relayerHttpUrl}/v0/wallet`, body, CreateWalletResponse);
-        return await request.then((res) => res.data.task_id);
+        const response = createPostRequest(`${this._relayerHttpUrl}/v0/wallet`, body, CreateWalletResponse);
+        return await response.then((res) => res.data.task_id);
     }
     /**
      * Deposit funds into the Account.
@@ -240,11 +240,13 @@ export default class Account {
      * @param fromAddr The on-chain address to transfer from.
      */
     async deposit(mint, amount, fromAddr) {
+        const statement_sig = signWalletDeposit(this._wallet, mint, amount);
+        console.log("🚀 ~ Account ~ deposit ~ statement_sig:", statement_sig);
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
             // TODO: Type task request and stringify
-            data: `{"public_var_sig":[],"from_addr":"${fromAddr}","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(amount).join(",")}],"statement_sig":${signWalletDeposit(this._wallet, mint, amount)}}`,
+            data: `{"public_var_sig":[],"from_addr":"${fromAddr}","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(amount).join(",")}],"statement_sig":${statement_sig}}`,
             validateStatus: () => true,
         };
         let response;
