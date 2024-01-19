@@ -94,6 +94,7 @@ export default class Account {
     // Sample the randomness. Note that sampling in this manner slightly biases
     // the randomness; should not be a big issue since the bias is extremely
     // small.
+    // TODO: Should reset derive blinder from Ethereum private key?
     const sampleLimb = () => BigInt(Math.floor(Math.random() * 2 ** 64));
     const blinder =
       sampleLimb() +
@@ -275,6 +276,8 @@ export default class Account {
    */
   private async _createNewWallet(): Promise<TaskId> {
     // TODO: Assert that Balances and Orders are empty.
+    // console.log("Creating new wallet: ", this._wallet.serialize());
+    // console.log("Blinder: ", this._wallet.blinder);
     const body: CreateWalletRequest = {
       wallet: this._wallet,
     };
@@ -297,8 +300,13 @@ export default class Account {
    */
   @assertSynced
   async deposit(mint: Token, amount: bigint, fromAddr: string) {
-    const statement_sig = signWalletDeposit(this._wallet, mint, amount);
-    console.log("🚀 ~ Account ~ deposit ~ statement_sig:", statement_sig)
+    // Fetch latest wallet from relayer
+    // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+    const wallet = await this._queryRelayerForWallet();
+
+    // Sign wallet deposit statement
+    const statement_sig = signWalletDeposit(wallet, mint, amount);
+
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
@@ -334,10 +342,9 @@ export default class Account {
   async withdraw(mint: Token, amount: bigint, destinationAddr: string) {
     const request: AxiosRequestConfig = {
       method: "POST",
-      url: `${this._relayerHttpUrl}/v0/wallet/${
-        this.accountId
+      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId
         // TODO: mint is address
-      }/balances/${mint.serialize()}/withdraw`,
+        }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(
         amount,
       ).join(",")}],"statement_sig":${signWalletWithdraw(
@@ -371,13 +378,17 @@ export default class Account {
    */
   @assertSynced
   async placeOrder(order: Order): Promise<TaskId> {
+    // Fetch latest wallet from relayer
+    // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+    const wallet = await this._queryRelayerForWallet();
+
+    // Sign wallet deposit statement
+    const statement_sig = signWalletPlaceOrder(wallet, order);
+
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders`,
-      data: `{"public_var_sig":[],"order":${order.serialize()},"statement_sig":${signWalletPlaceOrder(
-        this._wallet,
-        order,
-      )}}`,
+      data: `{"public_var_sig":[],"order":${order.serialize()},"statement_sig":${statement_sig}}`,
       validateStatus: () => true,
     };
     let response;

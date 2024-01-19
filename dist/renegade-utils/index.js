@@ -102,6 +102,19 @@ function takeObject(idx) {
     return ret;
 }
 /**
+* Generates a signature for a wallet update operation.
+*
+* This function takes a serialized wallet and the root secret key as inputs,
+* generates a signature for the wallet update, and returns the signature as a hex-encoded string.
+*
+* # Arguments
+*
+* * `wallet_str` - A string slice that holds the serialized wallet data.
+* * `sk_root` - A string slice that holds the root secret key.
+*
+* # Returns
+*
+* A `JsValue` containing the hex-encoded signature string.
 * @param {string} wallet_str
 * @param {string} sk_root
 * @returns {any}

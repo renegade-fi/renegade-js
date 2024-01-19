@@ -8,16 +8,21 @@ import { OrderId } from "../types";
  * @param wallet The Wallet to sign the shares for.
  */
 function signWalletShares(wallet: Wallet) {
-  console.log("Updated Wallet: ", wallet)
+  // TODO: Necessary for all tasks?
+  // Reblind
+  const reblindedWallet = wallet.reblind();
+  const serializedWallet = reblindedWallet.serialize();
+  console.log("Serialized ApiWallet: ", serializedWallet);
+
   const statement_sig_hex = generate_wallet_update_signature(
-    wallet.serialize(false),
-    wallet.keychain.keyHierarchy.root.secretKeyHex
+    serializedWallet,
+    reblindedWallet.keychain.keyHierarchy.root.secretKeyHex
   );
-  console.log("🚀 ~ signWalletShares ~ statement_sig_hex:", statement_sig_hex)
   const statement_sig_bytes = new Uint8Array(
     Buffer.from(statement_sig_hex, "hex"),
   );
-  console.log("🚀 ~ signWalletShares ~ statement_sig_bytes:", statement_sig_bytes)
+  console.log("Shares commitment signature: ", statement_sig_bytes)
+
   const statement_sig = statement_sig_bytes.toString();
   return `[${statement_sig}]`;
 }
@@ -30,11 +35,9 @@ function signWalletShares(wallet: Wallet) {
  * @param amount The amount to deposit.
  */
 export function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint) {
-  console.log("🚀 ~ signWalletDeposit ~ mint:", mint);
   const mintAddress = mint.address.replace("0x", "");
   try {
     const newBalances = [...wallet.balances];
-    console.log("Balances before deposit", wallet.balances);
     const index = newBalances.findIndex(
       (balance) => balance.mint.address === mintAddress,
     );
@@ -46,10 +49,10 @@ export function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint) {
         amount: newBalances[index].amount + amount,
       });
     }
-    console.log("Balances after deposit", newBalances);
     const newWallet = new Wallet({
       ...wallet,
       balances: newBalances,
+      exists: true,
     });
     return signWalletShares(newWallet);
   } catch (error) {
@@ -69,7 +72,6 @@ export function signWalletWithdraw(
   mint: Token,
   amount: bigint,
 ) {
-  console.log("🚀 ~ signWalletDeposit ~ mint:", mint);
   const mintAddress = mint.address.replace("0x", "");
   console.log("Balances before withdraw", wallet.balances);
   const newBalances = [...wallet.balances];
@@ -112,6 +114,7 @@ export function signWalletPlaceOrder(wallet: Wallet, order: Order) {
     const newWallet = new Wallet({
       ...wallet,
       orders: newOrders,
+      exists: true
     });
     return signWalletShares(newWallet);
   } catch (error) {

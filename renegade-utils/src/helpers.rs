@@ -14,23 +14,11 @@ const CREATE_SK_MATCH_MESSAGE: &str = "Unlock your Renegade match key.\nTestnet 
 // | Wallet Update Signature Helpers |
 // -----------------------------------
 
+/// Deserializes a JSON string into a `Wallet` object.
 pub fn deserialize_wallet(wallet_str: &str) -> Wallet {
     let wallet_bytes = wallet_str.as_bytes();
     let deserialized_wallet: ApiWallet = serde_json::from_reader(wallet_bytes).unwrap();
     deserialized_wallet.try_into().unwrap()
-}
-
-pub fn compute_total_wallet_shares(wallet: Wallet) -> Vec<ScalarField> {
-    // Concatenate the public shares and the private share commitment
-    let public_shares = wallet.clone().blinded_public_shares;
-    let private_shares_commitment = wallet.get_private_share_commitment();
-    let mut concatenated_shares = public_shares;
-    concatenated_shares.extend(private_shares_commitment);
-    concatenated_shares
-}
-
-pub fn compute_shares_commitment(shares: &[ScalarField]) -> ScalarField {
-    _compute_poseidon_hash(shares)
 }
 
 /// Convert a BigUint to a scalar

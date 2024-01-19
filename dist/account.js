@@ -60,6 +60,7 @@ export default class Account {
         // Sample the randomness. Note that sampling in this manner slightly biases
         // the randomness; should not be a big issue since the bias is extremely
         // small.
+        // TODO: Should reset derive blinder from Ethereum private key?
         const sampleLimb = () => BigInt(Math.floor(Math.random() * 2 ** 64));
         const blinder = sampleLimb() +
             sampleLimb() * 2n ** 64n +
@@ -224,6 +225,8 @@ export default class Account {
      */
     async _createNewWallet() {
         // TODO: Assert that Balances and Orders are empty.
+        // console.log("Creating new wallet: ", this._wallet.serialize());
+        // console.log("Blinder: ", this._wallet.blinder);
         const body = {
             wallet: this._wallet,
         };
@@ -240,8 +243,11 @@ export default class Account {
      * @param fromAddr The on-chain address to transfer from.
      */
     async deposit(mint, amount, fromAddr) {
-        const statement_sig = signWalletDeposit(this._wallet, mint, amount);
-        console.log("🚀 ~ Account ~ deposit ~ statement_sig:", statement_sig);
+        // Fetch latest wallet from relayer
+        // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+        const wallet = await this._queryRelayerForWallet();
+        // Sign wallet deposit statement
+        const statement_sig = signWalletDeposit(wallet, mint, amount);
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
@@ -303,10 +309,15 @@ export default class Account {
      * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
      */
     async placeOrder(order) {
+        // Fetch latest wallet from relayer
+        // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+        const wallet = await this._queryRelayerForWallet();
+        // Sign wallet deposit statement
+        const statement_sig = signWalletPlaceOrder(wallet, order);
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders`,
-            data: `{"public_var_sig":[],"order":${order.serialize()},"statement_sig":${signWalletPlaceOrder(this._wallet, order)}}`,
+            data: `{"public_var_sig":[],"order":${order.serialize()},"statement_sig":${statement_sig}}`,
             validateStatus: () => true,
         };
         let response;

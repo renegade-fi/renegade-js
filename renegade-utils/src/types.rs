@@ -94,7 +94,6 @@ impl TryFrom<ApiWallet> for Wallet {
 #[derive(Clone, Debug)]
 pub struct Wallet {
     /// The private secret shares of the wallet
-    /// TODO: This type should be the same type as compute_poseidon_hash input
     pub private_shares: Vec<ScalarField>,
     /// The public secret shares of the wallet
     pub blinded_public_shares: Vec<ScalarField>,
@@ -102,14 +101,12 @@ pub struct Wallet {
 
 impl Wallet {
     /// Computes the commitment to the private shares of the wallet
-    pub fn get_private_share_commitment(&self) -> Vec<ScalarField> {
+    pub fn get_private_share_commitment(&self) -> ScalarField {
         compute_wallet_private_share_commitment(&self.private_shares)
     }
 }
 
 /// Compute a commitment to a single share of a wallet
-pub fn compute_wallet_private_share_commitment(
-    private_share: &Vec<ScalarField>,
-) -> Vec<ScalarField> {
-    vec![_compute_poseidon_hash(&private_share)]
+pub fn compute_wallet_private_share_commitment(private_share: &Vec<ScalarField>) -> ScalarField {
+    _compute_poseidon_hash(&private_share)
 }

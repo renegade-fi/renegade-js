@@ -6,11 +6,14 @@ import { Balance, Wallet } from "../state";
  * @param wallet The Wallet to sign the shares for.
  */
 function signWalletShares(wallet) {
-    console.log("Updated Wallet: ", wallet);
-    const statement_sig_hex = generate_wallet_update_signature(wallet.serialize(false), wallet.keychain.keyHierarchy.root.secretKeyHex);
-    console.log("🚀 ~ signWalletShares ~ statement_sig_hex:", statement_sig_hex);
+    // TODO: Necessary for all tasks?
+    // Reblind
+    const reblindedWallet = wallet.reblind();
+    const serializedWallet = reblindedWallet.serialize();
+    console.log("Serialized ApiWallet: ", serializedWallet);
+    const statement_sig_hex = generate_wallet_update_signature(serializedWallet, reblindedWallet.keychain.keyHierarchy.root.secretKeyHex);
     const statement_sig_bytes = new Uint8Array(Buffer.from(statement_sig_hex, "hex"));
-    console.log("🚀 ~ signWalletShares ~ statement_sig_bytes:", statement_sig_bytes);
+    console.log("Shares commitment signature: ", statement_sig_bytes);
     const statement_sig = statement_sig_bytes.toString();
     return `[${statement_sig}]`;
 }
@@ -22,11 +25,9 @@ function signWalletShares(wallet) {
  * @param amount The amount to deposit.
  */
 export function signWalletDeposit(wallet, mint, amount) {
-    console.log("🚀 ~ signWalletDeposit ~ mint:", mint);
     const mintAddress = mint.address.replace("0x", "");
     try {
         const newBalances = [...wallet.balances];
-        console.log("Balances before deposit", wallet.balances);
         const index = newBalances.findIndex((balance) => balance.mint.address === mintAddress);
         if (index === -1) {
             newBalances.push(new Balance({ mint, amount }));
@@ -37,10 +38,10 @@ export function signWalletDeposit(wallet, mint, amount) {
                 amount: newBalances[index].amount + amount,
             });
         }
-        console.log("Balances after deposit", newBalances);
         const newWallet = new Wallet({
             ...wallet,
             balances: newBalances,
+            exists: true,
         });
         return signWalletShares(newWallet);
     }
@@ -56,7 +57,6 @@ export function signWalletDeposit(wallet, mint, amount) {
  * @param amount The amount to withdraw.
  */
 export function signWalletWithdraw(wallet, mint, amount) {
-    console.log("🚀 ~ signWalletDeposit ~ mint:", mint);
     const mintAddress = mint.address.replace("0x", "");
     console.log("Balances before withdraw", wallet.balances);
     const newBalances = [...wallet.balances];
@@ -98,6 +98,7 @@ export function signWalletPlaceOrder(wallet, order) {
         const newWallet = new Wallet({
             ...wallet,
             orders: newOrders,
+            exists: true
         });
         return signWalletShares(newWallet);
     }

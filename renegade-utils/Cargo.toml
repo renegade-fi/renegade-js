@@ -11,8 +11,10 @@ crate-type = ["cdylib"]
 ark-bn254 = "0.4.0"
 ark-ff = "0.4.2"
 base64 = "0.21"
+ethers = "2.0"
 getrandom = { version = "0.2", features = ["js"] }
 hex = "0.4.3"
+indexmap = "2.0.2"
 k256 = { version = "0.13", features = ["expose-field"] }
 num-bigint = "0.4"
 num-traits = "0.2"
@@ -20,5 +22,5 @@ renegade-crypto = { git = "https://github.com/renegade-fi/renegade.git", default
 serde = { version = "1.0.139" }
 serde_json = "1.0.64"
 sha2 = "0.10.8"
-wasm-bindgen = "0.2"
 uuid = { version = "1.1.2", features = ["v4", "serde"] }
+wasm-bindgen = "0.2"
