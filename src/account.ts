@@ -340,6 +340,12 @@ export default class Account {
    */
   @assertSynced
   async withdraw(mint: Token, amount: bigint, destinationAddr: string) {
+    // Fetch latest wallet from relayer
+    // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+    const wallet = await this._queryRelayerForWallet();
+
+    // Sign wallet deposit statement
+    const statement_sig = signWalletWithdraw(wallet, mint, amount);
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId
@@ -347,14 +353,9 @@ export default class Account {
         }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")}],"statement_sig":${signWalletWithdraw(
-        this._wallet,
-        mint,
-        amount,
-      )}}`,
+      ).join(",")}],"statement_sig":${statement_sig}}`,
       validateStatus: () => true,
     };
-    console.log("Wallet: ", this._wallet.serialize());
     console.log("🚀 ~ Account ~ withdraw ~ request:", request);
     let response;
     try {
@@ -415,14 +416,17 @@ export default class Account {
    */
   @assertSynced
   async modifyOrder(oldOrderId: OrderId, newOrder: Order): Promise<TaskId> {
+    console.log("MODIFYING ORDER");
+    // Fetch latest wallet from relayer
+    // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+    const wallet = await this._queryRelayerForWallet();
+
+    // Sign wallet deposit statement
+    const statement_sig = signWalletModifyOrder(wallet, oldOrderId, newOrder);
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${oldOrderId}/update`,
-      data: `{"public_var_sig":[],"order":${newOrder.serialize()},"statement_sig":${signWalletModifyOrder(
-        this._wallet,
-        oldOrderId,
-        newOrder,
-      )}}`,
+      data: `{"public_var_sig":[],"order":${newOrder.serialize()},"statement_sig":${statement_sig}}`,
       validateStatus: () => true,
     };
     let response;
@@ -447,25 +451,27 @@ export default class Account {
    */
   @assertSynced
   async modifyOrPlaceOrder(order: Order): Promise<TaskId> {
-    const orders = this._wallet.orders.reduce((acc, order) => {
-      acc[order.orderId] = order;
-      return acc;
-    }, {} as Record<OrderId, Order>);
-    const zeroOrders = findZeroOrders(orders);
-    if (Object.keys(orders).length < 5) {
-      return await this.placeOrder(order);
-    } else if (zeroOrders.length > 0) {
-      const randomOrderId =
-        zeroOrders[Math.floor(Math.random() * zeroOrders.length)];
-      return await this.modifyOrder(randomOrderId, order);
-    } else {
-      return new Promise((_, reject) => {
-        reject(new RenegadeError(RenegadeErrorType.MaxOrders));
-      });
-    }
+    // TODO: Change this back after testing modify order
+    const randomOrderId = this._wallet.orders[0].orderId;
+    return await this.modifyOrder(randomOrderId, order);
+    // const orders = this._wallet.orders.reduce((acc, order) => {
+    //   acc[order.orderId] = order;
+    //   return acc;
+    // }, {} as Record<OrderId, Order>);
+    // const zeroOrders = findZeroOrders(orders);
+    // if (Object.keys(orders).length < 5) {
+    //   return await this.placeOrder(order);
+    // } else if (zeroOrders.length > 0) {
+    //   const randomOrderId =
+    //     zeroOrders[Math.floor(Math.random() * zeroOrders.length)];
+    //   return await this.modifyOrder(randomOrderId, order);
+    // } else {
+    //   return new Promise((_, reject) => {
+    //     reject(new RenegadeError(RenegadeErrorType.MaxOrders));
+    //   });
+    // }
   }
 
-  // TODO: Does cancelling an order require a signature of the wallet shares after the order is removed?
   /**
    * Cancel an outstanding order.
    *
@@ -476,10 +482,16 @@ export default class Account {
    */
   @assertSynced
   async cancelOrder(orderId: OrderId): Promise<TaskId> {
+    // Fetch latest wallet from relayer
+    // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+    const wallet = await this._queryRelayerForWallet();
+
+    // Sign wallet deposit statement
+    const statement_sig = signWalletCancelOrder(wallet, orderId);
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/orders/${orderId}/cancel`,
-      data: `{"statement_sig":${signWalletCancelOrder(this._wallet, orderId)}}`,
+      data: `{"statement_sig":${statement_sig}}`,
       validateStatus: () => true,
     };
     let response;

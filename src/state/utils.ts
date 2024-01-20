@@ -100,7 +100,8 @@ export function createWalletSharesWithRandomness(
   privateBlinderShare: bigint,
   secretShares: bigint[],
 ) {
-  const publicShares: bigint[] = walletShares.map((share) => F.e(share));
+  // const publicShares: bigint[] = walletShares.map((share) => F.e(share));
+  const publicShares = walletShares;
   const walletPublicShares: bigint[] = publicShares.map((share, i) => {
     return F.sub(share, secretShares[i]);
   });

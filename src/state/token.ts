@@ -62,7 +62,7 @@ const KATANA_ADDR_TO_TICKER = {
 const STYLUS_ADDR_TO_TICKER = {
   ...ADDR_TO_TICKER,
   "408da76e87511429485c32e4ad647dd14823fdc4": "WETH",
-  "0x039d9a294c9414d65ba7bc52e1d4f5d890ed02d6": "USDC",
+  "0x4af567288e68cad4aa93a272fe6139ca53859c70": "USDC",
 };
 
 const TICKER_TO_ADDR = {};
@@ -108,8 +108,7 @@ export default class Token {
         params.address = REMAPPED_TICKER_TO_ADDR[params.ticker];
       } else {
         throw new Error(
-          `Unknown ticker: ${params.ticker}${
-            params.network ? " in network: " + params.network : ""
+          `Unknown ticker: ${params.ticker}${params.network ? " in network: " + params.network : ""
           }. Try using the params.address instead.`,
         );
       }

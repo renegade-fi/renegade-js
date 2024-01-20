@@ -75,7 +75,6 @@ export function signWalletWithdraw(
   const mintAddress = mint.address.replace("0x", "");
   console.log("Balances before withdraw", wallet.balances);
   const newBalances = [...wallet.balances];
-  console.log("Balances after withdraw", newBalances);
   const index = newBalances.findIndex(
     (balance) => balance.mint.address === mintAddress,
   );
@@ -93,9 +92,11 @@ export function signWalletWithdraw(
       amount: newBalance,
     });
   }
+  console.log("Balances after withdraw", newBalances);
   const newWallet = new Wallet({
     ...wallet,
     balances: newBalances,
+    exists: true
   });
   return signWalletShares(newWallet);
 }
@@ -109,13 +110,16 @@ export function signWalletWithdraw(
  * Assumes this function is called after verifying wallet orderbook has space.
  */
 export function signWalletPlaceOrder(wallet: Wallet, order: Order) {
+  console.log("🚀 ~ signWalletPlaceOrder ~ order:", order)
   try {
     const newOrders = [...wallet.orders].concat(order);
+    console.log("🚀 ~ signWalletPlaceOrder ~ newOrders:", newOrders)
     const newWallet = new Wallet({
       ...wallet,
       orders: newOrders,
       exists: true
     });
+    console.log("🚀 ~ signWalletPlaceOrder ~ newWallet:", newWallet)
     return signWalletShares(newWallet);
   } catch (error) {
     console.error("Error signing wallet update: ", error);
@@ -143,6 +147,8 @@ export function signWalletModifyOrder(
   const newWallet = new Wallet({
     ...wallet,
     orders: newOrders,
+    // TODO: Why does this work without exists?
+    exists: true
   });
   return signWalletShares(newWallet);
 }
@@ -161,6 +167,7 @@ export function signWalletCancelOrder(wallet: Wallet, orderId: OrderId) {
   const newWallet = new Wallet({
     ...wallet,
     orders: newOrders,
+    exists: true
   });
   return signWalletShares(newWallet);
 }

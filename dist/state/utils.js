@@ -76,7 +76,8 @@ export function evaluateHashChain(seed, length) {
  * Create a secret sharing of a wallet given the secret shares and blinders
  */
 export function createWalletSharesWithRandomness(walletShares, blinder, privateBlinderShare, secretShares) {
-    const publicShares = walletShares.map((share) => F.e(share));
+    // const publicShares: bigint[] = walletShares.map((share) => F.e(share));
+    const publicShares = walletShares;
     const walletPublicShares = publicShares.map((share, i) => {
         return F.sub(share, secretShares[i]);
     });

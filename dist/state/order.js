@@ -34,8 +34,8 @@ export default class Order {
             BigInt("0x" + this.quoteToken.address),
             BigInt("0x" + this.baseToken.address),
             this.side === "buy" ? 0n : 1n,
-            BigInt(Math.floor(this.worstPrice || 0)),
             this.amount,
+            BigInt(Math.floor(this.worstPrice * 2 ** 32 || 0)),
             BigInt(this.timestamp),
         ];
     }
@@ -53,7 +53,7 @@ export default class Order {
       "quote_mint": "${this.quoteToken.serialize()}",
       "side": "${this.side === "buy" ? "Buy" : "Sell"}",
       "type": "${this.type === "midpoint" ? "Midpoint" : "Limit"}",
-      "amount": [${bigIntToLimbsLE(this.amount).join(",")}],
+      "amount": [${this.amount}],
       "minimum_amount": ${minimumAmountSerialized},
       "worst_case_price": ${this.worstPrice},
       "timestamp": ${this.timestamp}
