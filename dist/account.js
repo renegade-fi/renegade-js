@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import axios from "axios";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
-import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, } from "./state/utils";
+import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, } from "./state/utils";
 import { CreateWalletResponse, createPostRequest, } from "./types/api";
 import { RenegadeWs } from "./utils";
 import { F } from "./utils/field";
@@ -194,7 +194,6 @@ export default class Account {
             return undefined;
         }
         if (response.status === 200) {
-            // Relayer returns keys in big endian byte order, so no need to reverse
             return Wallet.deserialize(response.data.wallet, false);
         }
         else {
@@ -216,7 +215,6 @@ export default class Account {
      * not yet been created.
      */
     async _queryChainForWallet() {
-        // TODO
         return undefined;
     }
     /**
@@ -225,8 +223,6 @@ export default class Account {
      */
     async _createNewWallet() {
         // TODO: Assert that Balances and Orders are empty.
-        // console.log("Creating new wallet: ", this._wallet.serialize());
-        // console.log("Blinder: ", this._wallet.blinder);
         const body = {
             wallet: this._wallet,
         };
@@ -236,22 +232,19 @@ export default class Account {
     /**
      * Deposit funds into the Account.
      *
-     * TODO: This is a mock function, and does not actually transfer any ERC-20s at the moment.
-     *
      * @param mint The Token to deposit.
      * @param amount The amount to deposit.
      * @param fromAddr The on-chain address to transfer from.
      */
     async deposit(mint, amount, fromAddr) {
         // Fetch latest wallet from relayer
-        // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+        // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
         // Sign wallet deposit statement
         const statement_sig = signWalletDeposit(wallet, mint, amount);
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
-            // TODO: Type task request and stringify
             data: `{"public_var_sig":[],"from_addr":"${fromAddr}","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(amount).join(",")}],"statement_sig":${statement_sig}}`,
             validateStatus: () => true,
         };
@@ -271,27 +264,22 @@ export default class Account {
     /**
      * Withdraw funds from an account.
      *
-     * TODO: This is a mock function, and does not actually transfer any ERC-20s at the moment.
-     *
      * @param mint The Token to withdraw.
      * @param amount The amount to withdraw.
      * @param destinationAddr The on-chain address to transfer to.
      */
     async withdraw(mint, amount, destinationAddr) {
         // Fetch latest wallet from relayer
-        // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+        // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
         // Sign wallet deposit statement
         const statement_sig = signWalletWithdraw(wallet, mint, amount);
         const request = {
             method: "POST",
-            url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId
-            // TODO: mint is address
-            }/balances/${mint.serialize()}/withdraw`,
+            url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/${mint.serialize()}/withdraw`,
             data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(amount).join(",")}],"statement_sig":${statement_sig}}`,
             validateStatus: () => true,
         };
-        console.log("🚀 ~ Account ~ withdraw ~ request:", request);
         let response;
         try {
             response = await this._transmitHttpRequest(request, true);
@@ -314,7 +302,7 @@ export default class Account {
      */
     async placeOrder(order) {
         // Fetch latest wallet from relayer
-        // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+        // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
         // Sign wallet deposit statement
         const statement_sig = signWalletPlaceOrder(wallet, order);
@@ -347,9 +335,8 @@ export default class Account {
      * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
      */
     async modifyOrder(oldOrderId, newOrder) {
-        console.log("MODIFYING ORDER");
         // Fetch latest wallet from relayer
-        // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+        // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
         // Sign wallet deposit statement
         const statement_sig = signWalletModifyOrder(wallet, oldOrderId, newOrder);
@@ -381,24 +368,25 @@ export default class Account {
      */
     async modifyOrPlaceOrder(order) {
         // TODO: Change this back after testing modify order
-        const randomOrderId = this._wallet.orders[0].orderId;
-        return await this.modifyOrder(randomOrderId, order);
-        // const orders = this._wallet.orders.reduce((acc, order) => {
-        //   acc[order.orderId] = order;
-        //   return acc;
-        // }, {} as Record<OrderId, Order>);
-        // const zeroOrders = findZeroOrders(orders);
-        // if (Object.keys(orders).length < 5) {
-        //   return await this.placeOrder(order);
-        // } else if (zeroOrders.length > 0) {
-        //   const randomOrderId =
-        //     zeroOrders[Math.floor(Math.random() * zeroOrders.length)];
-        //   return await this.modifyOrder(randomOrderId, order);
-        // } else {
-        //   return new Promise((_, reject) => {
-        //     reject(new RenegadeError(RenegadeErrorType.MaxOrders));
-        //   });
-        // }
+        // const randomOrderId = this._wallet.orders[0].orderId;
+        // return await this.modifyOrder(randomOrderId, order);
+        const orders = this._wallet.orders.reduce((acc, order) => {
+            acc[order.orderId] = order;
+            return acc;
+        }, {});
+        const zeroOrders = findZeroOrders(orders);
+        if (Object.keys(orders).length < 5) {
+            return await this.placeOrder(order);
+        }
+        else if (zeroOrders.length > 0) {
+            const randomOrderId = zeroOrders[Math.floor(Math.random() * zeroOrders.length)];
+            return await this.modifyOrder(randomOrderId, order);
+        }
+        else {
+            return new Promise((_, reject) => {
+                reject(new RenegadeError(RenegadeErrorType.MaxOrders));
+            });
+        }
     }
     /**
      * Cancel an outstanding order.
@@ -410,7 +398,7 @@ export default class Account {
      */
     async cancelOrder(orderId) {
         // Fetch latest wallet from relayer
-        // TODO: Temporary hacky fix, wallet should always be in sync with this anyways
+        // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
         // Sign wallet deposit statement
         const statement_sig = signWalletCancelOrder(wallet, orderId);

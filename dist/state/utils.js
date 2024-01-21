@@ -38,7 +38,6 @@ export function splitBigIntIntoWords(number, SCALAR_WORDS = 2) {
     }
     return res;
 }
-// TODO
 export function combineWordsIntoBigInt(words) {
     let res = 0n;
     for (let i = words.length - 1; i >= 0; i--) {

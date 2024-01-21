@@ -53,7 +53,6 @@ export default class Order {
   }
 
   pack(): bigint[] {
-    // TODO: Figure out correct price encoding.
     return [
       BigInt("0x" + this.quoteToken.address),
       BigInt("0x" + this.baseToken.address),
@@ -80,7 +79,7 @@ export default class Order {
       "quote_mint": "${this.quoteToken.serialize()}",
       "side": "${this.side === "buy" ? "Buy" : "Sell"}",
       "type": "${this.type === "midpoint" ? "Midpoint" : "Limit"}",
-      "amount": [${this.amount}],
+      "amount": [${bigIntToLimbsLE(this.amount).join(",")}],
       "minimum_amount": ${minimumAmountSerialized},
       "worst_case_price": ${this.worstPrice},
       "timestamp": ${this.timestamp}

@@ -103,7 +103,6 @@ export default class Wallet {
   getBlinders(): [bigint, bigint, bigint] {
     // TODO: Generate blinder seed from Ethereum private key signature
     // const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 1n
-    // TODO: Does this work?
     // TODO: Delete me, for testing only
     const blinderSeed = BigInt(`0x${crypto.randomBytes(32).toString('hex')}`);
     const [blinder, blinderPrivateShare] = evaluateHashChain(blinderSeed, 2);
@@ -122,12 +121,10 @@ export default class Wallet {
 
   packOrders(): bigint[] {
     const packedOrders = this.orders.map((order) => order.pack());
-    console.log("🚀 ~ Wallet ~ packOrders ~ packedOrders:", packedOrders)
     const packedPadding = Array(MAX_ORDERS - this.orders.length).fill(
       Array(SHARES_PER_ORDER).fill(0n),
     );
     const res = packedOrders.flat().concat(packedPadding.flat());
-    console.log("🚀 ~ Wallet ~ packOrders ~ res:", res)
     return res
   }
 
@@ -191,13 +188,9 @@ export default class Wallet {
   // Ensure that wallet is latest from relayer
   reblind() {
     const privateShares = this.privateShares;
-    // console.log("Private shares serialized: ", privateShares);
     const [newBlinder, newBlinderPrivateShare] = evaluateHashChain(privateShares[SHARES_PER_WALLET - 1], 2);
-    // console.log("New blinder:", newBlinder);
-    // console.log("New blinder private share: ", newBlinderPrivateShare);
 
     const secretShares = evaluateHashChain(privateShares[SHARES_PER_WALLET - 2], SHARES_PER_WALLET);
-    // console.log("New secret shares", secretShares);
 
     const [newPrivateShares, newPublicShares] =
       createWalletSharesWithRandomness(
@@ -206,8 +199,6 @@ export default class Wallet {
         newBlinderPrivateShare,
         secretShares,
       );
-    // console.log("New private shares:", newPrivateShares);
-    // console.log("New public shares: ", newPublicShares);
 
     return new Wallet({
       id: this.walletId,
@@ -254,7 +245,6 @@ export default class Wallet {
       Order.deserialize(o),
     );
     const fees = serializedWallet.fees.map((f: any) => Fee.deserialize(f));
-    // TODO: Fix keychain deserialization (pk_root serialized using split_biguint_into_words)
     const keychain = Keychain.deserialize(
       serializedWallet.key_chain,
       asBigEndian,

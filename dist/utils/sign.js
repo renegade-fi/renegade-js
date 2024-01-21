@@ -6,14 +6,11 @@ import { Balance, Wallet } from "../state";
  * @param wallet The Wallet to sign the shares for.
  */
 function signWalletShares(wallet) {
-    // TODO: Necessary for all tasks?
-    // Reblind
+    // Reblind the wallet, consuming the next set of blinders and secret shares
     const reblindedWallet = wallet.reblind();
     const serializedWallet = reblindedWallet.serialize();
-    console.log("Serialized ApiWallet: ", serializedWallet);
     const statement_sig_hex = generate_wallet_update_signature(serializedWallet, reblindedWallet.keychain.keyHierarchy.root.secretKeyHex);
     const statement_sig_bytes = new Uint8Array(Buffer.from(statement_sig_hex, "hex"));
-    console.log("Shares commitment signature: ", statement_sig_bytes);
     const statement_sig = statement_sig_bytes.toString();
     return `[${statement_sig}]`;
 }
@@ -58,7 +55,6 @@ export function signWalletDeposit(wallet, mint, amount) {
  */
 export function signWalletWithdraw(wallet, mint, amount) {
     const mintAddress = mint.address.replace("0x", "");
-    console.log("Balances before withdraw", wallet.balances);
     const newBalances = [...wallet.balances];
     const index = newBalances.findIndex((balance) => balance.mint.address === mintAddress);
     if (index === -1) {
@@ -77,7 +73,6 @@ export function signWalletWithdraw(wallet, mint, amount) {
             amount: newBalance,
         });
     }
-    console.log("Balances after withdraw", newBalances);
     const newWallet = new Wallet({
         ...wallet,
         balances: newBalances,
@@ -94,16 +89,13 @@ export function signWalletWithdraw(wallet, mint, amount) {
  * Assumes this function is called after verifying wallet orderbook has space.
  */
 export function signWalletPlaceOrder(wallet, order) {
-    console.log("🚀 ~ signWalletPlaceOrder ~ order:", order);
     try {
         const newOrders = [...wallet.orders].concat(order);
-        console.log("🚀 ~ signWalletPlaceOrder ~ newOrders:", newOrders);
         const newWallet = new Wallet({
             ...wallet,
             orders: newOrders,
             exists: true
         });
-        console.log("🚀 ~ signWalletPlaceOrder ~ newWallet:", newWallet);
         return signWalletShares(newWallet);
     }
     catch (error) {
@@ -119,20 +111,16 @@ export function signWalletPlaceOrder(wallet, order) {
  *
  */
 export function signWalletModifyOrder(wallet, oldOrderId, newOrder) {
-    console.log("Orders before modify", wallet.orders);
     const newOrders = [...wallet.orders];
     const index = newOrders.findIndex((order) => order.orderId === oldOrderId);
     newOrders[index] = newOrder;
-    console.log("Orders after modify", newOrders);
     const newWallet = new Wallet({
         ...wallet,
         orders: newOrders,
-        // TODO: Why does this work without exists?
         exists: true
     });
     return signWalletShares(newWallet);
 }
-// TODO Verify this is same behavrior as relayer.
 /**
  * Sign wallet to cancel an order.
  *

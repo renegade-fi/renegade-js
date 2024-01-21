@@ -29,12 +29,12 @@ export default class Order {
         this.timestamp = params.timestamp || new Date().getTime();
     }
     pack() {
-        // TODO: Figure out correct price encoding.
         return [
             BigInt("0x" + this.quoteToken.address),
             BigInt("0x" + this.baseToken.address),
             this.side === "buy" ? 0n : 1n,
             this.amount,
+            // Relayer expects worstPrice to be a FixedPoint
             BigInt(Math.floor(this.worstPrice * 2 ** 32 || 0)),
             BigInt(this.timestamp),
         ];
@@ -53,7 +53,7 @@ export default class Order {
       "quote_mint": "${this.quoteToken.serialize()}",
       "side": "${this.side === "buy" ? "Buy" : "Sell"}",
       "type": "${this.type === "midpoint" ? "Midpoint" : "Limit"}",
-      "amount": [${this.amount}],
+      "amount": [${bigIntToLimbsLE(this.amount).join(",")}],
       "minimum_amount": ${minimumAmountSerialized},
       "worst_case_price": ${this.worstPrice},
       "timestamp": ${this.timestamp}
