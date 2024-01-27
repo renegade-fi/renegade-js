@@ -9,7 +9,7 @@ export const renegadeConfig: RenegadeConfig = {
   relayerWsPort: 4000,
   useInsecureTransport: true,
   verbose: false,
-  taskDelay: 2500,
+  // taskDelay: 2500,
 };
 export const globalKeychain = new Keychain({
   skRoot: Buffer.from(
@@ -48,6 +48,6 @@ export function expectOrdersEquality(
 ) {
   expect(Object.keys(orders1).sort()).toEqual(Object.keys(orders2).sort());
   for (const orderId in orders1) {
-    expectOrderEquality(orders1[orderId], orders2[orderId]);
+    expectOrderEquality(orders1[orderId as OrderId], orders2[orderId as OrderId]);
   }
 }

@@ -90,7 +90,7 @@ export function signWalletWithdraw(wallet, mint, amount) {
  */
 export function signWalletPlaceOrder(wallet, order) {
     try {
-        const newOrders = [...wallet.orders].concat(order);
+        const newOrders = [...wallet.orders, order];
         const newWallet = new Wallet({
             ...wallet,
             orders: newOrders,

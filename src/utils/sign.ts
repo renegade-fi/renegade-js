@@ -105,7 +105,7 @@ export function signWalletWithdraw(
  */
 export function signWalletPlaceOrder(wallet: Wallet, order: Order) {
   try {
-    const newOrders = [...wallet.orders].concat(order);
+    const newOrders = [...wallet.orders, order]
     const newWallet = new Wallet({
       ...wallet,
       orders: newOrders,

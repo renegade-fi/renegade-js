@@ -61,6 +61,7 @@ export class RenegadeWs {
         if (this._verbose) {
             console.log(`[WebSocket] Received message: ${message}`);
         }
+        // TODO: Should handle case where message = "HttpStatusCode(400, "signature format invalid")"
         const parsedMessage = JSON.parse(message);
         const topic = parsedMessage.topic;
         if (!(topic in this._topicListeners)) {

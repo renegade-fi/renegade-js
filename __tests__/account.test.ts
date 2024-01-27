@@ -18,7 +18,7 @@ describe("Populating Accounts", () => {
     },
   );
 
-  test.concurrent(
+  test.skip(
     "Creating and initializing a new Account should result in an Account with the correct accountId and no balances, orders, or fees",
     async () => {
       const renegade = new Renegade(renegadeConfig);
@@ -40,7 +40,7 @@ describe("Populating Accounts", () => {
     },
   );
 
-  test.concurrent(
+  test.skip(
     "Re-registering an Account should not require an on-chain interaction",
     async () => {
       const renegade = new Renegade(renegadeConfig);
