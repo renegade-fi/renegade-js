@@ -1,3 +1,4 @@
+import { describe, expect, test } from "vitest";
 import { Keychain, Renegade } from "../src";
 import { renegadeConfig } from "./utils";
 

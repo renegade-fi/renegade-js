@@ -1,6 +1,0 @@
-{
-    "rust-analyzer.linkedProjects": [
-        "./renegade-utils/Cargo.toml"
-    ],
-    "typescript.tsdk": "node_modules/typescript/lib"
-}

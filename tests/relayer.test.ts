@@ -1,3 +1,4 @@
+import { describe, expect, test } from "vitest";
 import { Renegade, RenegadeConfig } from "../src";
 import RenegadeError from "../src/errors";
 import { renegadeConfig } from "./utils";

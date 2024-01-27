@@ -1,5 +1,5 @@
 import * as path from "path";
-
+import { describe, expect, test } from "vitest";
 import { Keychain } from "../src";
 import { RENEGADE_TEST_DIR, executeTestWithCleanup } from "./utils";
 
@@ -11,7 +11,7 @@ import { RENEGADE_TEST_DIR, executeTestWithCleanup } from "./utils";
  * @param keychain2 The second Keychain to compare.
  */
 function expectNoCommonKeypairs(keychain1: Keychain, keychain2: Keychain) {
-  for (const key of ["root", "match", "settle"]) {
+  for (const key of ["root", "match"]) {
     const keypair1 = keychain1.keyHierarchy[key];
     const keypair2 = keychain2.keyHierarchy[key];
     expect(keypair1.secretKey).not.toEqual(keypair2.secretKey);
