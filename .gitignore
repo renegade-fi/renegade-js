@@ -2,3 +2,4 @@
 *.sw[a-p]
 /yarn-error.log
 /temp-test
+/.vscode

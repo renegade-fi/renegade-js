@@ -175,7 +175,9 @@ export default class Renegade {
     }
     async awaitTaskCompletion(taskId) {
         await this._ws.awaitTaskCompletion(taskId);
-        await new Promise((resolve) => setTimeout(resolve, this._taskDelay));
+        if (this._taskDelay > 0) {
+            await new Promise((resolve) => setTimeout(resolve, this._taskDelay));
+        }
     }
     async teardown() {
         for (const accountId in this._registeredAccounts) {

@@ -1,4 +1,5 @@
-import { Renegade, Token, Exchange } from "../src";
+import { describe, expect, test } from "vitest";
+import { Exchange, Renegade, Token } from "../src";
 import { renegadeConfig } from "./utils";
 
 describe("Events Streaming", () => {

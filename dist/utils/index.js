@@ -71,16 +71,23 @@ export class RenegadeWs {
         if (this._verbose) {
             console.log(`[WebSocket] Received message: ${message}`);
         }
-        const parsedMessage = JSON.parse(message);
-        const topic = parsedMessage.topic;
-        if (!(topic in this._topicListeners)) {
-            return;
+        try {
+            // TODO: Should handle case where message = "HttpStatusCode(400, "signature format invalid")"
+            const parsedMessage = JSON.parse(message);
+            const topic = parsedMessage.topic;
+            if (!(topic in this._topicListeners)) {
+                return;
+            }
+            // Collect all callback IDs, and sort them in decreasing order by priority.
+            const callbackIdsWithPriorities = Array.from(this._topicListeners[topic]);
+            callbackIdsWithPriorities.sort((a, b) => b[1] - a[1]);
+            for (const [callbackId] of callbackIdsWithPriorities) {
+                this._topicCallbacks[callbackId](JSON.stringify(parsedMessage.event));
+            }
         }
-        // Collect all callback IDs, and sort them in decreasing order by priority.
-        const callbackIdsWithPriorities = Array.from(this._topicListeners[topic]);
-        callbackIdsWithPriorities.sort((a, b) => b[1] - a[1]);
-        for (const [callbackId] of callbackIdsWithPriorities) {
-            this._topicCallbacks[callbackId](JSON.stringify(parsedMessage.event));
+        catch (error) {
+            console.log("Websocket error: ", error);
+            console.log(`Error parsing message: ${message}`);
         }
     }
     /**
