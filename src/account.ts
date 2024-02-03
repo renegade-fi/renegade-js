@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { get_shares_commitment } from "../dist/renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
 import {
@@ -277,6 +278,7 @@ export default class Account {
     const body: CreateWalletRequest = {
       wallet: this._wallet,
     };
+    console.log("Creating wallet with merkle path: ", get_shares_commitment(this._wallet.serialize()))
     const response = createPostRequest(
       `${this._relayerHttpUrl}/v0/wallet`,
       body,
