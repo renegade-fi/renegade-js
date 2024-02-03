@@ -5,7 +5,6 @@ import Fee from "./fee";
 import Keychain from "./keychain";
 import Order from "./order";
 import { bigIntToLimbsLE, createWalletSharesWithRandomness, evaluateHashChain, generateId, limbsToBigIntLE } from "./utils";
-import * as crypto from 'crypto';
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
 const MAX_ORDERS = 5;
@@ -67,9 +66,9 @@ export default class Wallet {
     }
     getBlinders() {
         // TODO: Generate blinder seed from Ethereum private key signature
-        // const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 1n
+        const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 1n;
         // TODO: Delete me, for testing only
-        const blinderSeed = BigInt(`0x${crypto.randomBytes(32).toString('hex')}`);
+        // const blinderSeed = BigInt(`0x${crypto.randomBytes(32).toString('hex')}`);
         const [blinder, blinderPrivateShare] = evaluateHashChain(blinderSeed, 2);
         const blinderPublicShare = F.sub(blinder, blinderPrivateShare);
         return [blinder, blinderPrivateShare, blinderPublicShare];

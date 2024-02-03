@@ -15,9 +15,11 @@ import {
   PriceReport,
 } from "./types/schema";
 import { RenegadeErrorType } from "./errors";
+import tokenMappings from "./tokens/testnet.json";
 
 export { Renegade, RenegadeConfig };
 export { Balance, Fee, Keychain, Order, Token };
 export { BalanceId, OrderId, FeeId, AccountId, TaskId, CallbackId, Exchange };
 export { ExchangeHealthState, HealthState, PriceReport };
 export { RenegadeErrorType };
+export { tokenMappings };
