@@ -5,6 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
+import { get_shares_commitment } from "../dist/renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
 import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, } from "./state/utils";
@@ -238,6 +239,7 @@ export default class Account {
         const body = {
             wallet: this._wallet,
         };
+        console.log("Creating wallet with merkle path: ", get_shares_commitment(this._wallet.serialize()));
         const response = createPostRequest(`${this._relayerHttpUrl}/v0/wallet`, body, CreateWalletResponse);
         return await response.then((res) => res.data.task_id);
     }

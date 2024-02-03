@@ -1,6 +1,22 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+* Generates a signature for updating a wallet by hashing the wallet's share commitments
+* and using the provided signing key to sign the hash.
+*
+* # Arguments
+*
+* * `wallet` - The `Wallet` instance containing the share commitments to be signed.
+* * `signing_key` - A reference to the `SigningKey` used to sign the hash of the commitments.
+*
+* # Returns
+*
+* * A `Signature` object representing the ECDSA signature of the hashed commitments.
+* @param {string} wallet_str
+* @returns {any}
+*/
+export function get_shares_commitment(wallet_str: string): any;
+/**
 * Generates a signature for a wallet update operation.
 *
 * This function takes a serialized wallet and the root secret key as inputs,
@@ -112,6 +128,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly get_shares_commitment: (a: number, b: number) => number;
   readonly generate_wallet_update_signature: (a: number, b: number, c: number, d: number) => number;
   readonly compute_poseidon_hash: (a: number, b: number) => number;
   readonly get_key_hierarchy_shares: (a: number, b: number, c: number) => void;
