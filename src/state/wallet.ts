@@ -102,9 +102,9 @@ export default class Wallet {
 
   getBlinders(): [bigint, bigint, bigint] {
     // TODO: Generate blinder seed from Ethereum private key signature
-    // const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 1n
+    const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 1n
     // TODO: Delete me, for testing only
-    const blinderSeed = BigInt(`0x${crypto.randomBytes(32).toString('hex')}`);
+    // const blinderSeed = BigInt(`0x${crypto.randomBytes(32).toString('hex')}`);
     const [blinder, blinderPrivateShare] = evaluateHashChain(blinderSeed, 2);
     const blinderPublicShare = F.sub(blinder, blinderPrivateShare);
     return [blinder, blinderPrivateShare, blinderPublicShare];

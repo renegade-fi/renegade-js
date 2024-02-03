@@ -24,6 +24,32 @@ pub mod ethers_helpers;
 pub mod helpers;
 pub mod types;
 
+/// Generates a signature for updating a wallet by hashing the wallet's share commitments
+/// and using the provided signing key to sign the hash.
+///
+/// # Arguments
+///
+/// * `wallet` - The `Wallet` instance containing the share commitments to be signed.
+/// * `signing_key` - A reference to the `SigningKey` used to sign the hash of the commitments.
+///
+/// # Returns
+///
+/// * A `Signature` object representing the ECDSA signature of the hashed commitments.
+#[wasm_bindgen]
+pub fn get_shares_commitment(wallet_str: &str) -> JsValue {
+    let wallet = deserialize_wallet(wallet_str);
+    // Get total shares
+    let shares_commitment = _compute_poseidon_hash(
+        &[
+            vec![wallet.get_private_share_commitment()],
+            wallet.blinded_public_shares,
+        ]
+        .concat(),
+    )
+    .to_string();
+    JsValue::from_str(&shares_commitment)
+}
+
 /// Generates a signature for a wallet update operation.
 ///
 /// This function takes a serialized wallet and the root secret key as inputs,
