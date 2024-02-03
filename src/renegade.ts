@@ -79,13 +79,12 @@ export interface RenegadeConfig {
  */
 export default class Renegade
   implements
-    IRenegadeAccount,
-    IRenegadeInformation,
-    IRenegadeBalance,
-    IRenegadeTrading,
-    IRenegadeFees,
-    IRenegadeStreaming
-{
+  IRenegadeAccount,
+  IRenegadeInformation,
+  IRenegadeBalance,
+  IRenegadeTrading,
+  IRenegadeFees,
+  IRenegadeStreaming {
   // --------------------------
   // | State and Constructors |
   // --------------------------
