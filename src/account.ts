@@ -1,5 +1,4 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
-import { get_shares_commitment } from "../dist/renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
 import {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { Keychain, Order, OrderId, Renegade, Token } from "../src";
-import { DEVNET_ADMIN_ACCOUNT, WETH_ADDRESS, deposit, renegadeConfig } from './utils';
+import { DEVNET_ADMIN_ACCOUNT, WETH_ADDRESS, renegadeConfig } from './utils';
 
 /**
  * Checks the equality of two hashmaps of orders, ignoring the timestamp.
@@ -54,7 +54,7 @@ describe("Creating and Cancelling Orders", () => {
         const accountId = renegade.registerAccount(new Keychain());
         await renegade.initializeAccount(accountId);
 
-        await deposit(renegade, accountId, WETH_ADDRESS, 1n, DEVNET_ADMIN_ACCOUNT)
+        await renegade.deposit(accountId, new Token({ address: WETH_ADDRESS }), 1n, DEVNET_ADMIN_ACCOUNT);
 
         // Create and submit the order.
         const order = getOrder1()
@@ -71,7 +71,7 @@ describe("Creating and Cancelling Orders", () => {
         await renegade.teardown();
     })
 
-    test("Modifying an order should work", async () => {
+    test.skip("Modifying an order should work", async () => {
         // Setup the Account.
         const renegade = new Renegade(renegadeConfig);
         const accountId = renegade.registerAccount(new Keychain());

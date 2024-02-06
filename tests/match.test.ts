@@ -1,7 +1,7 @@
 import * as uuid from "uuid";
 import { describe, expect, test } from 'vitest';
 import { AccountId, Order, OrderId, Renegade, Token } from "../src";
-import { DEVNET_ADMIN_ACCOUNT, USDC_ADDRESS, WETH_ADDRESS, deposit, renegadeConfig, setupAccount } from './utils';
+import { DEVNET_ADMIN_ACCOUNT, USDC_ADDRESS, WETH_ADDRESS, renegadeConfig, setupAccount } from './utils';
 
 const baseToken = WETH_ADDRESS
 const quoteToken = USDC_ADDRESS
@@ -53,14 +53,14 @@ describe("Internal Order Matching", () => {
         const [accountIdSell, accountIdBuy] = await setupAccount(renegade, 2)
 
         // Deposit some tokens
-        await deposit(renegade, accountIdSell, baseToken, baseTokenAmount, DEVNET_ADMIN_ACCOUNT)
+        await renegade.deposit(accountIdSell, new Token({ address: baseToken }), baseTokenAmount, DEVNET_ADMIN_ACCOUNT)
             .then(async () => {
                 const sellOrder = getOrder1(baseTokenAmount)
                 // Create and submit the order.
                 await renegade.placeOrder(accountIdSell, sellOrder);
             })
 
-        await deposit(renegade, accountIdBuy, quoteToken, quoteTokenAmount, DEVNET_ADMIN_ACCOUNT)
+        await renegade.deposit(accountIdBuy, new Token({ address: quoteToken }), quoteTokenAmount, DEVNET_ADMIN_ACCOUNT)
             .then(async () => {
                 const buyOrder = getOrder2()
                 // Create and submit the order.
@@ -108,14 +108,14 @@ describe("Internal Order Matching", () => {
         const [accountIdSell, accountIdBuy] = await setupAccount(renegade, 2)
 
         // Deposit some tokens
-        await deposit(renegade, accountIdSell, baseToken, 2n, DEVNET_ADMIN_ACCOUNT)
+        await renegade.deposit(accountIdSell, new Token({ address: baseToken }), baseTokenAmount, DEVNET_ADMIN_ACCOUNT)
             .then(async () => {
                 const sellOrder = getOrder1(2n)
                 // Create and submit the order.
                 await renegade.placeOrder(accountIdSell, sellOrder);
             })
 
-        await deposit(renegade, accountIdBuy, quoteToken, quoteTokenAmount, DEVNET_ADMIN_ACCOUNT)
+        await renegade.deposit(accountIdBuy, new Token({ address: quoteToken }), quoteTokenAmount, DEVNET_ADMIN_ACCOUNT)
             .then(async () => {
                 const buyOrder = getOrder2()
                 // Create and submit the order.

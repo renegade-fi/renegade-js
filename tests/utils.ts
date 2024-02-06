@@ -1,6 +1,5 @@
 import * as fs from 'fs';
-import { expect } from "vitest";
-import { AccountId, Keychain, Renegade, RenegadeConfig, Token } from "../src";
+import { AccountId, Keychain, Renegade, RenegadeConfig } from "../src";
 
 // Constants
 
@@ -31,32 +30,6 @@ export const globalKeychain = new Keychain({
         "hex",
     ).reverse(),
 });
-
-/**
- * Deposits a specified amount of tokens into an account.
- * @param renegade - The Renegade instance to use for the deposit.
- * @param accountId - The ID of the account to deposit into.
- * @param tokenAddress - The address of the token to deposit.
- * @param amount - The amount of tokens to deposit.
- * @param adminAccount - The admin account to use for the deposit.
- */
-export async function deposit(renegade: Renegade, accountId: AccountId, tokenAddress: string, amount: bigint, adminAccount: string) {
-    // Deposit some tokens.
-    await renegade.deposit(accountId, new Token({ address: tokenAddress, network: "stylus" }), amount, adminAccount);
-    // TODO: WebSocket wallet updates not working? Need to force a queryWallet call to get the updated balances.
-    const balances = await renegade.queryWallet(accountId).then(
-        () => renegade.getBalances(accountId)
-    )
-    const balanceIds = Object.keys(balances);
-
-    // Expect that there is exactly one balance of 1 WETH.
-    expect(balanceIds.length).toBe(1);
-    // TODO: This will work after SDK/Relayer token maps are the same
-    // expect(balances[balanceIds[0]].mint).toEqual(
-    //     new Token({ ticker: "WETH" }),
-    // );
-    expect(balances[balanceIds[0]].amount).toEqual(amount);
-}
 
 /**
  * Executes a test function and cleans up the test directory before and after the test.

@@ -1,4 +1,4 @@
-import { get_key_hierarchy_shares } from "../../dist/renegade-utils";
+import { get_key_hierarchy_shares } from "renegade-utils";
 import { F } from "../utils/field";
 import Balance from "./balance";
 import Fee from "./fee";

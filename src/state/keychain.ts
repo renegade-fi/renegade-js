@@ -2,12 +2,10 @@ import { sha256 } from "@noble/hashes/sha256";
 import { randomBytes } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
 import {
-  compute_poseidon_hash,
   get_key_hierarchy,
   sign_http_request,
-  sign_message,
-} from "../../dist/renegade-utils";
-import { bigIntToUint8Array } from "./utils";
+  sign_message
+} from "renegade-utils";
 
 /**
  * Represents a signing key used for signing messages.
