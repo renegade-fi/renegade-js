@@ -1,6 +1,19 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+* Generates a secp256k1 public key from a given secret key.
+* # Arguments
+*
+* * `sk_root` - The root secret key to generate the public key from.
+*
+* # Returns
+*
+* * A `JsValue` containing the hexadecimal string representation of the public key.
+* @param {string} sk_root
+* @returns {any}
+*/
+export function get_public_key(sk_root: string): any;
+/**
 * Generates a signature for updating a wallet by hashing the wallet's share commitments
 * and using the provided signing key to sign the hash.
 *
@@ -128,6 +141,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly get_public_key: (a: number, b: number) => number;
   readonly get_shares_commitment: (a: number, b: number) => number;
   readonly generate_wallet_update_signature: (a: number, b: number, c: number, d: number) => number;
   readonly compute_poseidon_hash: (a: number, b: number) => number;

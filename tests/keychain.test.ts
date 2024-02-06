@@ -11,12 +11,8 @@ import { RENEGADE_TEST_DIR, executeTestWithCleanup } from "./utils";
  * @param keychain2 The second Keychain to compare.
  */
 function expectNoCommonKeypairs(keychain1: Keychain, keychain2: Keychain) {
-  for (const key of ["root", "match"]) {
-    const keypair1 = keychain1.keyHierarchy[key];
-    const keypair2 = keychain2.keyHierarchy[key];
-    expect(keypair1.secretKey).not.toEqual(keypair2.secretKey);
-    expect(keypair1.publicKey).not.toEqual(keypair2.publicKey);
-  }
+  expect(keychain1.keyHierarchy.root.secretKeyHex).not.toEqual(keychain2.keyHierarchy.root.secretKeyHex);
+  expect(keychain1.keyHierarchy.match.secretKey).not.toEqual(keychain2.keyHierarchy.match.secretKey);
 }
 
 describe("Keychain Creation", () => {

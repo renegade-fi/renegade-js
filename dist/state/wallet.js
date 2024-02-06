@@ -40,8 +40,7 @@ export default class Wallet {
     updateLocked = false;
     constructor(params) {
         this.walletId =
-            params.id ||
-                generateId(Buffer.from(params.keychain.keyHierarchy.root.publicKey.buffer));
+            params.id || generateId(params.keychain.keyHierarchy.root.secretKeyHex);
         this.balances = params.balances;
         this.orders = params.orders;
         this.fees = params.fees;

@@ -1,5 +1,4 @@
 import { sha256 } from "@noble/hashes/sha256";
-import * as secp from "@noble/secp256k1";
 import { randomBytes } from "crypto";
 import { readFileSync, writeFileSync } from "fs";
 import {
@@ -10,30 +9,14 @@ import {
 } from "../../dist/renegade-utils";
 import { bigIntToUint8Array } from "./utils";
 
-// Allow for synchronous secp256 signing. See:
-// https://github.com/paulmillr/noble-secp256k1/blob/main/README.md
-secp.etc.hmacSha256Sync = (...m) => sha256(secp.etc.concatBytes(...m));
-
 class SigningKey {
-  secretKey: Uint8Array;
   secretKeyHex: string
-  publicKey: Uint8Array;
-  // Affine x coordinate of the public key
-  x: bigint;
-  // Affine y coordinate of the public key
-  y: bigint;
 
   constructor(secretKey: Uint8Array) {
     if (secretKey.length !== 32) {
       throw new Error("SigningKey secretKey must be 32 bytes.");
     }
-    this.secretKey = secretKey;
     this.secretKeyHex = Buffer.from(secretKey).toString("hex");
-    this.publicKey = secp.getPublicKey(secretKey);
-
-    const point = secp.ProjectivePoint.fromHex(this.publicKey);
-    this.x = point.x;
-    this.y = point.y;
   }
 
   signMessage(message: string): string {

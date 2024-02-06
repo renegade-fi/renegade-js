@@ -110,6 +110,25 @@ function takeObject(idx) {
     return ret;
 }
 /**
+* Generates a secp256k1 public key from a given secret key.
+* # Arguments
+*
+* * `sk_root` - The root secret key to generate the public key from.
+*
+* # Returns
+*
+* * A `JsValue` containing the hexadecimal string representation of the public key.
+* @param {string} sk_root
+* @returns {any}
+*/
+export function get_public_key(sk_root) {
+    const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_public_key(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
 * Generates a signature for updating a wallet by hashing the wallet's share commitments
 * and using the provided signing key to sign the hash.
 *

@@ -24,6 +24,22 @@ pub mod ethers_helpers;
 pub mod helpers;
 pub mod types;
 
+/// Generates a secp256k1 public key from a given secret key.
+/// # Arguments
+///
+/// * `sk_root` - The root secret key to generate the public key from.
+///
+/// # Returns
+///
+/// * A `JsValue` containing the hexadecimal string representation of the public key.
+#[wasm_bindgen]
+pub fn get_public_key(sk_root: &str) -> JsValue {
+    let (_, pk_root) = get_root_key(sk_root);
+    let pk_root_hex = hex::encode(pk_root.to_encoded_point(false).as_bytes());
+
+    JsValue::from_str(&pk_root_hex)
+}
+
 /// Generates a signature for updating a wallet by hashing the wallet's share commitments
 /// and using the provided signing key to sign the hash.
 ///

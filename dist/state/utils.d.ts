@@ -1,9 +1,8 @@
-/// <reference types="node" />
-import { OrderId } from "../types";
+import { OrderId, WalletId } from "../types";
 import Order from "./order";
 export declare const RENEGADE_AUTH_HEADER = "renegade-auth";
 export declare const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
-export declare function generateId(data: Buffer): string;
+export declare function generateId(sk_root: string): WalletId;
 export declare function bigIntToLimbsLE(number: bigint, bitsPerLimb?: number, numLimbs?: number): bigint[];
 export declare function limbsToBigIntLE(limbs: (number | bigint)[], bitsPerLimb?: number): bigint;
 export declare function splitBigIntIntoWords(number: bigint, SCALAR_WORDS?: number): bigint[];
