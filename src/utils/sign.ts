@@ -14,7 +14,7 @@ function signWalletShares(wallet: Wallet) {
 
   const statement_sig_hex = generate_wallet_update_signature(
     serializedWallet,
-    reblindedWallet.keychain.keyHierarchy.root.secretKeyHex
+    reblindedWallet.keychain.keyHierarchy.root.secretKey
   );
   const statement_sig_bytes = new Uint8Array(
     Buffer.from(statement_sig_hex, "hex"),

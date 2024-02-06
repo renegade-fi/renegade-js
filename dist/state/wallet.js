@@ -40,7 +40,7 @@ export default class Wallet {
     updateLocked = false;
     constructor(params) {
         this.walletId =
-            params.id || generateId(params.keychain.keyHierarchy.root.secretKeyHex);
+            params.id || generateId(params.keychain.keyHierarchy.root.secretKey);
         this.balances = params.balances;
         this.orders = params.orders;
         this.fees = params.fees;
@@ -65,7 +65,7 @@ export default class Wallet {
     }
     getBlinders() {
         // TODO: Generate blinder seed from Ethereum private key signature
-        const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 1n;
+        const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 1n;
         // TODO: Delete me, for testing only
         // const blinderSeed = BigInt(`0x${crypto.randomBytes(32).toString('hex')}`);
         const [blinder, blinderPrivateShare] = evaluateHashChain(blinderSeed, 2);
@@ -89,7 +89,7 @@ export default class Wallet {
         return packedFees.flat().concat(packedPadding.flat());
     }
     packKeychain() {
-        return get_key_hierarchy_shares(this.keychain.keyHierarchy.root.secretKeyHex).map((share) => BigInt(share));
+        return get_key_hierarchy_shares(this.keychain.keyHierarchy.root.secretKey).map((share) => BigInt(share));
     }
     packBlinder() {
         return [this.blinder];
@@ -110,7 +110,7 @@ export default class Wallet {
      */
     deriveShares() {
         // TODO: Generate seed from Ethereuem private key signature
-        const shareStreamSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 2n;
+        const shareStreamSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 2n;
         const secretShares = evaluateHashChain(shareStreamSeed, SHARES_PER_WALLET);
         const [privateShares, blindedPublicShares] = createWalletSharesWithRandomness(this.packWallet(), this.blinder, this.privateBlinder, secretShares);
         if (blindedPublicShares.length !== SHARES_PER_WALLET ||
