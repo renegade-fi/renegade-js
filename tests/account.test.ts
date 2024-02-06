@@ -28,7 +28,7 @@ describe("Populating Accounts", () => {
             await renegade.initializeAccount(accountId);
 
             // Assert that accountId = uuidV4(sha256(pk_root)[-16:])
-            const publicKeyHash = sha256(Buffer.from(get_public_key(keychain.keyHierarchy.root.secretKeyHex), "hex"));
+            const publicKeyHash = sha256(Buffer.from(get_public_key(keychain.keyHierarchy.root.secretKey), "hex"));
             expect(accountId).toEqual(uuid.v4({ random: publicKeyHash.slice(-16) }));
 
             // Assert that this account has no balances, orders, or fees.

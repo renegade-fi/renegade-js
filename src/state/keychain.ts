@@ -9,33 +9,45 @@ import {
 } from "../../dist/renegade-utils";
 import { bigIntToUint8Array } from "./utils";
 
+/**
+ * Represents a signing key used for signing messages.
+ */
 class SigningKey {
-  secretKeyHex: string
+  /**
+   * The hexadecimal representation of the secret key.
+   */
+  secretKey: string
+  /**
+   * The hexadecimal representation of the public key.
+   */
+  publicKey: string
 
   constructor(secretKey: Uint8Array) {
     if (secretKey.length !== 32) {
       throw new Error("SigningKey secretKey must be 32 bytes.");
     }
-    this.secretKeyHex = Buffer.from(secretKey).toString("hex");
+    this.secretKey = Buffer.from(secretKey).toString("hex");
+    this.publicKey = JSON.parse(get_key_hierarchy(this.secretKey)).public_keys.pk_root.replace("0x", "");
   }
 
   signMessage(message: string): string {
-    return sign_message(message, this.secretKeyHex);
+    return sign_message(message, this.secretKey);
   }
 }
 
 class IdentificationKey {
-  secretKey: Uint8Array;
-  publicKey: Uint8Array;
+  /**
+   * The hexadecimal representation of the secret key.
+   */
+  secretKey: string;
+  /**
+   * The hexadecimal representation of the public key.
+   */
+  publicKey: string;
 
-  constructor(secretKey: Uint8Array) {
-    if (secretKey.length !== 32) {
-      throw new Error("IdentificationKey secretKey must be 32 bytes.");
-    }
+  constructor(secretKey: string, publicKey: string) {
     this.secretKey = secretKey;
-    const secretKeyHex = Buffer.from(secretKey).toString("hex");
-    const publicKeyBigInt = compute_poseidon_hash(secretKeyHex);
-    this.publicKey = bigIntToUint8Array(publicKeyBigInt);
+    this.publicKey = publicKey;
   }
 }
 
@@ -124,8 +136,9 @@ export default class Keychain {
       Keychain.CREATE_SK_MATCH_MESSAGE,
     );
 
-    const skMatch = sha256(rootSignatureBytes);
-    const match = new IdentificationKey(skMatch);
+    const skMatch = JSON.parse(get_key_hierarchy(root.secretKey)).private_keys.sk_match.replace("0x", "");
+    const pkMatch = JSON.parse(get_key_hierarchy(root.secretKey)).public_keys.pk_match.replace("0x", "");
+    const match = new IdentificationKey(skMatch, pkMatch);
 
     // Save the key hierarchy.
     this.keyHierarchy = { root, match };
@@ -142,7 +155,7 @@ export default class Keychain {
     const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
       dataBuffer,
       BigInt(Date.now()),
-      this.keyHierarchy.root.secretKeyHex,
+      this.keyHierarchy.root.secretKey,
     );
     return [renegadeAuth, renegadeAuthExpiration];
   }
@@ -178,7 +191,7 @@ export default class Keychain {
    * @returns The serialized keychain.
    */
   serialize(asBigEndian?: boolean): string {
-    return get_key_hierarchy(this.keyHierarchy.root.secretKeyHex);
+    return get_key_hierarchy(this.keyHierarchy.root.secretKey);
   }
 
   static deserialize(serializedKeychain: any, asBigEndian?: boolean): Keychain {

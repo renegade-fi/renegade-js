@@ -71,7 +71,7 @@ export default class Wallet {
     exists?: boolean;
   }) {
     this.walletId =
-      params.id || generateId(params.keychain.keyHierarchy.root.secretKeyHex);
+      params.id || generateId(params.keychain.keyHierarchy.root.secretKey);
     this.balances = params.balances;
     this.orders = params.orders;
     this.fees = params.fees;
@@ -99,7 +99,7 @@ export default class Wallet {
 
   getBlinders(): [bigint, bigint, bigint] {
     // TODO: Generate blinder seed from Ethereum private key signature
-    const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 1n
+    const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 1n
     // TODO: Delete me, for testing only
     // const blinderSeed = BigInt(`0x${crypto.randomBytes(32).toString('hex')}`);
     const [blinder, blinderPrivateShare] = evaluateHashChain(blinderSeed, 2);
@@ -134,7 +134,7 @@ export default class Wallet {
   }
 
   packKeychain(): bigint[] {
-    return get_key_hierarchy_shares(this.keychain.keyHierarchy.root.secretKeyHex).map((share: string) =>
+    return get_key_hierarchy_shares(this.keychain.keyHierarchy.root.secretKey).map((share: string) =>
       BigInt(share),
     );
   }
@@ -160,7 +160,7 @@ export default class Wallet {
    */
   deriveShares(): [bigint[], bigint[]] {
     // TODO: Generate seed from Ethereuem private key signature
-    const shareStreamSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKeyHex}`) + 2n
+    const shareStreamSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 2n
     const secretShares = evaluateHashChain(shareStreamSeed, SHARES_PER_WALLET);
 
     const [privateShares, blindedPublicShares] =

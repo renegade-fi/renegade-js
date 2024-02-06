@@ -9,7 +9,7 @@ function signWalletShares(wallet) {
     // Reblind the wallet, consuming the next set of blinders and secret shares
     const reblindedWallet = wallet.reblind();
     const serializedWallet = reblindedWallet.serialize();
-    const statement_sig_hex = generate_wallet_update_signature(serializedWallet, reblindedWallet.keychain.keyHierarchy.root.secretKeyHex);
+    const statement_sig_hex = generate_wallet_update_signature(serializedWallet, reblindedWallet.keychain.keyHierarchy.root.secretKey);
     const statement_sig_bytes = new Uint8Array(Buffer.from(statement_sig_hex, "hex"));
     const statement_sig = statement_sig_bytes.toString();
     return `[${statement_sig}]`;

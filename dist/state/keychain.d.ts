@@ -1,12 +1,28 @@
+/**
+ * Represents a signing key used for signing messages.
+ */
 declare class SigningKey {
-    secretKeyHex: string;
+    /**
+     * The hexadecimal representation of the secret key.
+     */
+    secretKey: string;
+    /**
+     * The hexadecimal representation of the public key.
+     */
+    publicKey: string;
     constructor(secretKey: Uint8Array);
     signMessage(message: string): string;
 }
 declare class IdentificationKey {
-    secretKey: Uint8Array;
-    publicKey: Uint8Array;
-    constructor(secretKey: Uint8Array);
+    /**
+     * The hexadecimal representation of the secret key.
+     */
+    secretKey: string;
+    /**
+     * The hexadecimal representation of the public key.
+     */
+    publicKey: string;
+    constructor(secretKey: string, publicKey: string);
 }
 /**
  * The KeyHierarchy contains the root, match, and settlekeypairs for a Renegade
