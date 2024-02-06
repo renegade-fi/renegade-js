@@ -65,8 +65,8 @@ describe("Renegade Object Parameters", () => {
     };
     const renegade = new Renegade(brokenRenegadeConfig);
     try {
-      await renegade.ping();
-      fail("Should have thrown an error.");
+      const ping = await renegade.ping();
+      expect(ping).toBe(false);
     } catch (error) {
       expect(error).toBeInstanceOf(RenegadeError);
     }

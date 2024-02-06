@@ -278,7 +278,6 @@ export default class Account {
     const body: CreateWalletRequest = {
       wallet: this._wallet,
     };
-    console.log("Creating wallet with merkle path: ", get_shares_commitment(this._wallet.serialize()))
     const response = createPostRequest(
       `${this._relayerHttpUrl}/v0/wallet`,
       body,

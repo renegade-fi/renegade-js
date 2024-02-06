@@ -140,13 +140,10 @@ export default class Renegade
     this._registeredAccounts = {} as Record<AccountId, Account>;
     this._isTornDown = false;
 
-    // Load the Signature wasm module into memory only if running in the browser
-    // Check if running in a browser environment
+    // Dynamically import renegade-utils WASM package if running in a browser
     if (typeof window !== "undefined" && typeof document !== "undefined") {
-      // Dynamically import the loadUtils function
       import("../dist/renegade-utils").then(module => {
         const loadUtils = module.default;
-        // Call loadUtils now that it's imported
         loadUtils();
       }).catch(error => {
         console.error("Failed to load utilities:", error);

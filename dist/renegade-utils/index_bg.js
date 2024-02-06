@@ -110,6 +110,28 @@ function takeObject(idx) {
     return ret;
 }
 /**
+* Generates a signature for updating a wallet by hashing the wallet's share commitments
+* and using the provided signing key to sign the hash.
+*
+* # Arguments
+*
+* * `wallet` - The `Wallet` instance containing the share commitments to be signed.
+* * `signing_key` - A reference to the `SigningKey` used to sign the hash of the commitments.
+*
+* # Returns
+*
+* * A `Signature` object representing the ECDSA signature of the hashed commitments.
+* @param {string} wallet_str
+* @returns {any}
+*/
+export function get_shares_commitment(wallet_str) {
+    const ptr0 = passStringToWasm0(wallet_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_shares_commitment(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
 * Generates a signature for a wallet update operation.
 *
 * This function takes a serialized wallet and the root secret key as inputs,
