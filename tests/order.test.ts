@@ -30,8 +30,8 @@ export function expectOrdersEquality(
 }
 
 const getOrder1 = () => new Order({
-    baseToken: new Token({ ticker: "WETH", network: "stylus" }),
-    quoteToken: new Token({ ticker: "USDC", network: "stylus" }),
+    baseToken: new Token({ ticker: "WETH" }),
+    quoteToken: new Token({ ticker: "USDC" }),
     side: "sell",
     type: "midpoint",
     amount: 1n,
@@ -39,8 +39,8 @@ const getOrder1 = () => new Order({
 })
 
 const getOrder2 = () => new Order({
-    baseToken: new Token({ ticker: "WETH", network: "stylus" }),
-    quoteToken: new Token({ ticker: "USDC", network: "stylus" }),
+    baseToken: new Token({ ticker: "WETH" }),
+    quoteToken: new Token({ ticker: "USDC" }),
     side: "buy",
     type: "midpoint",
     amount: 1n,
