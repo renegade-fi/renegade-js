@@ -3,6 +3,7 @@ import * as uuid from "uuid";
 import { describe, expect, test } from 'vitest';
 import { Keychain, Renegade } from "../src";
 import { globalKeychain, renegadeConfig } from "./utils";
+import { get_public_key } from "../dist/renegade-utils";
 
 describe("Populating Accounts", () => {
     test.concurrent(
@@ -27,9 +28,7 @@ describe("Populating Accounts", () => {
             await renegade.initializeAccount(accountId);
 
             // Assert that accountId = uuidV4(sha256(pk_root)[-16:])
-            const publicKeyHash = sha256(
-                Buffer.from(keychain.keyHierarchy.root.publicKey.buffer),
-            );
+            const publicKeyHash = sha256(Buffer.from(get_public_key(keychain.keyHierarchy.root.secretKeyHex), "hex"));
             expect(accountId).toEqual(uuid.v4({ random: publicKeyHash.slice(-16) }));
 
             // Assert that this account has no balances, orders, or fees.

@@ -1,9 +1,5 @@
 declare class SigningKey {
-    secretKey: Uint8Array;
     secretKeyHex: string;
-    publicKey: Uint8Array;
-    x: bigint;
-    y: bigint;
     constructor(secretKey: Uint8Array);
     signMessage(message: string): string;
 }

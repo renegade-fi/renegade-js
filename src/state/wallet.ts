@@ -71,10 +71,7 @@ export default class Wallet {
     exists?: boolean;
   }) {
     this.walletId =
-      params.id ||
-      (generateId(
-        Buffer.from(params.keychain.keyHierarchy.root.publicKey.buffer),
-      ) as WalletId);
+      params.id || generateId(params.keychain.keyHierarchy.root.secretKeyHex);
     this.balances = params.balances;
     this.orders = params.orders;
     this.fees = params.fees;

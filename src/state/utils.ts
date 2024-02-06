@@ -1,16 +1,17 @@
 import { sha256 } from "@noble/hashes/sha256";
 import * as uuid from "uuid";
-import { compute_poseidon_hash } from "../../dist/renegade-utils";
-import { OrderId } from "../types";
+import { compute_poseidon_hash, get_public_key } from "../../dist/renegade-utils";
+import { OrderId, WalletId } from "../types";
 import { F } from "../utils/field";
 import Order from "./order";
 
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
 
-export function generateId(data: Buffer): string {
-  const dataHash = sha256(data)
-  return uuid.v4({ random: dataHash.slice(-16) });
+export function generateId(sk_root: string): WalletId {
+  const publicKeyHex = get_public_key(sk_root);
+  const dataHash = sha256(Buffer.from(publicKeyHex, "hex"));
+  return uuid.v4({ random: dataHash.slice(-16) }) as WalletId;
 }
 
 export function bigIntToLimbsLE(

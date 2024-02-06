@@ -22,7 +22,7 @@ function expectBalances(
         expect(balance.amount).toEqual(
             expectedBalancesAddresses[`0x${balance.mint.address}`],
         );
-        delete expectedBalancesAddresses[balance.mint.address];
+        delete expectedBalancesAddresses[`0x${balance.mint.address}`];
     }
     expect(Object.keys(expectedBalancesAddresses).length).toBe(0);
 }
@@ -45,10 +45,9 @@ describe("Depositing and Withdrawing Tokens", () => {
 
             // Expect that there is exactly one balance of 1 WETH.
             expect(balanceIds.length).toBe(1);
-            // TODO: This will work after SDK/Relayer token maps are the same
-            // expect(balances[balanceIds[0]].mint).toEqual(
-            //     new Token({ ticker: "WETH" }),
-            // );
+            expect(balances[balanceIds[0]].mint).toEqual(
+                new Token({ ticker: "WETH" }),
+            );
             expect(balances[balanceIds[0]].amount).toEqual(depositAmount);
 
             // Teardown.
@@ -82,7 +81,6 @@ describe("Depositing and Withdrawing Tokens", () => {
         await renegade.withdraw(accountId, new Token({ ticker: "WETH" }), 1n, DEVNET_ADMIN_ACCOUNT);
         balances = await renegade.queryWallet(accountId).then(() => renegade.getBalances(accountId))
         expectBalances(balances, {
-            // TODO: Definitely error with withdrawing to 0 amount
             WETH: 1n,
             USDC: 100n,
         });

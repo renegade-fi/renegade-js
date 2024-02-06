@@ -1,6 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
+export function get_public_key(a: number, b: number): number;
 export function get_shares_commitment(a: number, b: number): number;
 export function generate_wallet_update_signature(a: number, b: number, c: number, d: number): number;
 export function compute_poseidon_hash(a: number, b: number): number;
