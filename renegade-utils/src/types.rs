@@ -5,6 +5,29 @@ use serde::{Deserialize, Serialize};
 
 pub type ScalarField = Fr;
 
+// ---------------------------
+// | IdentificationKey Types |
+// ---------------------------
+
+/// A public identification key is the image-under-hash of the secret
+/// identification key knowledge of which is proved in a circuit
+pub struct PublicIdentificationKey {
+    pub key: ScalarField,
+}
+
+impl PublicIdentificationKey {
+    pub fn serialize_to_hex(&self) -> String {
+        let bigint_key: BigUint = self.key.into();
+        bigint_key.to_str_radix(16)
+    }
+}
+
+impl From<ScalarField> for PublicIdentificationKey {
+    fn from(key: ScalarField) -> Self {
+        Self { key }
+    }
+}
+
 /// A secret identification key is the hash preimage of the public
 /// identification key
 pub struct SecretIdentificationKey {
@@ -31,25 +54,6 @@ impl SecretIdentificationKey {
     }
 }
 
-/// A public identification key is the image-under-hash of the secret
-/// identification key knowledge of which is proved in a circuit
-pub struct PublicIdentificationKey {
-    pub key: ScalarField,
-}
-
-impl PublicIdentificationKey {
-    pub fn serialize_to_hex(&self) -> String {
-        let bigint_key: BigUint = self.key.into();
-        bigint_key.to_str_radix(16)
-    }
-}
-
-impl From<ScalarField> for PublicIdentificationKey {
-    fn from(key: ScalarField) -> Self {
-        Self { key }
-    }
-}
-
 // --------------------
 // | Wallet API Types |
 // --------------------
@@ -68,10 +72,8 @@ pub struct ApiWallet {
 
 impl TryFrom<ApiWallet> for Wallet {
     type Error = String;
-
     fn try_from(wallet: ApiWallet) -> Result<Self, Self::Error> {
         // Deserialize the shares to scalar then re-structure into WalletSecretShare
-        // TODO: This type might be wrong
         let blinded_public_shares: Vec<ScalarField> = wallet
             .blinded_public_shares
             .iter()
@@ -82,7 +84,6 @@ impl TryFrom<ApiWallet> for Wallet {
             .iter()
             .map(biguint_to_scalar)
             .collect();
-
         Ok(Wallet {
             blinded_public_shares,
             private_shares,

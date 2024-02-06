@@ -8,20 +8,6 @@ use ethers::{
     utils::keccak256,
 };
 
-/// Hashes the given message and generates a signature over it using the signing
-/// key, as expected in ECDSA
-pub fn hash_and_sign_message(signing_key: &SigningKey, msg: &[u8]) -> Signature {
-    let msg_hash = keccak256(msg);
-    let (sig, recovery_id) = signing_key.sign_prehash_recoverable(&msg_hash).unwrap();
-    let r: U256 = U256::from_big_endian(&sig.r().to_bytes());
-    let s: U256 = U256::from_big_endian(&sig.s().to_bytes());
-    Signature {
-        r,
-        s,
-        v: recovery_id.to_byte() as u64,
-    }
-}
-
 /// Generates a signature for updating a wallet by hashing the wallet's share commitments
 /// and using the provided signing key to sign the hash.
 ///
@@ -46,4 +32,18 @@ pub fn gen_update_wallet_signature(wallet: Wallet, signing_key: &SigningKey) -> 
 
     // Sign commitment
     hash_and_sign_message(&signing_key, &shares_commitment)
+}
+
+/// Hashes the given message and generates a signature over it using the signing
+/// key, as expected in ECDSA
+pub fn hash_and_sign_message(signing_key: &SigningKey, msg: &[u8]) -> Signature {
+    let msg_hash = keccak256(msg);
+    let (sig, recovery_id) = signing_key.sign_prehash_recoverable(&msg_hash).unwrap();
+    let r: U256 = U256::from_big_endian(&sig.r().to_bytes());
+    let s: U256 = U256::from_big_endian(&sig.s().to_bytes());
+    Signature {
+        r,
+        s,
+        v: recovery_id.to_byte() as u64,
+    }
 }
