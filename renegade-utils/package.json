@@ -3,13 +3,15 @@
   "description": "Utility functions from the Renegade relayer",
   "version": "0.1.1",
   "files": [
-    "relayer_utils_bg.wasm",
-    "relayer_utils.js",
-    "relayer_utils.d.ts"
+    "index_bg.wasm",
+    "index.js",
+    "index_bg.js",
+    "index.d.ts"
   ],
-  "module": "relayer_utils.js",
-  "types": "relayer_utils.d.ts",
+  "module": "index.js",
+  "types": "index.d.ts",
   "sideEffects": [
+    "./index.js",
     "./snippets/*"
   ]
 }

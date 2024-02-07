@@ -19,8 +19,8 @@
   "scripts": {
     "test": "yarn run build:wasm-test && vitest run --dir tests",
     "build": "yarn run build:wasm && tsc",
-    "build:wasm": "cd renegade-utils && ./build.sh",
-    "build:wasm-test": "cd renegade-utils && ./build.sh",
+    "build:wasm": "cd wasm && ./build.sh",
+    "build:wasm-test": "cd wasm && ./build.sh --test",
     "prettier": "prettier --write {__tests__,src}/ --config ./.prettierrc",
     "eslint": "eslint {__tests__,src}/ --fix --config ./.eslintrc.cjs",
     "lint": "npm run prettier && npm run eslint"
@@ -34,7 +34,6 @@
     "ffjavascript": "^0.2.60",
     "isomorphic-fetch": "^3.0.0",
     "isomorphic-ws": "^5.0.0",
-    "renegade-utils": "file:./dist/renegade-utils",
     "uuid": "^9.0.0",
     "ws": "^8.13.0",
     "zod": "^3.22.2"
@@ -59,6 +58,7 @@
   "files": [
     "dist/",
     "src/",
+    "renegade-utils/",
     "README.md"
   ]
 }
