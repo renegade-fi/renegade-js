@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OUTPUT_NAME="index"
+OUTPUT_DIR="../dist/renegade-utils"
 
 # Check for --test flag
 TARGET="web"
@@ -12,8 +12,8 @@ do
 done
 
 # Build the WebAssembly package with conditional target
-wasm-pack build --release --target $TARGET
+wasm-pack build --target $TARGET --out-dir $OUTPUT_DIR
 
 # Delete the .gitignore file so the package is included
-rm pkg/.gitignore
+rm $OUTPUT_DIR/.gitignore
 

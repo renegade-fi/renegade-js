@@ -34,7 +34,7 @@
     "ffjavascript": "^0.2.60",
     "isomorphic-fetch": "^3.0.0",
     "isomorphic-ws": "^5.0.0",
-    "renegade-utils": "file:./renegade-utils/pkg",
+    "renegade-utils": "file:./dist/renegade-utils",
     "uuid": "^9.0.0",
     "ws": "^8.13.0",
     "zod": "^3.22.2"
