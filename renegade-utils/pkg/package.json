@@ -1,0 +1,15 @@
+{
+  "name": "relayer-utils",
+  "description": "Utility functions from the Renegade relayer",
+  "version": "0.1.1",
+  "files": [
+    "relayer_utils_bg.wasm",
+    "relayer_utils.js",
+    "relayer_utils.d.ts"
+  ],
+  "module": "relayer_utils.js",
+  "types": "relayer_utils.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

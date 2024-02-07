@@ -19,8 +19,8 @@
   "scripts": {
     "test": "yarn run build:wasm-test && vitest run --dir tests",
     "build": "yarn run build:wasm && tsc",
-    "build:wasm": "cd renegade-utils && wasm-pack build --release --target web ",
-    "build:wasm-test": "cd renegade-utils && wasm-pack build --release --target nodejs",
+    "build:wasm": "cd renegade-utils && ./build.sh",
+    "build:wasm-test": "cd renegade-utils && ./build.sh",
     "prettier": "prettier --write {__tests__,src}/ --config ./.prettierrc",
     "eslint": "eslint {__tests__,src}/ --fix --config ./.eslintrc.cjs",
     "lint": "npm run prettier && npm run eslint"
