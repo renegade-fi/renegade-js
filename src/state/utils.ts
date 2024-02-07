@@ -1,6 +1,6 @@
 import { sha256 } from "@noble/hashes/sha256";
 import * as uuid from "uuid";
-import { compute_poseidon_hash, get_key_hierarchy } from "renegade-utils";
+import { compute_poseidon_hash, get_key_hierarchy } from "../../renegade-utils";
 import { OrderId, WalletId } from "../types";
 import { F } from "../utils/field";
 import Order from "./order";

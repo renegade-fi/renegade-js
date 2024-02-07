@@ -1,4 +1,4 @@
-import { generate_wallet_update_signature } from "renegade-utils";
+import { generate_wallet_update_signature } from "../../renegade-utils";
 import { Balance, Wallet } from "../state";
 /**
  * Sign the shares of a wallet.

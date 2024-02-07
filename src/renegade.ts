@@ -142,7 +142,7 @@ export default class Renegade
 
     // Dynamically import renegade-utils WASM package if running in a browser
     if (typeof window !== "undefined" && typeof document !== "undefined") {
-      import("renegade-utils").then(module => {
+      import("../renegade-utils").then(module => {
         const loadUtils = module.default;
         loadUtils();
       }).catch(error => {

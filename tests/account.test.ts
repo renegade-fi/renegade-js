@@ -1,5 +1,5 @@
 import { sha256 } from "@noble/hashes/sha256";
-import { get_key_hierarchy } from "renegade-utils";
+import { get_key_hierarchy } from "../renegade-utils";
 import * as uuid from "uuid";
 import { describe, expect, test } from 'vitest';
 import { Keychain, Renegade } from "../src";

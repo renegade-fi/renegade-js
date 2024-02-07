@@ -5,7 +5,7 @@ import {
   get_key_hierarchy,
   sign_http_request,
   sign_message
-} from "renegade-utils";
+} from "../../renegade-utils";
 
 /**
  * Represents a signing key used for signing messages.

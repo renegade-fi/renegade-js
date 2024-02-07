@@ -1,4 +1,4 @@
-import { generate_wallet_update_signature } from "renegade-utils";
+import { generate_wallet_update_signature } from "../../renegade-utils";
 import { Balance, Order, Token, Wallet } from "../state";
 import { OrderId } from "../types";
 

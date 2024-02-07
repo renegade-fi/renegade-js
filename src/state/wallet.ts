@@ -1,6 +1,6 @@
 import {
   get_key_hierarchy_shares
-} from "renegade-utils";
+} from "../../renegade-utils";
 import { WalletId } from "../types";
 import { F } from "../utils/field";
 import Balance from "./balance";
