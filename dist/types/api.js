@@ -38,7 +38,6 @@ export function createPostRequest(url, data, schema, secretKey) {
     // const response = fetchWithZod(schema, request)
     const response = axios.request(request)
         .then((response) => {
-        console.log("🚀 ~ .then ~ response:", response);
         // TODO: Sync error messages with frontend expected errors
         if (response.status !== 200) {
             // Handle non-200 responses
