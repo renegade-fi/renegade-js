@@ -8,10 +8,11 @@ import axios from "axios";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
 import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, } from "./state/utils";
-import { CreateWalletResponse, createPostRequest, } from "./types/api";
-import { RenegadeWs } from "./utils";
+import { CreateWalletResponse, TaskQueueListResponse, TaskStatus, createPostRequest, } from "./types/api";
+import { RenegadeWs, createZodFetcher } from "./utils";
 import { F } from "./utils/field";
 import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, } from "./utils/sign";
+import { sign_http_request } from "../renegade-utils";
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
  * Wallet is now managed by the relayer and wallet update events are actively
@@ -233,6 +234,31 @@ export default class Account {
      * Given the currently-populated Wallet values, create this Wallet on-chain
      * with a VALID WALLET CREATE proof.
      */
+    async queryTaskQueue() {
+        const request = {
+            method: "GET",
+            url: `${this._relayerHttpUrl}/v0/task_queue/${this.accountId}`,
+            headers: {
+                "Content-Type": "application/json",
+            },
+        };
+        const [renegadeAuth, renegadeAuthExpiration] = sign_http_request("", BigInt(Date.now()), this._wallet.keychain.keyHierarchy.root.secretKey);
+        request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
+        request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
+        const fetchWithZod = createZodFetcher(axios.request);
+        const response = await fetchWithZod(TaskQueueListResponse, request);
+        const parsedRes = response.data.tasks.map((task) => {
+            return TaskStatus.parse({
+                ...task,
+                status: JSON.parse(task.status),
+            });
+        });
+        return parsedRes;
+    }
+    /**
+     * Given the currently-populated Wallet values, create this Wallet on-chain
+     * with a VALID WALLET CREATE proof.
+     */
     async _createNewWallet() {
         // TODO: Assert that Balances and Orders are empty.
         const body = {
@@ -252,6 +278,7 @@ export default class Account {
         // Fetch latest wallet from relayer
         // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
+        console.log("[FROM SDK] wallet: ", wallet);
         // Sign wallet deposit statement
         const statement_sig = signWalletDeposit(wallet, mint, amount);
         const request = {
@@ -498,6 +525,9 @@ export default class Account {
         return this._wallet.updateLocked;
     }
 }
+__decorate([
+    assertSynced
+], Account.prototype, "queryTaskQueue", null);
 __decorate([
     assertSynced
 ], Account.prototype, "deposit", null);
