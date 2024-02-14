@@ -12,7 +12,7 @@ export declare const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration
  * @param {S} schema - A Zod schema to validate the response. The function returns a promise of the schema's inferred type.
  * @param {boolean} [isAuthenticated=false] - Optional. If true, authentication headers are added to the request.
  */
-export declare function createPostRequest<S extends ZodSchema>(url: string, data: any, schema: S, isAuthenticated?: boolean): Promise<zInfer<S>>;
+export declare function createPostRequest<S extends ZodSchema>(url: string, data: any, schema: S, secretKey?: string): Promise<zInfer<S>>;
 export type CreateWalletRequest = {
     wallet: Wallet;
 };
@@ -52,5 +52,117 @@ export declare const CreateWalletResponse: z.ZodObject<{
     data?: {
         wallet_id?: string;
         task_id?: string;
+    };
+}>;
+export declare const TaskStatus: z.ZodObject<{
+    id: z.ZodString;
+    status: z.ZodObject<{
+        task_type: z.ZodString;
+        state: z.ZodString;
+    }, "strip", z.ZodTypeAny, {
+        task_type?: string;
+        state?: string;
+    }, {
+        task_type?: string;
+        state?: string;
+    }>;
+    committed: z.ZodBoolean;
+}, "strip", z.ZodTypeAny, {
+    id?: string;
+    status?: {
+        task_type?: string;
+        state?: string;
+    };
+    committed?: boolean;
+}, {
+    id?: string;
+    status?: {
+        task_type?: string;
+        state?: string;
+    };
+    committed?: boolean;
+}>;
+export declare const TaskQueueListResponse: z.ZodObject<{
+    status: z.ZodNumber;
+    statusText: z.ZodString;
+    data: z.ZodObject<{
+        tasks: z.ZodArray<z.ZodObject<{
+            id: z.ZodString;
+            status: z.ZodString;
+            committed: z.ZodBoolean;
+        }, "strip", z.ZodTypeAny, {
+            id?: string;
+            status?: string;
+            committed?: boolean;
+        }, {
+            id?: string;
+            status?: string;
+            committed?: boolean;
+        }>, "many">;
+    }, "strip", z.ZodTypeAny, {
+        tasks?: {
+            id?: string;
+            status?: string;
+            committed?: boolean;
+        }[];
+    }, {
+        tasks?: {
+            id?: string;
+            status?: string;
+            committed?: boolean;
+        }[];
+    }>;
+}, "strip", z.ZodTypeAny, {
+    status?: number;
+    statusText?: string;
+    data?: {
+        tasks?: {
+            id?: string;
+            status?: string;
+            committed?: boolean;
+        }[];
+    };
+}, {
+    status?: number;
+    statusText?: string;
+    data?: {
+        tasks?: {
+            id?: string;
+            status?: string;
+            committed?: boolean;
+        }[];
+    };
+}>;
+export declare const TaskStatusResponse: z.ZodObject<{
+    status: z.ZodNumber;
+    statusText: z.ZodString;
+    data: z.ZodObject<{
+        id: z.ZodString;
+        status: z.ZodString;
+        committed: z.ZodBoolean;
+    }, "strip", z.ZodTypeAny, {
+        id?: string;
+        status?: string;
+        committed?: boolean;
+    }, {
+        id?: string;
+        status?: string;
+        committed?: boolean;
+    }>;
+}, "strip", z.ZodTypeAny, {
+    status?: number;
+    statusText?: string;
+    data?: {
+        id?: string;
+        status?: string;
+        committed?: boolean;
+    };
+}, {
+    status?: number;
+    statusText?: string;
+    data?: {
+        id?: string;
+        status?: string;
+        committed?: boolean;
     };
 }>;

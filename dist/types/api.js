@@ -1,6 +1,7 @@
 import axios from "axios";
 import { z } from "zod";
 import { createZodFetcher } from "../utils";
+import { sign_http_request } from "../../renegade-utils";
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
 /**
@@ -13,7 +14,7 @@ export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
  * @param {S} schema - A Zod schema to validate the response. The function returns a promise of the schema's inferred type.
  * @param {boolean} [isAuthenticated=false] - Optional. If true, authentication headers are added to the request.
  */
-export function createPostRequest(url, data, schema, isAuthenticated) {
+export function createPostRequest(url, data, schema, secretKey) {
     const serializedData = customSerializer(data);
     const request = {
         method: "POST",
@@ -24,16 +25,20 @@ export function createPostRequest(url, data, schema, isAuthenticated) {
         },
         validateStatus: () => true,
     };
-    if (isAuthenticated) {
-        const messageBuffer = request.data ?? "";
-        const [renegadeAuth, renegadeAuthExpiration] = this.keychain.generateExpiringSignature(messageBuffer);
+    if (secretKey) {
+        // const messageBuffer = request.data ?? "";
+        // const [renegadeAuth, renegadeAuthExpiration] =
+        //   this.keychain.generateExpiringSignature(messageBuffer);
+        const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(request.data ?? "", BigInt(Date.now()), secretKey);
         request.headers = request.headers || {};
         request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
         request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
     }
     const fetchWithZod = createZodFetcher(axios.request);
-    const response = fetchWithZod(schema, request)
+    // const response = fetchWithZod(schema, request)
+    const response = axios.request(request)
         .then((response) => {
+        console.log("🚀 ~ .then ~ response:", response);
         // TODO: Sync error messages with frontend expected errors
         if (response.status !== 200) {
             // Handle non-200 responses
@@ -76,5 +81,29 @@ export const CreateWalletResponse = AxiosResponse.extend({
     data: z.object({
         wallet_id: z.string().uuid(),
         task_id: z.string().uuid(),
+    }),
+});
+export const TaskStatus = z.object({
+    id: z.string().uuid(),
+    status: z.object({
+        task_type: z.string(),
+        state: z.string(),
+    }),
+    committed: z.boolean(),
+});
+export const TaskQueueListResponse = AxiosResponse.extend({
+    data: z.object({
+        tasks: z.array(z.object({
+            id: z.string().uuid(),
+            status: z.string(),
+            committed: z.boolean(),
+        }))
+    })
+});
+export const TaskStatusResponse = AxiosResponse.extend({
+    data: z.object({
+        id: z.string().uuid(),
+        status: z.string(),
+        committed: z.boolean(),
     }),
 });
