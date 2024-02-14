@@ -1,6 +1,8 @@
 import { Balance, Fee, Keychain, Order, Token } from "./state";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
+import { TaskStatus } from "./types/api";
 import { RenegadeWs, TaskJob } from "./utils";
+import { z } from "zod";
 /**
  * A Renegade Account, which is a thin wrapper over the Wallet abstraction. The
  * authoritative Wallet state is stored on-chain in StarkNet encrypted Wallet
@@ -78,6 +80,11 @@ export default class Account {
      * not yet been created.
      */
     private _queryChainForWallet;
+    /**
+     * Given the currently-populated Wallet values, create this Wallet on-chain
+     * with a VALID WALLET CREATE proof.
+     */
+    queryTaskQueue(): Promise<Array<z.infer<typeof TaskStatus>>>;
     /**
      * Given the currently-populated Wallet values, create this Wallet on-chain
      * with a VALID WALLET CREATE proof.

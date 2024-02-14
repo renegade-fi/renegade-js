@@ -54,6 +54,7 @@ export default class Renegade {
      * @throws {InvalidPort} If the port is not a valid port.
      */
     constructor(config) {
+        // console.log("[FROM SDK] Constructing Renegade object with config: ", config)
         // Set defaults, if not provided.
         config.relayerHttpPort =
             config.relayerHttpPort !== undefined ? config.relayerHttpPort : 3000;
@@ -166,6 +167,10 @@ export default class Renegade {
         const account = this._lookupAccount(accountId);
         return await account.queryWallet();
     }
+    async queryTaskQueue(accountId) {
+        const account = this._lookupAccount(accountId);
+        return await account.queryTaskQueue();
+    }
     /**
      * Get the semver of the relayer.
      */
@@ -196,7 +201,9 @@ export default class Renegade {
     // | IRenegadeAccount Implementation |
     // -----------------------------------
     registerAccount(keychain) {
+        // console.log("[FROM SDK] Registering account with keychain: ", keychain)
         const account = new Account(keychain, this.relayerHttpUrl, this.relayerWsUrl, this._verbose);
+        // console.log("[FROM SDK] Registered accounts: ", this._registeredAccounts)
         const accountId = account.accountId;
         if (this._registeredAccounts[accountId]) {
             throw new RenegadeError(RenegadeErrorType.AccountAlreadyRegistered);
@@ -205,6 +212,7 @@ export default class Renegade {
         return accountId;
     }
     async initializeAccount(accountId) {
+        // console.log("[FROM SDK] Initializing account: ", accountId)
         const [, taskJob] = await this._initializeAccountTaskJob(accountId);
         return await taskJob;
     }
@@ -252,6 +260,7 @@ export default class Renegade {
     }
     async _depositTaskJob(accountId, mint, amount, fromAddr) {
         const account = this._lookupAccount(accountId);
+        // console.log("[SDK]: account: ", account)
         const taskId = await account.deposit(mint, amount, fromAddr);
         return [taskId, this.awaitTaskCompletion(taskId)];
     }
