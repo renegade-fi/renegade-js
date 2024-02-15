@@ -1,6 +1,6 @@
-import { MAX_ORDERS } from "@/state/wallet";
 import { generate_wallet_update_signature } from "../../renegade-utils";
 import { Balance, Order, Token, Wallet } from "../state";
+import { MAX_ORDERS } from "../state/wallet";
 import { OrderId } from "../types";
 
 const ERR_INSUFFICIENT_BALANCE = "insufficient balance";
