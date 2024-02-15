@@ -3,6 +3,7 @@ import { Balance, Order, Token, Wallet } from "../state";
 import { OrderId } from "../types";
 
 const ERR_INSUFFICIENT_BALANCE = "insufficient balance";
+const ERR_BALANCES_FULL = "balances full";
 
 /**
  * Sign the shares of a wallet.
@@ -26,6 +27,43 @@ function signWalletShares(wallet: Wallet) {
 }
 
 /**
+ * Add a balance to the wallet, replacing the first default balance
+ */
+function add_balance(wallet: Wallet, balance: Balance) {
+  console.log("Adding balance to: ", wallet.balances)
+  // const newBalances = wallet.balances.slice();
+  const newBalances = wallet.balances
+  console.log("Balances before deposit", newBalances)
+  const mintAddress = balance.mint.address.replace("0x", "");
+  const index = newBalances.findIndex(
+    (balance) => balance.mint.address === mintAddress,
+  );
+  // If the balance exists, increment it
+  if (index !== -1) {
+    newBalances[index] = new Balance({
+      mint: balance.mint,
+      amount: newBalances[index].amount + balance.amount,
+    });
+    return newBalances;
+  }
+
+  // Otherwise add the balance
+  if (newBalances.length < 5) {
+    newBalances.push(balance);
+    return newBalances;
+  }
+
+  // If the balances are full, try to find a balance to overwrite
+  let idx = newBalances.findIndex(balance => balance.amount === 0n);
+  if (idx !== -1) {
+    newBalances[idx] = balance;
+    return newBalances;
+  } else {
+    throw new Error(ERR_BALANCES_FULL);
+  }
+}
+
+/**
  * Sign the shares of a wallet after performing a deposit.
  *
  * @param wallet The wallet to sign the shares for.
@@ -33,20 +71,10 @@ function signWalletShares(wallet: Wallet) {
  * @param amount The amount to deposit.
  */
 export function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint) {
-  const mintAddress = mint.address.replace("0x", "");
   try {
-    const newBalances = [...wallet.balances];
-    const index = newBalances.findIndex(
-      (balance) => balance.mint.address === mintAddress,
-    );
-    if (index === -1) {
-      newBalances.push(new Balance({ mint, amount }));
-    } else {
-      newBalances[index] = new Balance({
-        mint,
-        amount: newBalances[index].amount + amount,
-      });
-    }
+    console.log("Wallet from relayer: ", wallet.balances)
+    const newBalances = add_balance(wallet, new Balance({ mint, amount }));
+    console.log("Balances after deposit", newBalances)
     const newWallet = new Wallet({
       ...wallet,
       balances: newBalances,

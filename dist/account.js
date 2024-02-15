@@ -248,7 +248,6 @@ export default class Account {
         // const fetchWithZod = createZodFetcher(axios.request);
         // const response = await fetchWithZod(TaskQueueListResponse, request)
         const response = await axios.request(request);
-        console.log("🚀 ~ Account ~ queryTaskQueue ~ response:", response);
         const parsedRes = response.data.tasks.map((task) => {
             return TaskStatus.parse({
                 ...task,
@@ -280,7 +279,6 @@ export default class Account {
         // Fetch latest wallet from relayer
         // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
-        console.log("[FROM SDK] wallet: ", wallet);
         // Sign wallet deposit statement
         const statement_sig = signWalletDeposit(wallet, mint, amount);
         const request = {
