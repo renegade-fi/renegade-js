@@ -4,15 +4,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
+import { MAX_ORDERS } from "@/state/wallet";
 import axios from "axios";
+import { sign_http_request } from "../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
-import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, } from "./state/utils";
-import { CreateWalletResponse, TaskStatus, createPostRequest, } from "./types/api";
+import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE } from "./state/utils";
+import { CreateWalletResponse, TaskStatus, createPostRequest } from "./types/api";
 import { RenegadeWs } from "./utils";
 import { F } from "./utils/field";
 import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, } from "./utils/sign";
-import { sign_http_request } from "../renegade-utils";
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
  * Wallet is now managed by the relayer and wallet update events are actively
@@ -406,20 +407,15 @@ export default class Account {
      * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
      */
     async modifyOrPlaceOrder(order) {
-        // TODO: Change this back after testing modify order
-        // const randomOrderId = this._wallet.orders[0].orderId;
-        // return await this.modifyOrder(randomOrderId, order);
-        const orders = this._wallet.orders.reduce((acc, order) => {
-            acc[order.orderId] = order;
-            return acc;
-        }, {});
-        const zeroOrders = findZeroOrders(orders);
-        if (Object.keys(orders).length < 5) {
+        const orders = this._wallet.orders;
+        // Append if the orders are not full
+        if (Object.keys(orders).length < MAX_ORDERS) {
             return await this.placeOrder(order);
         }
-        else if (zeroOrders.length > 0) {
-            const randomOrderId = zeroOrders[Math.floor(Math.random() * zeroOrders.length)];
-            return await this.modifyOrder(randomOrderId, order);
+        // Otherwise try to find an order to overwrite
+        const idx = orders.findIndex((o) => o.amount === BigInt(0));
+        if (idx !== -1) {
+            return await this.modifyOrder(orders[idx].orderId, order);
         }
         else {
             return new Promise((_, reject) => {

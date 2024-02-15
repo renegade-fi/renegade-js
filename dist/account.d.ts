@@ -1,8 +1,8 @@
+import { z } from "zod";
 import { Balance, Fee, Keychain, Order, Token } from "./state";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
 import { TaskStatus } from "./types/api";
 import { RenegadeWs, TaskJob } from "./utils";
-import { z } from "zod";
 /**
  * A Renegade Account, which is a thin wrapper over the Wallet abstraction. The
  * authoritative Wallet state is stored on-chain in StarkNet encrypted Wallet

@@ -7,7 +7,7 @@ import Order from "./order";
 import { bigIntToLimbsLE, createWalletSharesWithRandomness, evaluateHashChain, generateId, limbsToBigIntLE } from "./utils";
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
-const MAX_ORDERS = 5;
+export const MAX_ORDERS = 5;
 const MAX_FEES = 2;
 // Number of secret shares to represent each of balances, orders, and fees
 const SHARES_PER_BALANCE = 2;

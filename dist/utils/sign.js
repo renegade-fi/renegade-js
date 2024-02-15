@@ -40,7 +40,7 @@ function add_balance(wallet, balance) {
         return newBalances;
     }
     // If the balances are full, try to find a balance to overwrite
-    let idx = newBalances.findIndex(balance => balance.amount === 0n);
+    const idx = newBalances.findIndex(balance => balance.amount === 0n);
     if (idx !== -1) {
         newBalances[idx] = balance;
         return newBalances;

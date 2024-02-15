@@ -18,7 +18,7 @@ import * as crypto from 'crypto';
 
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
-const MAX_ORDERS = 5;
+export const MAX_ORDERS = 5;
 const MAX_FEES = 2;
 
 // Number of secret shares to represent each of balances, orders, and fees
