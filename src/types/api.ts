@@ -1,9 +1,8 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { ZodSchema, z, infer as zInfer } from "zod";
+import { sign_http_request } from "../../renegade-utils";
 import { Wallet } from "../state";
 import { createZodFetcher } from "../utils";
-import { sign_http_request } from "../../renegade-utils";
-
 
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
@@ -36,9 +35,6 @@ export function createPostRequest<S extends ZodSchema>(
   };
 
   if (secretKey) {
-    // const messageBuffer = request.data ?? "";
-    // const [renegadeAuth, renegadeAuthExpiration] =
-    //   this.keychain.generateExpiringSignature(messageBuffer);
     const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
       request.data ?? "",
       BigInt(Date.now()),
@@ -50,8 +46,7 @@ export function createPostRequest<S extends ZodSchema>(
   }
 
   const fetchWithZod = createZodFetcher(axios.request);
-  // const response = fetchWithZod(schema, request)
-  const response = axios.request(request)
+  const response = fetchWithZod(schema, request)
     .then((response) => {
       // TODO: Sync error messages with frontend expected errors
       if (response.status !== 200) {

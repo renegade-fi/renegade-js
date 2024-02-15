@@ -1,7 +1,7 @@
 import axios from "axios";
 import { z } from "zod";
-import { createZodFetcher } from "../utils";
 import { sign_http_request } from "../../renegade-utils";
+import { createZodFetcher } from "../utils";
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
 /**
@@ -26,17 +26,13 @@ export function createPostRequest(url, data, schema, secretKey) {
         validateStatus: () => true,
     };
     if (secretKey) {
-        // const messageBuffer = request.data ?? "";
-        // const [renegadeAuth, renegadeAuthExpiration] =
-        //   this.keychain.generateExpiringSignature(messageBuffer);
         const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(request.data ?? "", BigInt(Date.now()), secretKey);
         request.headers = request.headers || {};
         request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
         request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
     }
     const fetchWithZod = createZodFetcher(axios.request);
-    // const response = fetchWithZod(schema, request)
-    const response = axios.request(request)
+    const response = fetchWithZod(schema, request)
         .then((response) => {
         // TODO: Sync error messages with frontend expected errors
         if (response.status !== 200) {

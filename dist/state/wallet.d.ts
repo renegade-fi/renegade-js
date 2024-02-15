@@ -3,6 +3,7 @@ import Balance from "./balance";
 import Fee from "./fee";
 import Keychain from "./keychain";
 import Order from "./order";
+export declare const MAX_ORDERS = 5;
 export default class Wallet {
     readonly walletId: WalletId;
     readonly balances: Balance[];
