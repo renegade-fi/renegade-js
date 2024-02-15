@@ -82,6 +82,9 @@ export default class Renegade {
             });
         }
     }
+    modifyOrPlaceOrder(accountId, order) {
+        throw new Error("Method not implemented.");
+    }
     /**
      * Construct a URL from the given parameters.
      *
@@ -294,15 +297,6 @@ export default class Renegade {
         const taskId = await account.modifyOrder(oldOrderId, newOrder);
         return [taskId, this.awaitTaskCompletion(taskId)];
     }
-    async modifyOrPlaceOrder(accountId, newOrder) {
-        const [, taskJob] = await this._modifyOrPlaceOrderTaskJob(accountId, newOrder);
-        return await taskJob;
-    }
-    async _modifyOrPlaceOrderTaskJob(accountId, newOrder) {
-        const account = this._lookupAccount(accountId);
-        const taskId = await account.modifyOrPlaceOrder(newOrder);
-        return [taskId, this.awaitTaskCompletion(taskId)];
-    }
     async cancelOrder(accountId, orderId) {
         const [, taskJob] = await this._cancelOrderTaskJob(accountId, orderId);
         return await taskJob;
@@ -381,7 +375,6 @@ export default class Renegade {
         withdraw: async (...args) => await this._withdrawTaskJob(...args),
         placeOrder: async (...args) => await this._placeOrderTaskJob(...args),
         modifyOrder: async (...args) => await this._modifyOrderTaskJob(...args),
-        modifyOrPlaceOrder: async (...args) => await this._modifyOrPlaceOrderTaskJob(...args),
         cancelOrder: async (...args) => await this._cancelOrderTaskJob(...args),
         // approveFee: async (
         //   ...args: Parameters<typeof this._approveFeeTaskJob>
@@ -448,9 +441,6 @@ __decorate([
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "modifyOrder", null);
-__decorate([
-    assertNotTornDown
-], Renegade.prototype, "modifyOrPlaceOrder", null);
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "cancelOrder", null);

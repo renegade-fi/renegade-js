@@ -4,7 +4,6 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-import { MAX_ORDERS } from "@/state/wallet";
 import axios from "axios";
 import { sign_http_request } from "../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
@@ -399,31 +398,6 @@ export default class Account {
         return response.data.task_id;
     }
     /**
-     * Modify or place an order.
-     *
-     * @param order The order to modify or place.
-     * @returns A TaskId that can be used to query the status of the order.
-     *
-     * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
-     */
-    async modifyOrPlaceOrder(order) {
-        const orders = this._wallet.orders;
-        // Append if the orders are not full
-        if (Object.keys(orders).length < MAX_ORDERS) {
-            return await this.placeOrder(order);
-        }
-        // Otherwise try to find an order to overwrite
-        const idx = orders.findIndex((o) => o.amount === BigInt(0));
-        if (idx !== -1) {
-            return await this.modifyOrder(orders[idx].orderId, order);
-        }
-        else {
-            return new Promise((_, reject) => {
-                reject(new RenegadeError(RenegadeErrorType.MaxOrders));
-            });
-        }
-    }
-    /**
      * Cancel an outstanding order.
      *
      * @param orderId The ID of the order to cancel.
@@ -536,9 +510,6 @@ __decorate([
 __decorate([
     assertSynced
 ], Account.prototype, "modifyOrder", null);
-__decorate([
-    assertSynced
-], Account.prototype, "modifyOrPlaceOrder", null);
 __decorate([
     assertSynced
 ], Account.prototype, "cancelOrder", null);

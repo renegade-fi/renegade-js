@@ -466,34 +466,6 @@ export default class Account {
   }
 
   /**
-   * Modify or place an order.
-   *
-   * @param order The order to modify or place.
-   * @returns A TaskId that can be used to query the status of the order.
-   *
-   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
-   */
-  @assertSynced
-  async modifyOrPlaceOrder(order: Order): Promise<TaskId> {
-    const orders = this._wallet.orders
-    // Append if the orders are not full
-    if (Object.keys(orders).length < MAX_ORDERS) {
-      return await this.placeOrder(order);
-    }
-
-    // Otherwise try to find an order to overwrite
-    const idx = orders.findIndex((o) => o.amount === BigInt(0));
-    if (idx !== -1) {
-      return await this.modifyOrder(orders[idx].orderId, order);
-    } else {
-      return new Promise((_, reject) => {
-        reject(new RenegadeError(RenegadeErrorType.MaxOrders));
-      });
-    }
-
-  }
-
-  /**
    * Cancel an outstanding order.
    *
    * @param orderId The ID of the order to cancel.

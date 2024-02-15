@@ -1,7 +1,9 @@
+import { MAX_ORDERS } from "@/state/wallet";
 import { generate_wallet_update_signature } from "../../renegade-utils";
 import { Balance, Wallet } from "../state";
 const ERR_INSUFFICIENT_BALANCE = "insufficient balance";
 const ERR_BALANCES_FULL = "balances full";
+const ERR_ORDERS_FULL = "orders full";
 /**
  * Sign the shares of a wallet.
  *
@@ -58,9 +60,7 @@ function add_balance(wallet, balance) {
  */
 export function signWalletDeposit(wallet, mint, amount) {
     try {
-        console.log("Wallet from relayer: ", wallet.balances);
         const newBalances = add_balance(wallet, new Balance({ mint, amount }));
-        console.log("Balances after deposit", newBalances);
         const newWallet = new Wallet({
             ...wallet,
             balances: newBalances,
@@ -105,6 +105,26 @@ export function signWalletWithdraw(wallet, mint, amount) {
     return signWalletShares(newWallet);
 }
 /**
+ * Add an order to the wallet, replacing the first default order if the wallet is full
+ */
+function addOrder(wallet, order) {
+    // Append if the orders are not full
+    const newOrders = [...wallet.orders];
+    if (newOrders.length < MAX_ORDERS) {
+        newOrders.push(order);
+        return newOrders;
+    }
+    // Otherwise try to find an order to overwrite
+    const idx = newOrders.findIndex(order => order.amount === 0n);
+    if (idx !== -1) {
+        newOrders[idx] = order;
+        return newOrders;
+    }
+    else {
+        throw new Error(ERR_ORDERS_FULL);
+    }
+}
+/**
  * Sign wallet to place an order.
  *
  * @param wallet The wallet to sign the shares for.
@@ -114,7 +134,7 @@ export function signWalletWithdraw(wallet, mint, amount) {
  */
 export function signWalletPlaceOrder(wallet, order) {
     try {
-        const newOrders = [...wallet.orders, order];
+        const newOrders = addOrder(wallet, order);
         const newWallet = new Wallet({
             ...wallet,
             orders: newOrders,
