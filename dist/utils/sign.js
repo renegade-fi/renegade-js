@@ -1,5 +1,6 @@
 import { generate_wallet_update_signature } from "../../renegade-utils";
 import { Balance, Wallet } from "../state";
+const ERR_INSUFFICIENT_BALANCE = "insufficient balance";
 /**
  * Sign the shares of a wallet.
  *
@@ -54,24 +55,22 @@ export function signWalletDeposit(wallet, mint, amount) {
  * @param amount The amount to withdraw.
  */
 export function signWalletWithdraw(wallet, mint, amount) {
-    const mintAddress = mint.address.replace("0x", "");
+    // Find the balance to withdraw from
     const newBalances = [...wallet.balances];
+    const mintAddress = mint.address.replace("0x", "");
     const index = newBalances.findIndex((balance) => balance.mint.address === mintAddress);
     if (index === -1) {
         throw new Error("No balance to withdraw");
     }
-    const newBalance = newBalances[index].amount - amount;
-    if (newBalance < 0) {
-        throw new Error("Insufficient balance to withdraw");
-    }
-    else if (newBalance === 0n) {
-        newBalances.splice(index, 1);
-    }
-    else {
+    // Apply the withdrawal to the wallet
+    if (newBalances[index].amount >= amount) {
         newBalances[index] = new Balance({
             mint,
-            amount: newBalance,
+            amount: newBalances[index].amount - amount,
         });
+    }
+    else {
+        throw new Error(ERR_INSUFFICIENT_BALANCE);
     }
     const newWallet = new Wallet({
         ...wallet,

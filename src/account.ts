@@ -293,8 +293,10 @@ export default class Account {
     );
     request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
     request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
-    const fetchWithZod = createZodFetcher(axios.request);
-    const response = await fetchWithZod(TaskQueueListResponse, request)
+    // const fetchWithZod = createZodFetcher(axios.request);
+    // const response = await fetchWithZod(TaskQueueListResponse, request)
+    const response = await axios.request(request)
+    console.log("🚀 ~ Account ~ queryTaskQueue ~ response:", response)
     const parsedRes = response.data.tasks.map((task) => {
       return TaskStatus.parse(
         {

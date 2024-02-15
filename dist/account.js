@@ -8,8 +8,8 @@ import axios from "axios";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
 import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, findZeroOrders, } from "./state/utils";
-import { CreateWalletResponse, TaskQueueListResponse, TaskStatus, createPostRequest, } from "./types/api";
-import { RenegadeWs, createZodFetcher } from "./utils";
+import { CreateWalletResponse, TaskStatus, createPostRequest, } from "./types/api";
+import { RenegadeWs } from "./utils";
 import { F } from "./utils/field";
 import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, } from "./utils/sign";
 import { sign_http_request } from "../renegade-utils";
@@ -245,8 +245,10 @@ export default class Account {
         const [renegadeAuth, renegadeAuthExpiration] = sign_http_request("", BigInt(Date.now()), this._wallet.keychain.keyHierarchy.root.secretKey);
         request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
         request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
-        const fetchWithZod = createZodFetcher(axios.request);
-        const response = await fetchWithZod(TaskQueueListResponse, request);
+        // const fetchWithZod = createZodFetcher(axios.request);
+        // const response = await fetchWithZod(TaskQueueListResponse, request)
+        const response = await axios.request(request);
+        console.log("🚀 ~ Account ~ queryTaskQueue ~ response:", response);
         const parsedRes = response.data.tasks.map((task) => {
             return TaskStatus.parse({
                 ...task,
