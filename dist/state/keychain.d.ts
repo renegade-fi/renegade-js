@@ -89,10 +89,9 @@ export default class Keychain {
      * endian byte order for all EC points, so we reverse the byte order for big
      * endian encodings.
      *
-     * @param asBigEndian If true, the keys will be serialized in big endian byte order.
      * @returns The serialized keychain.
      */
-    serialize(asBigEndian?: boolean): string;
-    static deserialize(serializedKeychain: any, asBigEndian?: boolean): Keychain;
+    serialize(): string;
+    static deserialize(serializedKeychain: any): Keychain;
 }
 export {};

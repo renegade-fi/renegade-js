@@ -1,6 +1,6 @@
-import { MAX_ORDERS } from "@/state/wallet";
 import { generate_wallet_update_signature } from "../../renegade-utils";
 import { Balance, Wallet } from "../state";
+import { MAX_ORDERS } from "../state/wallet";
 const ERR_INSUFFICIENT_BALANCE = "insufficient balance";
 const ERR_BALANCES_FULL = "balances full";
 const ERR_ORDERS_FULL = "orders full";
@@ -13,6 +13,7 @@ function signWalletShares(wallet) {
     // Reblind the wallet, consuming the next set of blinders and secret shares
     const reblindedWallet = wallet.reblind();
     const serializedWallet = reblindedWallet.serialize();
+    console.log("Wallet after placing order: ", serializedWallet);
     const statement_sig_hex = generate_wallet_update_signature(serializedWallet, reblindedWallet.keychain.keyHierarchy.root.secretKey);
     const statement_sig_bytes = new Uint8Array(Buffer.from(statement_sig_hex, "hex"));
     const statement_sig = statement_sig_bytes.toString();
@@ -60,7 +61,9 @@ function add_balance(wallet, balance) {
  */
 export function signWalletDeposit(wallet, mint, amount) {
     try {
+        console.log("Wallet before deposit: ", wallet);
         const newBalances = add_balance(wallet, new Balance({ mint, amount }));
+        console.log("Wallet after deposit: ", newBalances);
         const newWallet = new Wallet({
             ...wallet,
             balances: newBalances,
@@ -82,6 +85,7 @@ export function signWalletDeposit(wallet, mint, amount) {
 export function signWalletWithdraw(wallet, mint, amount) {
     // Find the balance to withdraw from
     const newBalances = [...wallet.balances];
+    console.log("Balances before withdraw: ", newBalances);
     const mintAddress = mint.address.replace("0x", "");
     const index = newBalances.findIndex((balance) => balance.mint.address === mintAddress);
     if (index === -1) {
@@ -97,6 +101,7 @@ export function signWalletWithdraw(wallet, mint, amount) {
     else {
         throw new Error(ERR_INSUFFICIENT_BALANCE);
     }
+    console.log("Balances after withdraw: ", newBalances);
     const newWallet = new Wallet({
         ...wallet,
         balances: newBalances,
@@ -134,7 +139,9 @@ function addOrder(wallet, order) {
  */
 export function signWalletPlaceOrder(wallet, order) {
     try {
+        console.log("Orders before placing order: ", wallet.orders);
         const newOrders = addOrder(wallet, order);
+        console.log("Orders after placing order: ", newOrders);
         const newWallet = new Wallet({
             ...wallet,
             orders: newOrders,

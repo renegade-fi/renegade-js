@@ -27,6 +27,7 @@ export function createPostRequest(url, data, schema, secretKey) {
     };
     if (secretKey) {
         const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(request.data ?? "", BigInt(Date.now()), secretKey);
+        console.log("🚀 ~ renegadeAuth:", renegadeAuth);
         request.headers = request.headers || {};
         request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
         request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
@@ -66,7 +67,7 @@ function customSerializer(obj) {
     return `{${resultParts.join(",")}}`;
 }
 const customSerializers = {
-    wallet: (value) => value.serialize(false),
+    wallet: (value) => value.serialize(),
 };
 export const AxiosResponse = z.object({
     status: z.number(),

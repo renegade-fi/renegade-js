@@ -15,7 +15,6 @@ export default class Wallet {
     readonly privateBlinder: bigint;
     readonly blindedPublicShares: bigint[];
     readonly privateShares: bigint[];
-    readonly updateLocked: boolean;
     constructor(params: {
         id?: WalletId;
         balances: Balance[];
@@ -47,6 +46,6 @@ export default class Wallet {
      */
     deriveShares(): [bigint[], bigint[]];
     reblind(): Wallet;
-    serialize(asBigEndian?: boolean): string;
-    static deserialize(serializedWallet: any, asBigEndian?: boolean): Wallet;
+    serialize(): string;
+    static deserialize(serializedWallet: any): Wallet;
 }
