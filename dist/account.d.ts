@@ -1,8 +1,8 @@
+import { z } from "zod";
 import { Balance, Fee, Keychain, Order, Token } from "./state";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
 import { TaskStatus } from "./types/api";
 import { RenegadeWs, TaskJob } from "./utils";
-import { z } from "zod";
 /**
  * A Renegade Account, which is a thin wrapper over the Wallet abstraction. The
  * authoritative Wallet state is stored on-chain in StarkNet encrypted Wallet
@@ -125,15 +125,6 @@ export default class Account {
      * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
      */
     modifyOrder(oldOrderId: OrderId, newOrder: Order): Promise<TaskId>;
-    /**
-     * Modify or place an order.
-     *
-     * @param order The order to modify or place.
-     * @returns A TaskId that can be used to query the status of the order.
-     *
-     * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
-     */
-    modifyOrPlaceOrder(order: Order): Promise<TaskId>;
     /**
      * Cancel an outstanding order.
      *

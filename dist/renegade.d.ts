@@ -35,6 +35,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
      * @throws {InvalidPort} If the port is not a valid port.
      */
     constructor(config: RenegadeConfig);
+    modifyOrPlaceOrder(accountId: AccountId, order: Order): Promise<void>;
     /**
      * Construct a URL from the given parameters.
      *
@@ -88,8 +89,6 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     private _placeOrderTaskJob;
     modifyOrder(accountId: AccountId, oldOrderId: OrderId, newOrder: Order): Promise<void>;
     private _modifyOrderTaskJob;
-    modifyOrPlaceOrder(accountId: AccountId, newOrder: Order): Promise<void>;
-    private _modifyOrPlaceOrderTaskJob;
     cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void>;
     private _cancelOrderTaskJob;
     queryDesiredFee(): Promise<Fee>;
@@ -119,7 +118,6 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
         withdraw: (accountId: AccountId, mint: Token, amount: bigint, destinationAddr: string) => Promise<[TaskId, Promise<void>]>;
         placeOrder: (accountId: AccountId, order: Order) => Promise<[TaskId, Promise<void>]>;
         modifyOrder: (accountId: AccountId, oldOrderId: OrderId, newOrder: Order) => Promise<[TaskId, Promise<void>]>;
-        modifyOrPlaceOrder: (accountId: AccountId, newOrder: Order) => Promise<[TaskId, Promise<void>]>;
         cancelOrder: (accountId: AccountId, orderId: OrderId) => Promise<[TaskId, Promise<void>]>;
     };
 }

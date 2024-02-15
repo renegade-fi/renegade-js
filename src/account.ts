@@ -1,22 +1,22 @@
+import { MAX_ORDERS } from "@/state/wallet";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { z } from "zod";
+import { sign_http_request } from "../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
 import {
   RENEGADE_AUTH_EXPIRATION_HEADER,
   RENEGADE_AUTH_HEADER,
-  bigIntToLimbsLE,
-  findZeroOrders,
+  bigIntToLimbsLE
 } from "./state/utils";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
 import {
   CreateWalletRequest,
   CreateWalletResponse,
-  TaskQueueListResponse,
   TaskStatus,
-  TaskStatusResponse,
-  createPostRequest,
+  createPostRequest
 } from "./types/api";
-import { RenegadeWs, TaskJob, createZodFetcher } from "./utils";
+import { RenegadeWs, TaskJob } from "./utils";
 import { F } from "./utils/field";
 import {
   signWalletCancelOrder,
@@ -25,8 +25,6 @@ import {
   signWalletPlaceOrder,
   signWalletWithdraw,
 } from "./utils/sign";
-import { z } from "zod";
-import { sign_http_request } from "../renegade-utils";
 
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -293,8 +291,9 @@ export default class Account {
     );
     request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
     request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
-    const fetchWithZod = createZodFetcher(axios.request);
-    const response = await fetchWithZod(TaskQueueListResponse, request)
+    // const fetchWithZod = createZodFetcher(axios.request);
+    // const response = await fetchWithZod(TaskQueueListResponse, request)
+    const response = await axios.request(request)
     const parsedRes = response.data.tasks.map((task) => {
       return TaskStatus.parse(
         {
@@ -335,7 +334,6 @@ export default class Account {
     // Fetch latest wallet from relayer
     // TODO: Temporary hacky fix, wallet should always be in sync with relayer
     const wallet = await this._queryRelayerForWallet();
-    console.log("[FROM SDK] wallet: ", wallet)
 
     // Sign wallet deposit statement
     const statement_sig = signWalletDeposit(wallet, mint, amount);
@@ -465,37 +463,6 @@ export default class Account {
       throw new RenegadeError(RenegadeErrorType.RelayerError, response.data);
     }
     return response.data.task_id;
-  }
-
-  /**
-   * Modify or place an order.
-   *
-   * @param order The order to modify or place.
-   * @returns A TaskId that can be used to query the status of the order.
-   *
-   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
-   */
-  @assertSynced
-  async modifyOrPlaceOrder(order: Order): Promise<TaskId> {
-    // TODO: Change this back after testing modify order
-    // const randomOrderId = this._wallet.orders[0].orderId;
-    // return await this.modifyOrder(randomOrderId, order);
-    const orders = this._wallet.orders.reduce((acc, order) => {
-      acc[order.orderId] = order;
-      return acc;
-    }, {} as Record<OrderId, Order>);
-    const zeroOrders = findZeroOrders(orders);
-    if (Object.keys(orders).length < 5) {
-      return await this.placeOrder(order);
-    } else if (zeroOrders.length > 0) {
-      const randomOrderId =
-        zeroOrders[Math.floor(Math.random() * zeroOrders.length)];
-      return await this.modifyOrder(randomOrderId, order);
-    } else {
-      return new Promise((_, reject) => {
-        reject(new RenegadeError(RenegadeErrorType.MaxOrders));
-      });
-    }
   }
 
   /**
