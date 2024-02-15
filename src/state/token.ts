@@ -42,6 +42,15 @@ export default class Token {
 
   }
 
+  public get ticker(): string | null {
+    const ticker = Token.addressToTicker![this.address];
+    if (!ticker) {
+      console.error(`Ticker not found for address: ${this.address}`);
+      return null;
+    }
+    return ticker;
+  }
+
   serialize(): string {
     return "0x" + this.address;
   }

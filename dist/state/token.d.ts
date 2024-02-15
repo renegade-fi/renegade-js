@@ -6,6 +6,7 @@ export default class Token {
         address?: string;
         ticker?: string;
     });
+    get ticker(): string | null;
     serialize(): string;
     static deserialize(serializedToken: string): Token;
     static findAddressByTicker(ticker: string): string;

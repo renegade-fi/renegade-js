@@ -32,6 +32,7 @@ import {
   createZodFetcher,
   unimplemented,
 } from "./utils";
+// import loadUtils from "../renegade-utils"
 
 /**
  * A decorator that asserts that the relayer has not been torn down.
@@ -142,7 +143,7 @@ export default class Renegade
     this._isTornDown = false;
 
     // Dynamically import renegade-utils WASM package if running in a browser
-    if (typeof window !== "undefined" && typeof document !== "undefined") {
+    if ((typeof window !== "undefined" && typeof document !== "undefined") || typeof globalThis.EdgeRuntime === 'string') {
       import("../renegade-utils").then(module => {
         const loadUtils = module.default;
         loadUtils();
@@ -207,21 +208,22 @@ export default class Renegade
    */
   @assertNotTornDown
   async ping(): Promise<void> {
-    const request: AxiosRequestConfig = {
-      method: "GET",
-      url: `${this.relayerHttpUrl}/v0/ping`,
-      validateStatus: () => true,
-    };
+    const url = `${this.relayerHttpUrl}/v0/ping`;
     let response;
     try {
-      response = await axios.request(request);
+      response = await fetch(url, {
+        method: "GET",
+      });
+      if (!response.ok || response.status !== 200) {
+        throw new Error('Response not OK');
+      }
+      const data = await response.json();
+      console.log("[SDK] Response: ", data);
+      if (!data.timestamp) {
+        throw new Error('Timestamp missing');
+      }
     } catch (e) {
-      throw new RenegadeError(
-        RenegadeErrorType.RelayerUnreachable,
-        this.relayerHttpUrl,
-      );
-    }
-    if (response.status !== 200 || !response.data.timestamp) {
+      console.log("[SDK] Error: ", e);
       throw new RenegadeError(
         RenegadeErrorType.RelayerUnreachable,
         this.relayerHttpUrl,
@@ -387,12 +389,6 @@ export default class Renegade
   getKeychain(accountId: AccountId): Keychain {
     const account = this._lookupAccount(accountId);
     return account.keychain;
-  }
-
-  @assertNotTornDown
-  getIsLocked(accountId: AccountId): boolean {
-    const account = this._lookupAccount(accountId);
-    return account.isLocked;
   }
 
   // -----------------------------------

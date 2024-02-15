@@ -80,7 +80,6 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     getOrders(accountId: AccountId): Record<OrderId, Order>;
     getFees(accountId: AccountId): Record<FeeId, Fee>;
     getKeychain(accountId: AccountId): Keychain;
-    getIsLocked(accountId: AccountId): boolean;
     deposit(accountId: AccountId, mint: Token, amount: bigint, fromAddr: string): Promise<void>;
     private _depositTaskJob;
     withdraw(accountId: AccountId, mint: Token, amount: bigint, destinationAddr: string): Promise<void>;
