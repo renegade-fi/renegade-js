@@ -185,14 +185,13 @@ export default class Keychain {
    * endian byte order for all EC points, so we reverse the byte order for big
    * endian encodings.
    *
-   * @param asBigEndian If true, the keys will be serialized in big endian byte order.
    * @returns The serialized keychain.
    */
-  serialize(asBigEndian?: boolean): string {
+  serialize(): string {
     return get_key_hierarchy(this.keyHierarchy.root.secretKey);
   }
 
-  static deserialize(serializedKeychain: any, asBigEndian?: boolean): Keychain {
+  static deserialize(serializedKeychain: any): Keychain {
     let skRoot = Buffer.from(
       serializedKeychain.private_keys.sk_root.replace("0x", ""),
       "hex",
@@ -200,6 +199,6 @@ export default class Keychain {
     if (skRoot.length < 32) {
       skRoot = Buffer.concat([Buffer.alloc(32 - skRoot.length), skRoot]);
     }
-    return new Keychain({ skRoot: asBigEndian ? skRoot.reverse() : skRoot });
+    return new Keychain({ skRoot });
   }
 }

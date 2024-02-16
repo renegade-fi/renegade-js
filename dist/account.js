@@ -180,7 +180,7 @@ export default class Account {
             if (parsedMessage.type !== "WalletUpdate") {
                 return;
             }
-            this._wallet = Wallet.deserialize(parsedMessage.wallet, false);
+            this._wallet = Wallet.deserialize(parsedMessage.wallet);
         };
         await this._ws.registerAccountCallback(callback, this.accountId, this._wallet.keychain);
     }
@@ -207,7 +207,7 @@ export default class Account {
             return undefined;
         }
         if (response.status === 200) {
-            return Wallet.deserialize(response.data.wallet, false);
+            return Wallet.deserialize(response.data.wallet);
         }
         else {
             return undefined;

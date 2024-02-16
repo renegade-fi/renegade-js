@@ -47,6 +47,6 @@ export default class Wallet {
      */
     deriveShares(): [bigint[], bigint[]];
     reblind(): Wallet;
-    serialize(asBigEndian?: boolean): string;
-    static deserialize(serializedWallet: any, asBigEndian?: boolean): Wallet;
+    serialize(): string;
+    static deserialize(serializedWallet: any): Wallet;
 }

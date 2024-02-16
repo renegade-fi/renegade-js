@@ -138,7 +138,7 @@ export default class Wallet {
             exists: true
         });
     }
-    serialize(asBigEndian) {
+    serialize() {
         const serializedBlindedPublicShares = this.blindedPublicShares.map((share) => "[" + bigIntToLimbsLE(share).join(",") + "]");
         const serializedPrivateShares = this.privateShares.map((share) => "[" + bigIntToLimbsLE(share).join(",") + "]");
         return `{
@@ -146,19 +146,19 @@ export default class Wallet {
       "balances": [${this.balances.map((b) => b.serialize()).join(",")}],
       "orders": [${this.orders.map((o) => o.serialize()).join(",")}],
       "fees": [${this.fees.map((f) => f.serialize()).join(",")}],
-      "key_chain": ${this.keychain.serialize(asBigEndian)},
+      "key_chain": ${this.keychain.serialize()},
       "blinder": [${bigIntToLimbsLE(this.blinder).join(",")}],
       "blinded_public_shares": [${serializedBlindedPublicShares.join(",")}],
       "private_shares": [${serializedPrivateShares.join(",")}],
       "update_locked": false
     }`.replace(/[\s\n]/g, "");
     }
-    static deserialize(serializedWallet, asBigEndian) {
+    static deserialize(serializedWallet) {
         const id = serializedWallet.id;
         const balances = serializedWallet.balances.map((b) => Balance.deserialize(b));
         const orders = serializedWallet.orders.map((o) => Order.deserialize(o));
         const fees = serializedWallet.fees.map((f) => Fee.deserialize(f));
-        const keychain = Keychain.deserialize(serializedWallet.key_chain, asBigEndian);
+        const keychain = Keychain.deserialize(serializedWallet.key_chain);
         const updateLocked = serializedWallet.update_locked;
         const blindedPublicShares = serializedWallet.blinded_public_shares.map((share) => {
             return limbsToBigIntLE(share);

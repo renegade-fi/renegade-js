@@ -84,7 +84,7 @@ function customSerializer(obj: Record<string, any>) {
 }
 
 const customSerializers = {
-  wallet: (value) => value.serialize(false),
+  wallet: (value) => value.serialize(),
 };
 
 export type CreateWalletRequest = {

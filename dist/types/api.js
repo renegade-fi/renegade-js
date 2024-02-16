@@ -66,7 +66,7 @@ function customSerializer(obj) {
     return `{${resultParts.join(",")}}`;
 }
 const customSerializers = {
-    wallet: (value) => value.serialize(false),
+    wallet: (value) => value.serialize(),
 };
 export const AxiosResponse = z.object({
     status: z.number(),
