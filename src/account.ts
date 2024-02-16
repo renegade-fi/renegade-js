@@ -215,7 +215,7 @@ export default class Account {
       if (parsedMessage.type !== "WalletUpdate") {
         return;
       }
-      this._wallet = Wallet.deserialize(parsedMessage.wallet, true);
+      this._wallet = Wallet.deserialize(parsedMessage.wallet, false);
     };
     await this._ws.registerAccountCallback(
       callback,
