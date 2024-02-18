@@ -1,18 +1,6 @@
 {
     "tokens": [
         {
-            "name": "DUMMY1",
-            "ticker": "DUMMY1",
-            "address": "0x7e32b54800705876d3b5cfbc7d9c226a211f7c1a",
-            "decimals": 18
-        },
-        {
-            "name": "DUMMY2",
-            "ticker": "DUMMY2",
-            "address": "0x85d9a8a4bd77b9b5559c1b7fcb8ec9635922ed49",
-            "decimals": 18
-        },
-        {
             "name": "WBTC",
             "ticker": "WBTC",
             "address": "0x96c6cf4afdafb835cdd5a8259a0cedd8195895a9",

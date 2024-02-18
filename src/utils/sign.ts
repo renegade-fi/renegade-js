@@ -16,6 +16,7 @@ function signWalletShares(wallet: Wallet) {
   // Reblind the wallet, consuming the next set of blinders and secret shares
   const reblindedWallet = wallet.reblind();
   const serializedWallet = reblindedWallet.serialize();
+  console.log("Wallet after placing order: ", serializedWallet)
 
   const statement_sig_hex = generate_wallet_update_signature(
     serializedWallet,
@@ -74,7 +75,9 @@ function add_balance(wallet: Wallet, balance: Balance) {
  */
 export function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint) {
   try {
+    console.log("Wallet before deposit: ", wallet)
     const newBalances = add_balance(wallet, new Balance({ mint, amount }));
+    console.log("Wallet after deposit: ", newBalances)
     const newWallet = new Wallet({
       ...wallet,
       balances: newBalances,
@@ -100,6 +103,7 @@ export function signWalletWithdraw(
 ) {
   // Find the balance to withdraw from
   const newBalances = [...wallet.balances];
+  console.log("Balances before withdraw: ", newBalances)
   const mintAddress = mint.address.replace("0x", "");
   const index = newBalances.findIndex(
     (balance) => balance.mint.address === mintAddress,
@@ -117,6 +121,7 @@ export function signWalletWithdraw(
   } else {
     throw new Error(ERR_INSUFFICIENT_BALANCE);
   }
+  console.log("Balances after withdraw: ", newBalances)
   const newWallet = new Wallet({
     ...wallet,
     balances: newBalances,
@@ -156,7 +161,9 @@ function addOrder(wallet: Wallet, order: Order) {
  */
 export function signWalletPlaceOrder(wallet: Wallet, order: Order) {
   try {
+    console.log("Orders before placing order: ", wallet.orders)
     const newOrders = addOrder(wallet, order);
+    console.log("Orders after placing order: ", newOrders)
     const newWallet = new Wallet({
       ...wallet,
       orders: newOrders,

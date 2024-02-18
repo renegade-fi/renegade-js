@@ -37,7 +37,6 @@ export default class Wallet {
     privateBlinder;
     blindedPublicShares;
     privateShares;
-    updateLocked = false;
     constructor(params) {
         this.walletId =
             params.id || generateId(params.keychain.keyHierarchy.root.secretKey);
@@ -55,7 +54,6 @@ export default class Wallet {
                 this.getBlinders();
             [this.blindedPublicShares, this.privateShares] = this.deriveShares();
         }
-        this.updateLocked = params.updateLocked || false;
     }
     static getBlindersFromShares(privateShares, publicShares) {
         const blinderPrivateShare = privateShares[privateShares.length - 1];

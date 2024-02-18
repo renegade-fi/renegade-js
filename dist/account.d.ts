@@ -164,8 +164,4 @@ export default class Account {
      * Getter for the underlying RenegadeWs.
      */
     get ws(): RenegadeWs;
-    /**
-     * Getter for the state of the update lock.
-     */
-    get isLocked(): boolean;
 }

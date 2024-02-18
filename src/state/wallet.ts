@@ -54,7 +54,6 @@ export default class Wallet {
   public readonly privateBlinder: bigint;
   public readonly blindedPublicShares: bigint[];
   public readonly privateShares: bigint[];
-  public readonly updateLocked: boolean = false;
   constructor(params: {
     id?: WalletId;
     balances: Balance[];
@@ -86,7 +85,6 @@ export default class Wallet {
         this.getBlinders();
       [this.blindedPublicShares, this.privateShares] = this.deriveShares();
     }
-    this.updateLocked = params.updateLocked || false;
   }
 
   static getBlindersFromShares(privateShares: bigint[], publicShares: bigint[]): [bigint, bigint, bigint] {

@@ -488,12 +488,6 @@ export default class Account {
     get ws() {
         return this._ws;
     }
-    /**
-     * Getter for the state of the update lock.
-     */
-    get isLocked() {
-        return this._wallet.updateLocked;
-    }
 }
 __decorate([
     assertSynced
