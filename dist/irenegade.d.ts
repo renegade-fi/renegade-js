@@ -150,15 +150,6 @@ export interface IRenegadeTrading {
      * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
      */
     cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void>;
-    /**
-     * Modify or place an order.
-     *
-     * @param order The order to modify or place.
-     * @returns A TaskId that can be used to query the status of the order.
-     *
-     * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
-     */
-    modifyOrPlaceOrder(accountId: AccountId, order: Order): Promise<void>;
 }
 /**
  * Interface for manipulation of fee approvals.

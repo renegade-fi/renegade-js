@@ -7,14 +7,14 @@ import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
 import {
   RENEGADE_AUTH_EXPIRATION_HEADER,
   RENEGADE_AUTH_HEADER,
-  bigIntToLimbsLE
+  bigIntToLimbsLE,
 } from "./state/utils";
 import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
 import {
   CreateWalletRequest,
   CreateWalletResponse,
   TaskStatus,
-  createPostRequest
+  createPostRequest,
 } from "./types/api";
 import { RenegadeWs, TaskJob } from "./utils";
 import { F } from "./utils/field";
@@ -243,12 +243,15 @@ export default class Account {
     const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
       "",
       BigInt(Date.now()),
-      this._wallet.keychain.keyHierarchy.root.secretKey
+      this._wallet.keychain.keyHierarchy.root.secretKey,
     );
-    headers.append(RENEGADE_AUTH_HEADER, renegadeAuth)
-    headers.append(RENEGADE_AUTH_EXPIRATION_HEADER, renegadeAuthExpiration)
+    headers.append(RENEGADE_AUTH_HEADER, renegadeAuth);
+    headers.append(RENEGADE_AUTH_EXPIRATION_HEADER, renegadeAuthExpiration);
 
-    console.log("🚀 ~ Account ~ _queryRelayerForWallet ~ renegadeAuth:", renegadeAuth)
+    console.log(
+      "🚀 ~ Account ~ _queryRelayerForWallet ~ renegadeAuth:",
+      renegadeAuth,
+    );
     try {
       const response = await fetch(url, {
         method: "GET",
@@ -298,26 +301,24 @@ export default class Account {
       headers: {
         "Content-Type": "application/json",
       },
-    }
+    };
     const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
       "",
       BigInt(Date.now()),
-      this._wallet.keychain.keyHierarchy.root.secretKey
+      this._wallet.keychain.keyHierarchy.root.secretKey,
     );
     request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
     request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
     // const fetchWithZod = createZodFetcher(axios.request);
     // const response = await fetchWithZod(TaskQueueListResponse, request)
-    const response = await axios.request(request)
+    const response = await axios.request(request);
     const parsedRes = response.data.tasks.map((task) => {
-      return TaskStatus.parse(
-        {
-          ...task,
-          status: JSON.parse(task.status),
-        }
-      )
-    })
-    return parsedRes
+      return TaskStatus.parse({
+        ...task,
+        status: JSON.parse(task.status),
+      });
+    });
+    return parsedRes;
   }
 
   /**
@@ -391,7 +392,9 @@ export default class Account {
     const statement_sig = signWalletWithdraw(wallet, mint, amount);
     const request: AxiosRequestConfig = {
       method: "POST",
-      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/${mint.serialize()}/withdraw`,
+      url: `${this._relayerHttpUrl}/v0/wallet/${
+        this.accountId
+      }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(
         amount,
       ).join(",")}],"statement_sig":${statement_sig}}`,

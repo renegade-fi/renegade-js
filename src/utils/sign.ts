@@ -16,11 +16,11 @@ function signWalletShares(wallet: Wallet) {
   // Reblind the wallet, consuming the next set of blinders and secret shares
   const reblindedWallet = wallet.reblind();
   const serializedWallet = reblindedWallet.serialize();
-  console.log("Wallet after placing order: ", serializedWallet)
+  console.log("Wallet after placing order: ", serializedWallet);
 
   const statement_sig_hex = generate_wallet_update_signature(
     serializedWallet,
-    reblindedWallet.keychain.keyHierarchy.root.secretKey
+    reblindedWallet.keychain.keyHierarchy.root.secretKey,
   );
   const statement_sig_bytes = new Uint8Array(
     Buffer.from(statement_sig_hex, "hex"),
@@ -33,10 +33,10 @@ function signWalletShares(wallet: Wallet) {
  * Add a balance to the wallet, replacing the first default balance
  */
 function add_balance(wallet: Wallet, balance: Balance) {
-  console.log("Adding balance to: ", wallet.balances)
+  console.log("Adding balance to: ", wallet.balances);
   // const newBalances = wallet.balances.slice();
-  const newBalances = wallet.balances
-  console.log("Balances before deposit", newBalances)
+  const newBalances = wallet.balances;
+  console.log("Balances before deposit", newBalances);
   const mintAddress = balance.mint.address.replace("0x", "");
   const index = newBalances.findIndex(
     (balance) => balance.mint.address === mintAddress,
@@ -57,7 +57,7 @@ function add_balance(wallet: Wallet, balance: Balance) {
   }
 
   // If the balances are full, try to find a balance to overwrite
-  const idx = newBalances.findIndex(balance => balance.amount === 0n);
+  const idx = newBalances.findIndex((balance) => balance.amount === 0n);
   if (idx !== -1) {
     newBalances[idx] = balance;
     return newBalances;
@@ -75,9 +75,9 @@ function add_balance(wallet: Wallet, balance: Balance) {
  */
 export function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint) {
   try {
-    console.log("Wallet before deposit: ", wallet)
+    console.log("Wallet before deposit: ", wallet);
     const newBalances = add_balance(wallet, new Balance({ mint, amount }));
-    console.log("Wallet after deposit: ", newBalances)
+    console.log("Wallet after deposit: ", newBalances);
     const newWallet = new Wallet({
       ...wallet,
       balances: newBalances,
@@ -103,7 +103,7 @@ export function signWalletWithdraw(
 ) {
   // Find the balance to withdraw from
   const newBalances = [...wallet.balances];
-  console.log("Balances before withdraw: ", newBalances)
+  console.log("Balances before withdraw: ", newBalances);
   const mintAddress = mint.address.replace("0x", "");
   const index = newBalances.findIndex(
     (balance) => balance.mint.address === mintAddress,
@@ -121,11 +121,11 @@ export function signWalletWithdraw(
   } else {
     throw new Error(ERR_INSUFFICIENT_BALANCE);
   }
-  console.log("Balances after withdraw: ", newBalances)
+  console.log("Balances after withdraw: ", newBalances);
   const newWallet = new Wallet({
     ...wallet,
     balances: newBalances,
-    exists: true
+    exists: true,
   });
   return signWalletShares(newWallet);
 }
@@ -142,7 +142,7 @@ function addOrder(wallet: Wallet, order: Order) {
   }
 
   // Otherwise try to find an order to overwrite
-  const idx = newOrders.findIndex(order => order.amount === 0n);
+  const idx = newOrders.findIndex((order) => order.amount === 0n);
   if (idx !== -1) {
     newOrders[idx] = order;
     return newOrders;
@@ -161,13 +161,13 @@ function addOrder(wallet: Wallet, order: Order) {
  */
 export function signWalletPlaceOrder(wallet: Wallet, order: Order) {
   try {
-    console.log("Orders before placing order: ", wallet.orders)
+    console.log("Orders before placing order: ", wallet.orders);
     const newOrders = addOrder(wallet, order);
-    console.log("Orders after placing order: ", newOrders)
+    console.log("Orders after placing order: ", newOrders);
     const newWallet = new Wallet({
       ...wallet,
       orders: newOrders,
-      exists: true
+      exists: true,
     });
     return signWalletShares(newWallet);
   } catch (error) {
@@ -194,7 +194,7 @@ export function signWalletModifyOrder(
   const newWallet = new Wallet({
     ...wallet,
     orders: newOrders,
-    exists: true
+    exists: true,
   });
   return signWalletShares(newWallet);
 }
@@ -212,7 +212,7 @@ export function signWalletCancelOrder(wallet: Wallet, orderId: OrderId) {
   const newWallet = new Wallet({
     ...wallet,
     orders: newOrders,
-    exists: true
+    exists: true,
   });
   return signWalletShares(newWallet);
 }

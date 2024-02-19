@@ -3,7 +3,7 @@ import { sha256 } from "@noble/hashes/sha256";
 import {
   get_key_hierarchy,
   sign_http_request,
-  sign_message
+  sign_message,
 } from "../../renegade-utils";
 
 /**
@@ -13,18 +13,20 @@ class SigningKey {
   /**
    * The hexadecimal representation of the secret key.
    */
-  secretKey: string
+  secretKey: string;
   /**
    * The hexadecimal representation of the public key.
    */
-  publicKey: string
+  publicKey: string;
 
   constructor(secretKey: Uint8Array) {
     if (secretKey.length !== 32) {
       throw new Error("SigningKey secretKey must be 32 bytes.");
     }
     this.secretKey = Buffer.from(secretKey).toString("hex");
-    this.publicKey = JSON.parse(get_key_hierarchy(this.secretKey)).public_keys.pk_root.replace("0x", "");
+    this.publicKey = JSON.parse(
+      get_key_hierarchy(this.secretKey),
+    ).public_keys.pk_root.replace("0x", "");
   }
 
   signMessage(message: string): string {
@@ -133,8 +135,12 @@ export default class Keychain {
       Keychain.CREATE_SK_MATCH_MESSAGE,
     );
 
-    const skMatch = JSON.parse(get_key_hierarchy(root.secretKey)).private_keys.sk_match.replace("0x", "");
-    const pkMatch = JSON.parse(get_key_hierarchy(root.secretKey)).public_keys.pk_match.replace("0x", "");
+    const skMatch = JSON.parse(
+      get_key_hierarchy(root.secretKey),
+    ).private_keys.sk_match.replace("0x", "");
+    const pkMatch = JSON.parse(
+      get_key_hierarchy(root.secretKey),
+    ).public_keys.pk_match.replace("0x", "");
     const match = new IdentificationKey(skMatch, pkMatch);
 
     // Save the key hierarchy.

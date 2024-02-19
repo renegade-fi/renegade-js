@@ -1,6 +1,4 @@
-import {
-  get_key_hierarchy_shares
-} from "../../renegade-utils";
+import { get_key_hierarchy_shares } from "../../renegade-utils";
 import { WalletId } from "../types";
 import { F } from "../utils/field";
 import Balance from "./balance";
@@ -12,9 +10,9 @@ import {
   createWalletSharesWithRandomness,
   evaluateHashChain,
   generateId,
-  limbsToBigIntLE
+  limbsToBigIntLE,
 } from "./utils";
-import * as crypto from 'crypto';
+import * as crypto from "crypto";
 
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
@@ -87,17 +85,20 @@ export default class Wallet {
     }
   }
 
-  static getBlindersFromShares(privateShares: bigint[], publicShares: bigint[]): [bigint, bigint, bigint] {
+  static getBlindersFromShares(
+    privateShares: bigint[],
+    publicShares: bigint[],
+  ): [bigint, bigint, bigint] {
     const blinderPrivateShare = privateShares[privateShares.length - 1];
     const blinderPublicShare = publicShares[publicShares.length - 1];
     const blinder = F.add(blinderPrivateShare, blinderPublicShare);
     return [blinder, blinderPrivateShare, blinderPublicShare];
   }
 
-
   getBlinders(): [bigint, bigint, bigint] {
     // TODO: Generate blinder seed from Ethereum private key signature
-    const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 1n
+    const blinderSeed =
+      BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 1n;
     const [blinder, blinderPrivateShare] = evaluateHashChain(blinderSeed, 2);
     const blinderPublicShare = F.sub(blinder, blinderPrivateShare);
     return [blinder, blinderPrivateShare, blinderPublicShare];
@@ -111,14 +112,13 @@ export default class Wallet {
     return packedBalances.flat().concat(packedPadding.flat());
   }
 
-
   packOrders(): bigint[] {
     const packedOrders = this.orders.map((order) => order.pack());
     const packedPadding = Array(MAX_ORDERS - this.orders.length).fill(
       Array(SHARES_PER_ORDER).fill(0n),
     );
     const res = packedOrders.flat().concat(packedPadding.flat());
-    return res
+    return res;
   }
 
   packFees(): bigint[] {
@@ -130,9 +130,9 @@ export default class Wallet {
   }
 
   packKeychain(): bigint[] {
-    return get_key_hierarchy_shares(this.keychain.keyHierarchy.root.secretKey).map((share: string) =>
-      BigInt(share),
-    );
+    return get_key_hierarchy_shares(
+      this.keychain.keyHierarchy.root.secretKey,
+    ).map((share: string) => BigInt(share));
   }
 
   packBlinder(): bigint[] {
@@ -156,7 +156,8 @@ export default class Wallet {
    */
   deriveShares(): [bigint[], bigint[]] {
     // TODO: Generate seed from Ethereuem private key signature
-    const shareStreamSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 2n
+    const shareStreamSeed =
+      BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 2n;
     const secretShares = evaluateHashChain(shareStreamSeed, SHARES_PER_WALLET);
 
     const [privateShares, blindedPublicShares] =
@@ -181,9 +182,15 @@ export default class Wallet {
   // Ensure that wallet is latest from relayer
   reblind() {
     const privateShares = this.privateShares;
-    const [newBlinder, newBlinderPrivateShare] = evaluateHashChain(privateShares[SHARES_PER_WALLET - 1], 2);
+    const [newBlinder, newBlinderPrivateShare] = evaluateHashChain(
+      privateShares[SHARES_PER_WALLET - 1],
+      2,
+    );
 
-    const secretShares = evaluateHashChain(privateShares[SHARES_PER_WALLET - 2], SHARES_PER_WALLET);
+    const secretShares = evaluateHashChain(
+      privateShares[SHARES_PER_WALLET - 2],
+      SHARES_PER_WALLET,
+    );
 
     const [newPrivateShares, newPublicShares] =
       createWalletSharesWithRandomness(
@@ -204,9 +211,8 @@ export default class Wallet {
       publicBlinder: F.sub(newBlinder, newBlinderPrivateShare),
       blindedPublicShares: newPublicShares,
       privateShares: newPrivateShares,
-      exists: true
+      exists: true,
     });
-
   }
 
   serialize(): string {
@@ -240,13 +246,18 @@ export default class Wallet {
     const fees = serializedWallet.fees.map((f: any) => Fee.deserialize(f));
     const keychain = Keychain.deserialize(serializedWallet.key_chain);
     const updateLocked = serializedWallet.update_locked;
-    const blindedPublicShares = serializedWallet.blinded_public_shares.map((share: number[]) => {
-      return limbsToBigIntLE(share)
-    })
-    const privateShares = serializedWallet.private_shares.map((share: number[]) => {
-      return limbsToBigIntLE(share)
-    });
-    const [derivedBlinder, privateBlinder, publicBlinder] = Wallet.getBlindersFromShares(privateShares, blindedPublicShares);
+    const blindedPublicShares = serializedWallet.blinded_public_shares.map(
+      (share: number[]) => {
+        return limbsToBigIntLE(share);
+      },
+    );
+    const privateShares = serializedWallet.private_shares.map(
+      (share: number[]) => {
+        return limbsToBigIntLE(share);
+      },
+    );
+    const [derivedBlinder, privateBlinder, publicBlinder] =
+      Wallet.getBlindersFromShares(privateShares, blindedPublicShares);
 
     return new Wallet({
       id,
@@ -260,7 +271,7 @@ export default class Wallet {
       blindedPublicShares,
       privateShares,
       updateLocked,
-      exists: true
+      exists: true,
     });
   }
 }
