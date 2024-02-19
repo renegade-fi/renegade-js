@@ -1,6 +1,5 @@
 import { sha256 } from "@noble/hashes/sha256";
-import { randomBytes } from "crypto";
-import { readFileSync, writeFileSync } from "fs";
+// import { readFileSync, writeFileSync } from "fs";
 import {
   get_key_hierarchy,
   sign_http_request,
@@ -116,7 +115,7 @@ export default class Keychain {
       }
       skRoot = options.skRoot;
     } else {
-      skRoot = randomBytes(32);
+      skRoot = crypto.getRandomValues(new Uint8Array(32));
     }
     // Populate the hierarchy.
     this.populateHierarchy(skRoot);
@@ -164,7 +163,7 @@ export default class Keychain {
    * @param filePath File path to save the keychain to.
    */
   saveToFile(filePath: string): void {
-    writeFileSync(filePath, this.serialize());
+    // writeFileSync(filePath, this.serialize());
   }
 
   /**
@@ -173,11 +172,11 @@ export default class Keychain {
    * @param filePath File path to load the keychain from.
    */
   private loadFromFile(filePath: string): void {
-    const keychainSerialized = readFileSync(filePath, "utf8");
-    const keychainDeserialized = Keychain.deserialize(
-      JSON.parse(keychainSerialized),
-    );
-    this.keyHierarchy = keychainDeserialized.keyHierarchy;
+    // const keychainSerialized = readFileSync(filePath, "utf8");
+    // const keychainDeserialized = Keychain.deserialize(
+    //   JSON.parse(keychainSerialized),
+    // );
+    // this.keyHierarchy = keychainDeserialized.keyHierarchy;
   }
 
   /**

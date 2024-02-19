@@ -233,21 +233,36 @@ export default class Account {
    * if it does not.
    */
   private async _queryRelayerForWallet(): Promise<Wallet | undefined> {
-    const request: AxiosRequestConfig = {
-      method: "GET",
-      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`,
-      validateStatus: () => true,
-    };
-    let response;
+    const url = `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`;
+
+    let headers = new Headers();
+    // Add or modify headers after instantiation if needed
+    headers.append("Content-Type", "application/json");
+    // If there are authentication or other headers, add them here
+    // headers.append("Authorization", "Bearer your_token_here");
+    const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
+      "",
+      BigInt(Date.now()),
+      this._wallet.keychain.keyHierarchy.root.secretKey
+    );
+    headers.append(RENEGADE_AUTH_HEADER, renegadeAuth)
+    headers.append(RENEGADE_AUTH_EXPIRATION_HEADER, renegadeAuthExpiration)
+
+    console.log("🚀 ~ Account ~ _queryRelayerForWallet ~ renegadeAuth:", renegadeAuth)
     try {
-      response = await this._transmitHttpRequest(request, true);
+      const response = await fetch(url, {
+        method: "GET",
+        headers: headers,
+      });
+
+      if (response.status === 200) {
+        const data = await response.json(); // Assuming the response is JSON
+        return Wallet.deserialize(data.wallet);
+      } else {
+        return undefined;
+      }
     } catch (e) {
       console.error("Error querying relayer for wallet: ", e);
-      return undefined;
-    }
-    if (response.status === 200) {
-      return Wallet.deserialize(response.data.wallet);
-    } else {
       return undefined;
     }
   }
