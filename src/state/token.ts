@@ -7,7 +7,7 @@ export default class Token {
   // Static property to hold the cached address to ticker mapping
   private static addressToTicker: { [key: string]: string } | null = null;
 
-  constructor(params: { address?: string; ticker?: string; }) {
+  constructor(params: { address?: string; ticker?: string }) {
     if (
       (params.address && params.ticker) ||
       (!params.address && !params.ticker)
@@ -19,7 +19,7 @@ export default class Token {
     if (Token.tickerToAddress === null || Token.addressToTicker === null) {
       Token.tickerToAddress = {};
       Token.addressToTicker = {};
-      tokenMappings.tokens.forEach(token => {
+      tokenMappings.tokens.forEach((token) => {
         const tickerUpper = token.ticker.toUpperCase();
         Token.tickerToAddress![tickerUpper] = token.address;
         Token.addressToTicker![token.address] = tickerUpper;
@@ -39,7 +39,6 @@ export default class Token {
     }
 
     this.address = params.address.toLowerCase().replace("0x", "");
-
   }
 
   public get ticker(): string | null {
@@ -61,7 +60,8 @@ export default class Token {
 
   public static findAddressByTicker(ticker: string): string {
     try {
-      return tokenMappings.tokens.find(token => token.ticker === ticker).address;
+      return tokenMappings.tokens.find((token) => token.ticker === ticker)
+        .address;
     } catch (e) {
       throw new Error(`Unknown ticker: ${ticker}`);
     }
@@ -69,9 +69,12 @@ export default class Token {
 
   public static findTickerByAddress(address: string): string {
     try {
-      return tokenMappings.tokens.find(token => token.address === address).ticker;
+      return tokenMappings.tokens.find((token) => token.address === address)
+        .ticker;
     } catch (e) {
-      throw new Error(`Could not find ${address} in mapping: ${this.addressToTicker}`);
+      throw new Error(
+        `Could not find ${address} in mapping: ${this.addressToTicker}`,
+      );
     }
   }
 }

@@ -93,8 +93,8 @@ export const TaskQueueListResponse = AxiosResponse.extend({
             id: z.string().uuid(),
             status: z.string(),
             committed: z.boolean(),
-        }))
-    })
+        })),
+    }),
 });
 export const TaskStatusResponse = AxiosResponse.extend({
     data: z.object({

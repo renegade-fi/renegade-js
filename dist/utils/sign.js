@@ -43,7 +43,7 @@ function add_balance(wallet, balance) {
         return newBalances;
     }
     // If the balances are full, try to find a balance to overwrite
-    const idx = newBalances.findIndex(balance => balance.amount === 0n);
+    const idx = newBalances.findIndex((balance) => balance.amount === 0n);
     if (idx !== -1) {
         newBalances[idx] = balance;
         return newBalances;
@@ -105,7 +105,7 @@ export function signWalletWithdraw(wallet, mint, amount) {
     const newWallet = new Wallet({
         ...wallet,
         balances: newBalances,
-        exists: true
+        exists: true,
     });
     return signWalletShares(newWallet);
 }
@@ -120,7 +120,7 @@ function addOrder(wallet, order) {
         return newOrders;
     }
     // Otherwise try to find an order to overwrite
-    const idx = newOrders.findIndex(order => order.amount === 0n);
+    const idx = newOrders.findIndex((order) => order.amount === 0n);
     if (idx !== -1) {
         newOrders[idx] = order;
         return newOrders;
@@ -145,7 +145,7 @@ export function signWalletPlaceOrder(wallet, order) {
         const newWallet = new Wallet({
             ...wallet,
             orders: newOrders,
-            exists: true
+            exists: true,
         });
         return signWalletShares(newWallet);
     }
@@ -168,7 +168,7 @@ export function signWalletModifyOrder(wallet, oldOrderId, newOrder) {
     const newWallet = new Wallet({
         ...wallet,
         orders: newOrders,
-        exists: true
+        exists: true,
     });
     return signWalletShares(newWallet);
 }
@@ -185,7 +185,7 @@ export function signWalletCancelOrder(wallet, orderId) {
     const newWallet = new Wallet({
         ...wallet,
         orders: newOrders,
-        exists: true
+        exists: true,
     });
     return signWalletShares(newWallet);
 }

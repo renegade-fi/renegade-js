@@ -73,18 +73,21 @@ export default class Renegade {
         this._ws = new RenegadeWs(this.relayerWsUrl, this._verbose);
         this._registeredAccounts = {};
         this._isTornDown = false;
-        // Dynamically import renegade-utils WASM package if running in a browser
-        if ((typeof window !== "undefined" && typeof document !== "undefined") || typeof globalThis.EdgeRuntime === 'string') {
-            import("../renegade-utils").then(module => {
-                const loadUtils = module.default;
-                loadUtils();
-            }).catch(error => {
-                console.error("Failed to load utilities:", error);
-            });
-        }
     }
-    modifyOrPlaceOrder(accountId, order) {
-        throw new Error("Method not implemented.");
+    /**
+     * Initializes the WASM module for use in both browser and serverless environments.
+     */
+    async init() {
+        try {
+            const module = await import("../renegade-utils");
+            const loadUtils = module.default;
+            await loadUtils(); // Ensure this is awaited
+            console.log("Utilities loaded successfully.");
+        }
+        catch (error) {
+            console.error("Failed to load utilities:", error);
+            throw new Error("Utilities loading failed");
+        }
     }
     /**
      * Construct a URL from the given parameters.
@@ -127,12 +130,12 @@ export default class Renegade {
                 method: "GET",
             });
             if (!response.ok || response.status !== 200) {
-                throw new Error('Response not OK');
+                throw new Error("Response not OK");
             }
             const data = await response.json();
             console.log("[SDK] Response: ", data);
             if (!data.timestamp) {
-                throw new Error('Timestamp missing');
+                throw new Error("Timestamp missing");
             }
         }
         catch (e) {

@@ -9,8 +9,9 @@ export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
 
 export function generateId(sk_root: string): WalletId {
-
-  const publicKey = JSON.parse(get_key_hierarchy(sk_root)).public_keys.pk_root.replace("0x", "");
+  const publicKey = JSON.parse(
+    get_key_hierarchy(sk_root),
+  ).public_keys.pk_root.replace("0x", "");
   const dataHash = sha256(Buffer.from(publicKey, "hex"));
   return uuid.v4({ random: dataHash.slice(-16) }) as WalletId;
 }

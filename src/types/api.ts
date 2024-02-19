@@ -21,7 +21,7 @@ export function createPostRequest<S extends ZodSchema>(
   url: string,
   data: any,
   schema: S,
-  secretKey?: string
+  secretKey?: string,
 ): Promise<zInfer<S>> {
   const serializedData = customSerializer(data);
   const request: AxiosRequestConfig = {
@@ -38,9 +38,9 @@ export function createPostRequest<S extends ZodSchema>(
     const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
       request.data ?? "",
       BigInt(Date.now()),
-      secretKey
+      secretKey,
     );
-    console.log("🚀 ~ renegadeAuth:", renegadeAuth)
+    console.log("🚀 ~ renegadeAuth:", renegadeAuth);
     request.headers = request.headers || {};
     request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
     request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
@@ -111,17 +111,19 @@ export const TaskStatus = z.object({
     state: z.string(),
   }),
   committed: z.boolean(),
-})
+});
 
 export const TaskQueueListResponse = AxiosResponse.extend({
   data: z.object({
-    tasks: z.array(z.object({
-      id: z.string().uuid(),
-      status: z.string(),
-      committed: z.boolean(),
-    }))
-  })
-})
+    tasks: z.array(
+      z.object({
+        id: z.string().uuid(),
+        status: z.string(),
+        committed: z.boolean(),
+      }),
+    ),
+  }),
+});
 
 export const TaskStatusResponse = AxiosResponse.extend({
   data: z.object({
@@ -129,4 +131,4 @@ export const TaskStatusResponse = AxiosResponse.extend({
     status: z.string(),
     committed: z.boolean(),
   }),
-})
+});

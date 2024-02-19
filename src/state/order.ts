@@ -47,8 +47,8 @@ export default class Order {
       params.worstPrice !== undefined
         ? params.worstPrice
         : params.side === "buy"
-          ? MAX_PRICE
-          : 0;
+        ? MAX_PRICE
+        : 0;
     this.timestamp = params.timestamp || new Date().getTime();
   }
 

@@ -4,7 +4,7 @@ import Balance from "./balance";
 import Fee from "./fee";
 import Keychain from "./keychain";
 import Order from "./order";
-import { bigIntToLimbsLE, createWalletSharesWithRandomness, evaluateHashChain, generateId, limbsToBigIntLE } from "./utils";
+import { bigIntToLimbsLE, createWalletSharesWithRandomness, evaluateHashChain, generateId, limbsToBigIntLE, } from "./utils";
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
 export const MAX_ORDERS = 5;
@@ -133,7 +133,7 @@ export default class Wallet {
             publicBlinder: F.sub(newBlinder, newBlinderPrivateShare),
             blindedPublicShares: newPublicShares,
             privateShares: newPrivateShares,
-            exists: true
+            exists: true,
         });
     }
     serialize() {
@@ -177,7 +177,7 @@ export default class Wallet {
             blindedPublicShares,
             privateShares,
             updateLocked,
-            exists: true
+            exists: true,
         });
     }
 }
