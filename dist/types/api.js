@@ -27,7 +27,6 @@ export function createPostRequest(url, data, schema, secretKey) {
     };
     if (secretKey) {
         const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(request.data ?? "", BigInt(Date.now()), secretKey);
-        console.log("🚀 ~ renegadeAuth:", renegadeAuth);
         request.headers = request.headers || {};
         request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
         request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;

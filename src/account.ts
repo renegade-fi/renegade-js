@@ -1,7 +1,9 @@
-import { MAX_ORDERS } from "@/state/wallet";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { z } from "zod";
-import { bigint_to_scalar_within_field, sign_http_request } from "../renegade-utils";
+import {
+  bigint_to_scalar_within_field,
+  sign_http_request,
+} from "../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
 import {
@@ -110,7 +112,7 @@ export default class Account {
       orders: [],
       fees: [],
       keychain: keychain || this._wallet.keychain,
-      blinder: bigint_to_scalar_within_field(blinder.toString(16)),
+      blinder: BigInt(bigint_to_scalar_within_field(blinder.toString(16))),
     });
 
     // Reset the sync status.
@@ -247,10 +249,6 @@ export default class Account {
     headers.append(RENEGADE_AUTH_HEADER, renegadeAuth);
     headers.append(RENEGADE_AUTH_EXPIRATION_HEADER, renegadeAuthExpiration);
 
-    console.log(
-      "🚀 ~ Account ~ _queryRelayerForWallet ~ renegadeAuth:",
-      renegadeAuth,
-    );
     try {
       const response = await fetch(url, {
         method: "GET",
@@ -391,8 +389,9 @@ export default class Account {
     const statement_sig = signWalletWithdraw(wallet, mint, amount);
     const request: AxiosRequestConfig = {
       method: "POST",
-      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId
-        }/balances/${mint.serialize()}/withdraw`,
+      url: `${this._relayerHttpUrl}/v0/wallet/${
+        this.accountId
+      }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(
         amount,
       ).join(",")}],"statement_sig":${statement_sig}}`,

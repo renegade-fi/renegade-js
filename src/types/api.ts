@@ -40,12 +40,10 @@ export function createPostRequest<S extends ZodSchema>(
       BigInt(Date.now()),
       secretKey,
     );
-    console.log("🚀 ~ renegadeAuth:", renegadeAuth);
     request.headers = request.headers || {};
     request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
     request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
   }
-
   const fetchWithZod = createZodFetcher(axios.request);
   const response = fetchWithZod(schema, request)
     .then((response) => {
