@@ -25,7 +25,7 @@ pub mod ethers_helpers;
 pub mod helpers;
 pub mod types;
 
-/// Converts a bigint hex string to a scalar within the prime field's order.
+/// Converts a bigint hex string to a scalar within the prime field's order and returns a BigInt as a string.
 ///
 /// # Arguments
 ///
@@ -33,7 +33,7 @@ pub mod types;
 ///
 /// # Returns
 ///
-/// A `JsValue` containing the bigint within the prime field's order as a `BigInt`.
+/// A `JsValue` containing the bigint within the prime field's order as a string.
 #[wasm_bindgen]
 pub fn bigint_to_scalar_within_field(value: &str) -> JsValue {
     let bigint = biguint_from_hex_string(value);
@@ -42,7 +42,7 @@ pub fn bigint_to_scalar_within_field(value: &str) -> JsValue {
     JsValue::from_str(&result_bigint.to_string())
 }
 
-/// Adds two numbers in the prime field and returns the result. Inputs are hex strings.
+/// Adds two numbers in the prime field and returns the result as a string. Inputs are hex strings.
 ///
 /// # Arguments
 ///
@@ -58,14 +58,12 @@ pub fn add_prime_field(a: &str, b: &str) -> JsValue {
     let b_scalar = ScalarField::from(biguint_from_hex_string(b));
 
     // Perform addition
-    let result = a_scalar + b_scalar;
-
-    // Convert result back to BigUint for string representation
+    let result: ScalarField = a_scalar + b_scalar;
     let result_bigint: BigUint = result.into();
     JsValue::from_str(&result_bigint.to_string())
 }
 
-/// Subtracts the second number from the first in the prime field and returns the result. Inputs are hex strings.
+/// Subtracts the second number from the first in the prime field and returns the result as a string. Inputs are hex strings.
 ///
 /// # Arguments
 ///
@@ -77,28 +75,24 @@ pub fn add_prime_field(a: &str, b: &str) -> JsValue {
 /// A `JsValue` containing the decimal string representation of the result.
 #[wasm_bindgen]
 pub fn subtract_prime_field(a: &str, b: &str) -> JsValue {
-    // Convert BigUint to ScalarField using ScalarField::from
     let a_scalar: ScalarField = ScalarField::from(biguint_from_hex_string(a));
     let b_scalar: ScalarField = ScalarField::from(biguint_from_hex_string(b));
 
     // Perform subtraction
-    let result = a_scalar - b_scalar;
-
-    // Convert result back to BigUint for string representation
+    let result: ScalarField = a_scalar - b_scalar;
     let result_bigint: BigUint = result.into();
     JsValue::from_str(&result_bigint.to_string())
 }
 
-/// Computes the Poseidon2 hash of the input string and returns a BigInt.
+/// Computes the Poseidon2 hash of the input string and returns a BigInt as a string.
 ///
 /// Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.
 #[wasm_bindgen]
-pub fn compute_poseidon_hash(value: &str) -> BigInt {
+pub fn compute_poseidon_hash(value: &str) -> JsValue {
     let input = [ScalarField::from(biguint_from_hex_string(value))];
     let res = _compute_poseidon_hash(&input);
-    // Convert the hash result to a JavaScript BigInt
-    let js_bigint: JsValue = res.to_string().into();
-    js_bigint.unchecked_into::<BigInt>()
+    // Convert the hash result to a JavaScript BigInt as a string
+    JsValue::from_str(&res.to_string())
 }
 
 /// Generates a signature for a wallet update operation.

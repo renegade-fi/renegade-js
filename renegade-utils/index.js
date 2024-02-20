@@ -102,7 +102,7 @@ function takeObject(idx) {
     return ret;
 }
 /**
-* Converts a bigint hex string to a scalar within the prime field's order.
+* Converts a bigint hex string to a scalar within the prime field's order and returns a BigInt as a string.
 *
 * # Arguments
 *
@@ -110,7 +110,7 @@ function takeObject(idx) {
 *
 * # Returns
 *
-* A `JsValue` containing the bigint within the prime field's order as a `BigInt`.
+* A `JsValue` containing the bigint within the prime field's order as a string.
 * @param {string} value
 * @returns {any}
 */
@@ -122,7 +122,7 @@ export function bigint_to_scalar_within_field(value) {
 }
 
 /**
-* Adds two numbers in the prime field and returns the result. Inputs are hex strings.
+* Adds two numbers in the prime field and returns the result as a string. Inputs are hex strings.
 *
 * # Arguments
 *
@@ -146,7 +146,7 @@ export function add_prime_field(a, b) {
 }
 
 /**
-* Subtracts the second number from the first in the prime field and returns the result. Inputs are hex strings.
+* Subtracts the second number from the first in the prime field and returns the result as a string. Inputs are hex strings.
 *
 * # Arguments
 *
@@ -170,11 +170,11 @@ export function subtract_prime_field(a, b) {
 }
 
 /**
-* Computes the Poseidon2 hash of the input string and returns a BigInt.
+* Computes the Poseidon2 hash of the input string and returns a BigInt as a string.
 *
 * Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.
 * @param {string} value
-* @returns {bigint}
+* @returns {any}
 */
 export function compute_poseidon_hash(value) {
     const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);

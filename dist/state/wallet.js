@@ -1,4 +1,4 @@
-import { add_prime_field, get_key_hierarchy_shares, subtract_prime_field } from "../../renegade-utils";
+import { add_prime_field, get_key_hierarchy_shares, subtract_prime_field, } from "../../renegade-utils";
 import Balance from "./balance";
 import Fee from "./fee";
 import Keychain from "./keychain";
@@ -57,14 +57,14 @@ export default class Wallet {
     static getBlindersFromShares(privateShares, publicShares) {
         const blinderPrivateShare = privateShares[privateShares.length - 1];
         const blinderPublicShare = publicShares[publicShares.length - 1];
-        const blinder = add_prime_field(blinderPrivateShare.toString(16), blinderPublicShare.toString(16));
+        const blinder = BigInt(add_prime_field(blinderPrivateShare.toString(16), blinderPublicShare.toString(16)));
         return [blinder, blinderPrivateShare, blinderPublicShare];
     }
     getBlinders() {
         // TODO: Generate blinder seed from Ethereum private key signature
         const blinderSeed = BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 1n;
         const [blinder, blinderPrivateShare] = evaluateHashChain(blinderSeed, 2);
-        const blinderPublicShare = subtract_prime_field(blinder.toString(16), blinderPrivateShare.toString(16));
+        const blinderPublicShare = BigInt(subtract_prime_field(blinder.toString(16), blinderPrivateShare.toString(16)));
         return [blinder, blinderPrivateShare, blinderPublicShare];
     }
     packBalances() {
@@ -129,7 +129,7 @@ export default class Wallet {
             keychain: this.keychain,
             blinder: newBlinder,
             privateBlinder: newBlinderPrivateShare,
-            publicBlinder: subtract_prime_field(newBlinder.toString(16), newBlinderPrivateShare.toString(16)),
+            publicBlinder: BigInt(subtract_prime_field(newBlinder.toString(16), newBlinderPrivateShare.toString(16))),
             blindedPublicShares: newPublicShares,
             privateShares: newPrivateShares,
             exists: true,

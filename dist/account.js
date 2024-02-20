@@ -5,7 +5,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
-import { bigint_to_scalar_within_field, sign_http_request } from "../renegade-utils";
+import { bigint_to_scalar_within_field, sign_http_request, } from "../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
 import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, } from "./state/utils";
@@ -84,7 +84,7 @@ export default class Account {
             orders: [],
             fees: [],
             keychain: keychain || this._wallet.keychain,
-            blinder: bigint_to_scalar_within_field(blinder.toString(16)),
+            blinder: BigInt(bigint_to_scalar_within_field(blinder.toString(16))),
         });
         // Reset the sync status.
         this._isSynced = false;
@@ -201,7 +201,6 @@ export default class Account {
         const [renegadeAuth, renegadeAuthExpiration] = sign_http_request("", BigInt(Date.now()), this._wallet.keychain.keyHierarchy.root.secretKey);
         headers.append(RENEGADE_AUTH_HEADER, renegadeAuth);
         headers.append(RENEGADE_AUTH_EXPIRATION_HEADER, renegadeAuthExpiration);
-        console.log("🚀 ~ Account ~ _queryRelayerForWallet ~ renegadeAuth:", renegadeAuth);
         try {
             const response = await fetch(url, {
                 method: "GET",

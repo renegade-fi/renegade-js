@@ -114,7 +114,6 @@ export default class Renegade
    * @throws {InvalidPort} If the port is not a valid port.
    */
   constructor(config: RenegadeConfig) {
-    // console.log("[FROM SDK] Constructing Renegade object with config: ", config)
     // Set defaults, if not provided.
     config.relayerHttpPort =
       config.relayerHttpPort !== undefined ? config.relayerHttpPort : 3000;
@@ -152,10 +151,10 @@ export default class Renegade
       const module = await import("../renegade-utils");
       const loadUtils = module.default;
       await loadUtils(); // Ensure this is awaited
-      console.log("Utilities loaded successfully.");
+      console.log("WASM module loaded successfully!");
     } catch (error) {
-      console.error("Failed to load utilities:", error);
-      throw new Error("Utilities loading failed");
+      console.error("Failed to load WASM module:", error);
+      throw new Error("Failed to load WASM module");
     }
   }
 
@@ -220,12 +219,10 @@ export default class Renegade
         throw new Error("Response not OK");
       }
       const data = await response.json();
-      console.log("[SDK] Response: ", data);
       if (!data.timestamp) {
         throw new Error("Timestamp missing");
       }
     } catch (e) {
-      console.log("[SDK] Error: ", e);
       throw new RenegadeError(
         RenegadeErrorType.RelayerUnreachable,
         this.relayerHttpUrl,
@@ -322,14 +319,12 @@ export default class Renegade
 
   @assertNotTornDown
   registerAccount(keychain: Keychain): AccountId {
-    // console.log("[FROM SDK] Registering account with keychain: ", keychain)
     const account = new Account(
       keychain,
       this.relayerHttpUrl,
       this.relayerWsUrl,
       this._verbose,
     );
-    // console.log("[FROM SDK] Registered accounts: ", this._registeredAccounts)
     const accountId = account.accountId;
     if (this._registeredAccounts[accountId]) {
       throw new RenegadeError(RenegadeErrorType.AccountAlreadyRegistered);
@@ -340,7 +335,6 @@ export default class Renegade
 
   @assertNotTornDown
   async initializeAccount(accountId: AccountId): Promise<void> {
-    // console.log("[FROM SDK] Initializing account: ", accountId)
     const [, taskJob] = await this._initializeAccountTaskJob(accountId);
     return await taskJob;
   }
@@ -420,7 +414,6 @@ export default class Renegade
     fromAddr: string,
   ): TaskJob<void> {
     const account = this._lookupAccount(accountId);
-    // console.log("[SDK]: account: ", account)
     const taskId = await account.deposit(mint, amount, fromAddr);
     return [taskId, this.awaitTaskCompletion(taskId)];
   }
