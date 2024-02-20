@@ -102,6 +102,74 @@ function takeObject(idx) {
     return ret;
 }
 /**
+* Converts a bigint hex string to a scalar within the prime field's order.
+*
+* # Arguments
+*
+* * `value` - A string representing the bigint in hex form.
+*
+* # Returns
+*
+* A `JsValue` containing the bigint within the prime field's order as a `BigInt`.
+* @param {string} value
+* @returns {any}
+*/
+export function bigint_to_scalar_within_field(value) {
+    const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.bigint_to_scalar_within_field(ptr0, len0);
+    return takeObject(ret);
+}
+
+/**
+* Adds two numbers in the prime field and returns the result. Inputs are hex strings.
+*
+* # Arguments
+*
+* * `a` - A string representing the first number in hex form.
+* * `b` - A string representing the second number in hex form.
+*
+* # Returns
+*
+* A `JsValue` containing the decimal string representation of the result.
+* @param {string} a
+* @param {string} b
+* @returns {any}
+*/
+export function add_prime_field(a, b) {
+    const ptr0 = passStringToWasm0(a, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(b, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.add_prime_field(ptr0, len0, ptr1, len1);
+    return takeObject(ret);
+}
+
+/**
+* Subtracts the second number from the first in the prime field and returns the result. Inputs are hex strings.
+*
+* # Arguments
+*
+* * `a` - A string representing the first number in hex form.
+* * `b` - A string representing the second number in hex form to subtract from the first.
+*
+* # Returns
+*
+* A `JsValue` containing the decimal string representation of the result.
+* @param {string} a
+* @param {string} b
+* @returns {any}
+*/
+export function subtract_prime_field(a, b) {
+    const ptr0 = passStringToWasm0(a, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(b, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.subtract_prime_field(ptr0, len0, ptr1, len1);
+    return takeObject(ret);
+}
+
+/**
 * Computes the Poseidon2 hash of the input string and returns a BigInt.
 *
 * Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.

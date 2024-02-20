@@ -5,8 +5,6 @@ export declare const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration
 export declare function generateId(sk_root: string): WalletId;
 export declare function bigIntToLimbsLE(number: bigint, bitsPerLimb?: number, numLimbs?: number): bigint[];
 export declare function limbsToBigIntLE(limbs: (number | bigint)[], bitsPerLimb?: number): bigint;
-export declare function splitBigIntIntoWords(number: bigint, SCALAR_WORDS?: number): bigint[];
-export declare function combineWordsIntoBigInt(words: bigint[]): bigint;
 /**
  * Convert a bigint to a Uint8Array
  */
