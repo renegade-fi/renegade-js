@@ -8,6 +8,7 @@ use k256::{
     ecdsa::{signature::Signer, Signature},
     elliptic_curve::sec1::ToEncodedPoint,
 };
+use num_bigint::BigUint;
 use types::ScalarField;
 use wasm_bindgen::prelude::*;
 
@@ -23,6 +24,70 @@ pub mod custom_serde;
 pub mod ethers_helpers;
 pub mod helpers;
 pub mod types;
+
+/// Converts a bigint hex string to a scalar within the prime field's order.
+///
+/// # Arguments
+///
+/// * `value` - A string representing the bigint in hex form.
+///
+/// # Returns
+///
+/// A `JsValue` containing the bigint within the prime field's order as a `BigInt`.
+#[wasm_bindgen]
+pub fn bigint_to_scalar_within_field(value: &str) -> JsValue {
+    let bigint = biguint_from_hex_string(value);
+    let scalar: ScalarField = ScalarField::from(bigint);
+    let result_bigint: BigUint = scalar.into();
+    JsValue::from_str(&result_bigint.to_string())
+}
+
+/// Adds two numbers in the prime field and returns the result. Inputs are hex strings.
+///
+/// # Arguments
+///
+/// * `a` - A string representing the first number in hex form.
+/// * `b` - A string representing the second number in hex form.
+///
+/// # Returns
+///
+/// A `JsValue` containing the decimal string representation of the result.
+#[wasm_bindgen]
+pub fn add_prime_field(a: &str, b: &str) -> JsValue {
+    let a_scalar = ScalarField::from(biguint_from_hex_string(a));
+    let b_scalar = ScalarField::from(biguint_from_hex_string(b));
+
+    // Perform addition
+    let result = a_scalar + b_scalar;
+
+    // Convert result back to BigUint for string representation
+    let result_bigint: BigUint = result.into();
+    JsValue::from_str(&result_bigint.to_string())
+}
+
+/// Subtracts the second number from the first in the prime field and returns the result. Inputs are hex strings.
+///
+/// # Arguments
+///
+/// * `a` - A string representing the first number in hex form.
+/// * `b` - A string representing the second number in hex form to subtract from the first.
+///
+/// # Returns
+///
+/// A `JsValue` containing the decimal string representation of the result.
+#[wasm_bindgen]
+pub fn subtract_prime_field(a: &str, b: &str) -> JsValue {
+    // Convert BigUint to ScalarField using ScalarField::from
+    let a_scalar: ScalarField = ScalarField::from(biguint_from_hex_string(a));
+    let b_scalar: ScalarField = ScalarField::from(biguint_from_hex_string(b));
+
+    // Perform subtraction
+    let result = a_scalar - b_scalar;
+
+    // Convert result back to BigUint for string representation
+    let result_bigint: BigUint = result.into();
+    JsValue::from_str(&result_bigint.to_string())
+}
 
 /// Computes the Poseidon2 hash of the input string and returns a BigInt.
 ///

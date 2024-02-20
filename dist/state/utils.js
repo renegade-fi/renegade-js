@@ -1,7 +1,6 @@
 import { sha256 } from "@noble/hashes/sha256";
 import * as uuid from "uuid";
-import { compute_poseidon_hash, get_key_hierarchy } from "../../renegade-utils";
-import { F } from "../utils/field";
+import { add_prime_field, bigint_to_scalar_within_field, compute_poseidon_hash, get_key_hierarchy, subtract_prime_field } from "../../renegade-utils";
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
 export function generateId(sk_root) {
@@ -29,24 +28,24 @@ export function limbsToBigIntLE(limbs, bitsPerLimb) {
     }
     return number;
 }
-const SCALAR_MOD = F.p;
-export function splitBigIntIntoWords(number, SCALAR_WORDS = 2) {
-    const res = [];
-    for (let i = 0; i < SCALAR_WORDS; i++) {
-        const word = number % SCALAR_MOD;
-        number /= SCALAR_MOD;
-        res.push(word);
-    }
-    return res;
-}
-export function combineWordsIntoBigInt(words) {
-    let res = 0n;
-    for (let i = words.length - 1; i >= 0; i--) {
-        res *= SCALAR_MOD;
-        res += words[i];
-    }
-    return res;
-}
+// const SCALAR_MOD: bigint = F.p;
+// export function splitBigIntIntoWords(number: bigint, SCALAR_WORDS = 2) {
+//   const res: bigint[] = [];
+//   for (let i = 0; i < SCALAR_WORDS; i++) {
+//     const word = number % SCALAR_MOD;
+//     number /= SCALAR_MOD;
+//     res.push(word);
+//   }
+//   return res;
+// }
+// export function combineWordsIntoBigInt(words: bigint[]) {
+//   let res = 0n;
+//   for (let i = words.length - 1; i >= 0; i--) {
+//     res *= SCALAR_MOD;
+//     res += words[i];
+//   }
+//   return res;
+// }
 /**
  * Convert a bigint to a Uint8Array
  */
@@ -63,7 +62,8 @@ export function uint8ArrayToBigInt(buf) {
  * Compute a chained Poseidon hash of the given length from the given seed
  */
 export function evaluateHashChain(seed, length) {
-    seed = F.e(seed);
+    // seed = F.e(seed);
+    seed = bigint_to_scalar_within_field(seed.toString(16));
     const res = [];
     for (let i = 0; i < length; i++) {
         // TODO: Should not need to cast to BigInt
@@ -79,13 +79,13 @@ export function createWalletSharesWithRandomness(walletShares, blinder, privateB
     // const publicShares: bigint[] = walletShares.map((share) => F.e(share));
     const publicShares = walletShares;
     const walletPublicShares = publicShares.map((share, i) => {
-        return F.sub(share, secretShares[i]);
+        return subtract_prime_field(share.toString(16), secretShares[i].toString(16));
     });
     const privateShares = secretShares;
-    const publicBlindedShares = walletPublicShares.map((share) => F.add(share, blinder));
+    const publicBlindedShares = walletPublicShares.map((share) => add_prime_field(share.toString(16), blinder.toString(16)));
     /// This is necessary because this implementation will blind the blinder as well as the shares, which is undesirable
     privateShares[privateShares.length - 1] = privateBlinderShare;
-    publicBlindedShares[walletPublicShares.length - 1] = F.sub(blinder, privateBlinderShare);
+    publicBlindedShares[walletPublicShares.length - 1] = subtract_prime_field(blinder.toString(16), privateBlinderShare.toString(16));
     return [privateShares, publicBlindedShares];
 }
 export function findZeroOrders(orders) {
