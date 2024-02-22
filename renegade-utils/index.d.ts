@@ -13,7 +13,7 @@
 * @param {string} value
 * @returns {any}
 */
-export function bigint_to_scalar_within_field(value: string): any;
+export function hex_to_field_scalar(value: string): any;
 /**
 * Adds two numbers in the prime field and returns the result as a string. Inputs are hex strings.
 *
@@ -29,7 +29,7 @@ export function bigint_to_scalar_within_field(value: string): any;
 * @param {string} b
 * @returns {any}
 */
-export function add_prime_field(a: string, b: string): any;
+export function add(a: string, b: string): any;
 /**
 * Subtracts the second number from the first in the prime field and returns the result as a string. Inputs are hex strings.
 *
@@ -45,7 +45,7 @@ export function add_prime_field(a: string, b: string): any;
 * @param {string} b
 * @returns {any}
 */
-export function subtract_prime_field(a: string, b: string): any;
+export function subtract(a: string, b: string): any;
 /**
 * Computes the Poseidon2 hash of the input string and returns a BigInt as a string.
 *
@@ -155,9 +155,9 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly bigint_to_scalar_within_field: (a: number, b: number) => number;
-  readonly add_prime_field: (a: number, b: number, c: number, d: number) => number;
-  readonly subtract_prime_field: (a: number, b: number, c: number, d: number) => number;
+  readonly hex_to_field_scalar: (a: number, b: number) => number;
+  readonly add: (a: number, b: number, c: number, d: number) => number;
+  readonly subtract: (a: number, b: number, c: number, d: number) => number;
   readonly compute_poseidon_hash: (a: number, b: number) => number;
   readonly generate_wallet_update_signature: (a: number, b: number, c: number, d: number) => number;
   readonly get_key_hierarchy_shares: (a: number, b: number, c: number) => void;

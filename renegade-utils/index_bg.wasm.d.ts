@@ -1,9 +1,9 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
-export function bigint_to_scalar_within_field(a: number, b: number): number;
-export function add_prime_field(a: number, b: number, c: number, d: number): number;
-export function subtract_prime_field(a: number, b: number, c: number, d: number): number;
+export function hex_to_field_scalar(a: number, b: number): number;
+export function add(a: number, b: number, c: number, d: number): number;
+export function subtract(a: number, b: number, c: number, d: number): number;
 export function compute_poseidon_hash(a: number, b: number): number;
 export function generate_wallet_update_signature(a: number, b: number, c: number, d: number): number;
 export function get_key_hierarchy_shares(a: number, b: number, c: number): void;
