@@ -114,10 +114,10 @@ function takeObject(idx) {
 * @param {string} value
 * @returns {any}
 */
-export function bigint_to_scalar_within_field(value) {
+export function hex_to_field_scalar(value) {
     const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.bigint_to_scalar_within_field(ptr0, len0);
+    const ret = wasm.hex_to_field_scalar(ptr0, len0);
     return takeObject(ret);
 }
 
@@ -136,12 +136,12 @@ export function bigint_to_scalar_within_field(value) {
 * @param {string} b
 * @returns {any}
 */
-export function add_prime_field(a, b) {
+export function add(a, b) {
     const ptr0 = passStringToWasm0(a, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(b, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
-    const ret = wasm.add_prime_field(ptr0, len0, ptr1, len1);
+    const ret = wasm.add(ptr0, len0, ptr1, len1);
     return takeObject(ret);
 }
 
@@ -160,12 +160,12 @@ export function add_prime_field(a, b) {
 * @param {string} b
 * @returns {any}
 */
-export function subtract_prime_field(a, b) {
+export function subtract(a, b) {
     const ptr0 = passStringToWasm0(a, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(b, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
-    const ret = wasm.subtract_prime_field(ptr0, len0, ptr1, len1);
+    const ret = wasm.subtract(ptr0, len0, ptr1, len1);
     return takeObject(ret);
 }
 

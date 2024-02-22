@@ -5,12 +5,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
-import { bigint_to_scalar_within_field, sign_http_request, } from "../renegade-utils";
+import { sign_http_request } from "../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
 import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, } from "./state/utils";
 import { CreateWalletResponse, TaskStatus, createPostRequest, } from "./types/api";
 import { RenegadeWs } from "./utils";
+import { toFieldScalar } from "./utils/field";
 import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, } from "./utils/sign";
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -84,7 +85,7 @@ export default class Account {
             orders: [],
             fees: [],
             keychain: keychain || this._wallet.keychain,
-            blinder: BigInt(bigint_to_scalar_within_field(blinder.toString(16))),
+            blinder: toFieldScalar(blinder),
         });
         // Reset the sync status.
         this._isSynced = false;

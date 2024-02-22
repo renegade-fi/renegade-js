@@ -21,6 +21,7 @@
     "build": "yarn run build:wasm && tsc",
     "build:wasm": "cd wasm && ./build.sh",
     "build:wasm-test": "cd wasm && ./build.sh --test",
+    "build:wasm-node": "cd wasm && ./build.sh --node",
     "prettier": "prettier --write {__tests__,src}/ --config ./.prettierrc",
     "eslint": "eslint {__tests__,src}/ --fix --config ./.eslintrc.cjs",
     "lint": "npm run prettier && npm run eslint"

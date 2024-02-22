@@ -1,6 +1,7 @@
 import { sha256 } from "@noble/hashes/sha256";
 import * as uuid from "uuid";
-import { add_prime_field, bigint_to_scalar_within_field, compute_poseidon_hash, get_key_hierarchy, subtract_prime_field, } from "../../renegade-utils";
+import { get_key_hierarchy } from "../../renegade-utils";
+import { addFF, computePoseidonHash, subtractFF, toFieldScalar, } from "../utils/field";
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
 export function generateId(sk_root) {
@@ -44,10 +45,10 @@ export function uint8ArrayToBigInt(buf) {
  * Compute a chained Poseidon hash of the given length from the given seed
  */
 export function evaluateHashChain(seed, length) {
-    seed = BigInt(bigint_to_scalar_within_field(seed.toString(16)));
+    seed = toFieldScalar(seed);
     const res = [];
     for (let i = 0; i < length; i++) {
-        seed = BigInt(compute_poseidon_hash(seed.toString(16)));
+        seed = computePoseidonHash(seed);
         res.push(seed);
     }
     return res;
@@ -59,13 +60,13 @@ export function createWalletSharesWithRandomness(walletShares, blinder, privateB
     // const publicShares: bigint[] = walletShares.map((share) => F.e(share));
     const publicShares = walletShares;
     const walletPublicShares = publicShares.map((share, i) => {
-        return subtract_prime_field(share.toString(16), secretShares[i].toString(16));
+        return subtractFF(share, secretShares[i]);
     });
     const privateShares = secretShares;
-    const publicBlindedShares = walletPublicShares.map((share) => BigInt(add_prime_field(share.toString(16), blinder.toString(16))));
+    const publicBlindedShares = walletPublicShares.map((share) => addFF(share, blinder));
     /// This is necessary because this implementation will blind the blinder as well as the shares, which is undesirable
     privateShares[privateShares.length - 1] = privateBlinderShare;
-    publicBlindedShares[walletPublicShares.length - 1] = BigInt(subtract_prime_field(blinder.toString(16), privateBlinderShare.toString(16)));
+    publicBlindedShares[walletPublicShares.length - 1] = subtractFF(blinder, privateBlinderShare);
     return [privateShares, publicBlindedShares];
 }
 export function findZeroOrders(orders) {

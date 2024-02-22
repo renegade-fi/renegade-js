@@ -14,12 +14,6 @@ use wasm_bindgen::prelude::*;
 
 const SIG_VALIDITY_WINDOW_MS: u64 = 10_000; // 10 seconds
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(typescript_type = "bigint")]
-    pub type BigInt;
-}
-
 pub mod custom_serde;
 pub mod ethers_helpers;
 pub mod helpers;
@@ -35,10 +29,10 @@ pub mod types;
 ///
 /// A `JsValue` containing the bigint within the prime field's order as a string.
 #[wasm_bindgen]
-pub fn bigint_to_scalar_within_field(value: &str) -> JsValue {
+pub fn hex_to_field_scalar(value: &str) -> JsValue {
     let bigint = biguint_from_hex_string(value);
-    let scalar: ScalarField = ScalarField::from(bigint);
-    let result_bigint: BigUint = scalar.into();
+    let res = ScalarField::from(bigint);
+    let result_bigint: BigUint = res.into();
     JsValue::from_str(&result_bigint.to_string())
 }
 
@@ -53,13 +47,13 @@ pub fn bigint_to_scalar_within_field(value: &str) -> JsValue {
 ///
 /// A `JsValue` containing the decimal string representation of the result.
 #[wasm_bindgen]
-pub fn add_prime_field(a: &str, b: &str) -> JsValue {
+pub fn add(a: &str, b: &str) -> JsValue {
     let a_scalar = ScalarField::from(biguint_from_hex_string(a));
     let b_scalar = ScalarField::from(biguint_from_hex_string(b));
 
     // Perform addition
-    let result: ScalarField = a_scalar + b_scalar;
-    let result_bigint: BigUint = result.into();
+    let res = a_scalar + b_scalar;
+    let result_bigint: BigUint = res.into();
     JsValue::from_str(&result_bigint.to_string())
 }
 
@@ -74,13 +68,13 @@ pub fn add_prime_field(a: &str, b: &str) -> JsValue {
 ///
 /// A `JsValue` containing the decimal string representation of the result.
 #[wasm_bindgen]
-pub fn subtract_prime_field(a: &str, b: &str) -> JsValue {
-    let a_scalar: ScalarField = ScalarField::from(biguint_from_hex_string(a));
-    let b_scalar: ScalarField = ScalarField::from(biguint_from_hex_string(b));
+pub fn subtract(a: &str, b: &str) -> JsValue {
+    let a_scalar = ScalarField::from(biguint_from_hex_string(a));
+    let b_scalar = ScalarField::from(biguint_from_hex_string(b));
 
     // Perform subtraction
-    let result: ScalarField = a_scalar - b_scalar;
-    let result_bigint: BigUint = result.into();
+    let res = a_scalar - b_scalar;
+    let result_bigint: BigUint = res.into();
     JsValue::from_str(&result_bigint.to_string())
 }
 
@@ -91,8 +85,9 @@ pub fn subtract_prime_field(a: &str, b: &str) -> JsValue {
 pub fn compute_poseidon_hash(value: &str) -> JsValue {
     let input = [ScalarField::from(biguint_from_hex_string(value))];
     let res = _compute_poseidon_hash(&input);
-    // Convert the hash result to a JavaScript BigInt as a string
-    JsValue::from_str(&res.to_string())
+    // Convert the hash result to a JavaScript BigInt
+    let result_bigint: BigUint = res.into();
+    JsValue::from_str(&result_bigint.to_string())
 }
 
 /// Generates a signature for a wallet update operation.

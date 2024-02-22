@@ -9,6 +9,8 @@ for arg in "$@"
 do
     if [ "$arg" == "--test" ]; then
         TARGET="bundler"
+    elif [ "$arg" == "--node" ]; then
+        TARGET="nodejs"
     fi
 done
 
