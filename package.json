@@ -18,7 +18,7 @@
   "type": "module",
   "scripts": {
     "test": "yarn run build:wasm-test && vitest run --dir tests",
-    "build": "yarn run build:wasm-node && tsc",
+    "build": "yarn run build:wasm && tsc",
     "build:wasm": "cd wasm && ./build.sh",
     "build:wasm-test": "cd wasm && ./build.sh --test",
     "build:wasm-node": "cd wasm && ./build.sh --node",
