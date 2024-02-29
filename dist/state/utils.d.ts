@@ -22,3 +22,4 @@ export declare function evaluateHashChain(seed: bigint, length: number): bigint[
  */
 export declare function createWalletSharesWithRandomness(walletShares: bigint[], blinder: bigint, privateBlinderShare: bigint, secretShares: bigint[]): bigint[][];
 export declare function findZeroOrders(orders: Record<OrderId, Order>): OrderId[];
+export declare function getRandomBytes(size: number): Uint8Array;
