@@ -1,6 +1,6 @@
 {
   "name": "@renegade-fi/renegade-js",
-  "version": "0.4.15",
+  "version": "0.4.15-cjs",
   "description": "Typescript bindings for the Renegade relayer API.",
   "author": "Christopher Bender <chris@renegade.fi>",
   "repository": "https://github.com/renegade-fi/renegade-js",
@@ -18,7 +18,7 @@
   "type": "module",
   "scripts": {
     "test": "yarn run build:wasm-test && vitest run --dir tests",
-    "build": "yarn run build:wasm && tsc",
+    "build": "yarn run build:wasm-node && tsc",
     "build:wasm": "cd wasm && ./build.sh",
     "build:wasm-test": "cd wasm && ./build.sh --test",
     "build:wasm-node": "cd wasm && ./build.sh --node",
