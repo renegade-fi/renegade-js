@@ -1,6 +1,7 @@
 import { sha256 } from "@noble/hashes/sha256";
 // import { readFileSync, writeFileSync } from "fs";
 import { get_key_hierarchy, sign_http_request, sign_message, } from "../../renegade-utils";
+import { getRandomBytes } from "../state/utils";
 /**
  * Represents a signing key used for signing messages.
  */
@@ -83,7 +84,7 @@ export default class Keychain {
             skRoot = options.skRoot;
         }
         else {
-            skRoot = crypto.getRandomValues(new Uint8Array(32));
+            skRoot = getRandomBytes(32);
         }
         // Populate the hierarchy.
         this.populateHierarchy(skRoot);

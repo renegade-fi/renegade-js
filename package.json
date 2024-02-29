@@ -18,16 +18,13 @@
   "type": "module",
   "scripts": {
     "test": "yarn run build:wasm-test && vitest run --dir tests",
-    "build": "yarn run build:wasm-node && tsc",
+    "build": "yarn run build:wasm && tsc",
     "build:wasm": "cd wasm && ./build.sh",
     "build:wasm-test": "cd wasm && ./build.sh --test",
     "build:wasm-node": "cd wasm && ./build.sh --node",
     "prettier": "prettier --write {__tests__,src}/ --config ./.prettierrc",
     "eslint": "eslint {__tests__,src}/ --fix --config ./.eslintrc.cjs",
     "lint": "npm run prettier && npm run eslint"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
   },
   "dependencies": {
     "@noble/hashes": "^1.3.0",
