@@ -35,7 +35,6 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
      * @throws {InvalidPort} If the port is not a valid port.
      */
     constructor(config: RenegadeConfig);
-    init(): Promise<void>;
     /**
      * Construct a URL from the given parameters.
      *
