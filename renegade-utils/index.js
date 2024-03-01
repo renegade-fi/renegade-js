@@ -1,11 +1,8 @@
-let imports = {};
-imports['__wbindgen_placeholder__'] = module.exports;
 let wasm;
-const { TextDecoder, TextEncoder } = require(`util`);
 
-let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+const cachedTextDecoder = (typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8', { ignoreBOM: true, fatal: true }) : { decode: () => { throw Error('TextDecoder not available') } } );
 
-cachedTextDecoder.decode();
+if (typeof TextDecoder !== 'undefined') { cachedTextDecoder.decode(); };
 
 let cachedUint8Memory0 = null;
 
@@ -38,7 +35,7 @@ function addHeapObject(obj) {
 
 let WASM_VECTOR_LEN = 0;
 
-let cachedTextEncoder = new TextEncoder('utf-8');
+const cachedTextEncoder = (typeof TextEncoder !== 'undefined' ? new TextEncoder('utf-8') : { encode: () => { throw Error('TextEncoder not available') } } );
 
 const encodeString = (typeof cachedTextEncoder.encodeInto === 'function'
     ? function (arg, view) {
@@ -117,12 +114,12 @@ function takeObject(idx) {
 * @param {string} value
 * @returns {any}
 */
-module.exports.hex_to_field_scalar = function(value) {
+export function hex_to_field_scalar(value) {
     const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.hex_to_field_scalar(ptr0, len0);
     return takeObject(ret);
-};
+}
 
 /**
 * Adds two numbers in the prime field and returns the result as a string. Inputs are hex strings.
@@ -139,14 +136,14 @@ module.exports.hex_to_field_scalar = function(value) {
 * @param {string} b
 * @returns {any}
 */
-module.exports.add = function(a, b) {
+export function add(a, b) {
     const ptr0 = passStringToWasm0(a, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(b, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.add(ptr0, len0, ptr1, len1);
     return takeObject(ret);
-};
+}
 
 /**
 * Subtracts the second number from the first in the prime field and returns the result as a string. Inputs are hex strings.
@@ -163,14 +160,14 @@ module.exports.add = function(a, b) {
 * @param {string} b
 * @returns {any}
 */
-module.exports.subtract = function(a, b) {
+export function subtract(a, b) {
     const ptr0 = passStringToWasm0(a, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(b, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.subtract(ptr0, len0, ptr1, len1);
     return takeObject(ret);
-};
+}
 
 /**
 * Computes the Poseidon2 hash of the input string and returns a BigInt as a string.
@@ -179,12 +176,12 @@ module.exports.subtract = function(a, b) {
 * @param {string} value
 * @returns {any}
 */
-module.exports.compute_poseidon_hash = function(value) {
+export function compute_poseidon_hash(value) {
     const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.compute_poseidon_hash(ptr0, len0);
     return takeObject(ret);
-};
+}
 
 /**
 * Generates a signature for a wallet update operation.
@@ -204,14 +201,14 @@ module.exports.compute_poseidon_hash = function(value) {
 * @param {string} sk_root
 * @returns {any}
 */
-module.exports.generate_wallet_update_signature = function(wallet_str, sk_root) {
+export function generate_wallet_update_signature(wallet_str, sk_root) {
     const ptr0 = passStringToWasm0(wallet_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.generate_wallet_update_signature(ptr0, len0, ptr1, len1);
     return takeObject(ret);
-};
+}
 
 let cachedInt32Memory0 = null;
 
@@ -253,7 +250,7 @@ function getArrayJsValueFromWasm0(ptr, len) {
 * @param {string} sk_root
 * @returns {any[]}
 */
-module.exports.get_key_hierarchy_shares = function(sk_root) {
+export function get_key_hierarchy_shares(sk_root) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -267,7 +264,7 @@ module.exports.get_key_hierarchy_shares = function(sk_root) {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
-};
+}
 
 /**
 * Get the string representation of the key hierarchy computed from `sk_root`
@@ -281,12 +278,12 @@ module.exports.get_key_hierarchy_shares = function(sk_root) {
 * @param {string} sk_root
 * @returns {any}
 */
-module.exports.get_key_hierarchy = function(sk_root) {
+export function get_key_hierarchy(sk_root) {
     const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.get_key_hierarchy(ptr0, len0);
     return takeObject(ret);
-};
+}
 
 /**
 * Generates a signature for updating a wallet by hashing the wallet's share commitments
@@ -303,12 +300,12 @@ module.exports.get_key_hierarchy = function(sk_root) {
 * @param {string} wallet_str
 * @returns {any}
 */
-module.exports.get_shares_commitment = function(wallet_str) {
+export function get_shares_commitment(wallet_str) {
     const ptr0 = passStringToWasm0(wallet_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.get_shares_commitment(ptr0, len0);
     return takeObject(ret);
-};
+}
 
 /**
 * Sign the body of a request with `sk_root`
@@ -328,7 +325,7 @@ module.exports.get_shares_commitment = function(wallet_str) {
 * @param {string} key
 * @returns {any[]}
 */
-module.exports.sign_http_request = function(message, timestamp, key) {
+export function sign_http_request(message, timestamp, key) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -344,7 +341,7 @@ module.exports.sign_http_request = function(message, timestamp, key) {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
-};
+}
 
 /**
 * Sign a message with a given key
@@ -361,29 +358,109 @@ module.exports.sign_http_request = function(message, timestamp, key) {
 * @param {string} key
 * @returns {any}
 */
-module.exports.sign_message = function(message, key) {
+export function sign_message(message, key) {
     const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.sign_message(ptr0, len0, ptr1, len1);
     return takeObject(ret);
-};
+}
 
-module.exports.__wbindgen_string_new = function(arg0, arg1) {
-    const ret = getStringFromWasm0(arg0, arg1);
-    return addHeapObject(ret);
-};
+async function __wbg_load(module, imports) {
+    if (typeof Response === 'function' && module instanceof Response) {
+        if (typeof WebAssembly.instantiateStreaming === 'function') {
+            try {
+                return await WebAssembly.instantiateStreaming(module, imports);
 
-module.exports.__wbindgen_throw = function(arg0, arg1) {
-    throw new Error(getStringFromWasm0(arg0, arg1));
-};
+            } catch (e) {
+                if (module.headers.get('Content-Type') != 'application/wasm') {
+                    console.warn("`WebAssembly.instantiateStreaming` failed because your server does not serve wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n", e);
 
-const path = require('path').join(__dirname, 'index_bg.wasm');
-const bytes = require('fs').readFileSync(path);
+                } else {
+                    throw e;
+                }
+            }
+        }
 
-const wasmModule = new WebAssembly.Module(bytes);
-const wasmInstance = new WebAssembly.Instance(wasmModule, imports);
-wasm = wasmInstance.exports;
-module.exports.__wasm = wasm;
+        const bytes = await module.arrayBuffer();
+        return await WebAssembly.instantiate(bytes, imports);
 
+    } else {
+        const instance = await WebAssembly.instantiate(module, imports);
+
+        if (instance instanceof WebAssembly.Instance) {
+            return { instance, module };
+
+        } else {
+            return instance;
+        }
+    }
+}
+
+function __wbg_get_imports() {
+    const imports = {};
+    imports.wbg = {};
+    imports.wbg.__wbindgen_string_new = function(arg0, arg1) {
+        const ret = getStringFromWasm0(arg0, arg1);
+        return addHeapObject(ret);
+    };
+    imports.wbg.__wbindgen_throw = function(arg0, arg1) {
+        throw new Error(getStringFromWasm0(arg0, arg1));
+    };
+
+    return imports;
+}
+
+function __wbg_init_memory(imports, maybe_memory) {
+
+}
+
+function __wbg_finalize_init(instance, module) {
+    wasm = instance.exports;
+    __wbg_init.__wbindgen_wasm_module = module;
+    cachedInt32Memory0 = null;
+    cachedUint32Memory0 = null;
+    cachedUint8Memory0 = null;
+
+
+    return wasm;
+}
+
+function initSync(module) {
+    if (wasm !== undefined) return wasm;
+
+    const imports = __wbg_get_imports();
+
+    __wbg_init_memory(imports);
+
+    if (!(module instanceof WebAssembly.Module)) {
+        module = new WebAssembly.Module(module);
+    }
+
+    const instance = new WebAssembly.Instance(module, imports);
+
+    return __wbg_finalize_init(instance, module);
+}
+
+async function __wbg_init(input) {
+    if (wasm !== undefined) return wasm;
+
+    if (typeof input === 'undefined') {
+        input = new URL('index_bg.wasm', import.meta.url);
+    }
+    const imports = __wbg_get_imports();
+
+    if (typeof input === 'string' || (typeof Request === 'function' && input instanceof Request) || (typeof URL === 'function' && input instanceof URL)) {
+        input = fetch(input);
+    }
+
+    __wbg_init_memory(imports);
+
+    const { instance, module } = await __wbg_load(await input, imports);
+
+    return __wbg_finalize_init(instance, module);
+}
+
+export { initSync }
+export default __wbg_init;

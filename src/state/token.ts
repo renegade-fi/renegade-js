@@ -50,6 +50,17 @@ export default class Token {
     return ticker;
   }
 
+  public get decimals(): number | null {
+    const tokenInfo = tokenMappings.tokens.find(
+      (token) => token.address === "0x" + this.address,
+    );
+    if (!tokenInfo) {
+      console.error(`Decimals not found for address: 0x${this.address}`);
+      return null;
+    }
+    return tokenInfo.decimals;
+  }
+
   serialize(): string {
     return "0x" + this.address;
   }
