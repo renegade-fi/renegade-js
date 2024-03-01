@@ -1,4 +1,5 @@
 import * as uuid from "uuid";
+import { limbsToBigIntLE } from "../state/utils";
 import Token from "./token";
 export default class Balance {
     balanceId;
@@ -21,7 +22,7 @@ export default class Balance {
     static deserialize(serializedBalance) {
         return new Balance({
             mint: Token.deserialize(serializedBalance.mint),
-            amount: BigInt(serializedBalance.amount),
+            amount: limbsToBigIntLE(serializedBalance.amount),
         });
     }
 }

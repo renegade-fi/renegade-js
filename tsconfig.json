@@ -3,17 +3,23 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": "./",
-    "paths": { 
-      "@/*": ["src/*"]
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
     },
     "declaration": true,
-    "lib": ["ESNext", "dom"],
+    "lib": [
+      "ESNext",
+      "dom"
+    ],
     "module": "esnext",
     "target": "esnext",
     "esModuleInterop": true,
     "moduleResolution": "node",
     "experimentalDecorators": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   },
   "include": [
     "./src/**/*.ts"

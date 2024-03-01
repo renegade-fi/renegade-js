@@ -76,16 +76,20 @@ export function findZeroOrders(orders) {
 }
 export function getRandomBytes(size) {
     // Node.js environment
-    if (typeof process === 'object' && process.versions && process.versions.node) {
-        const crypto = require('crypto');
+    if (typeof process === "object" &&
+        process.versions &&
+        process.versions.node) {
+        const crypto = require("crypto");
         return new Uint8Array(crypto.randomBytes(size));
     }
     // Browser environment
-    else if (typeof window === 'object' && typeof window.crypto === 'object' && typeof window.crypto.getRandomValues === 'function') {
+    else if (typeof window === "object" &&
+        typeof window.crypto === "object" &&
+        typeof window.crypto.getRandomValues === "function") {
         return window.crypto.getRandomValues(new Uint8Array(size));
     }
     // Unsupported environment
     else {
-        throw new Error('Secure random bytes generation is not supported in this environment');
+        throw new Error("Secure random bytes generation is not supported in this environment");
     }
 }

@@ -40,6 +40,14 @@ export default class Token {
         }
         return ticker;
     }
+    get decimals() {
+        const tokenInfo = tokenMappings.tokens.find((token) => token.address === "0x" + this.address);
+        if (!tokenInfo) {
+            console.error(`Decimals not found for address: 0x${this.address}`);
+            return null;
+        }
+        return tokenInfo.decimals;
+    }
     serialize() {
         return "0x" + this.address;
     }

@@ -7,6 +7,7 @@ export default class Token {
         ticker?: string;
     });
     get ticker(): string | null;
+    get decimals(): number | null;
     serialize(): string;
     static deserialize(serializedToken: string): Token;
     static findAddressByTicker(ticker: string): string;
