@@ -79,13 +79,12 @@ export interface RenegadeConfig {
  */
 export default class Renegade
   implements
-    IRenegadeAccount,
-    IRenegadeInformation,
-    IRenegadeBalance,
-    IRenegadeTrading,
-    IRenegadeFees,
-    IRenegadeStreaming
-{
+  IRenegadeAccount,
+  IRenegadeInformation,
+  IRenegadeBalance,
+  IRenegadeTrading,
+  IRenegadeFees,
+  IRenegadeStreaming {
   // --------------------------
   // | State and Constructors |
   // --------------------------
@@ -146,17 +145,17 @@ export default class Renegade
   // /**
   //  * Initializes the WASM module for use in both browser and serverless environments.
   //  */
-  async init() {
-    try {
-      const module = await import("../renegade-utils");
-      const loadUtils = module.default;
-      await loadUtils(); // Ensure this is awaited
-      console.log("WASM module loaded successfully!");
-    } catch (error) {
-      console.error("Failed to load WASM module:", error);
-      throw new Error("Failed to load WASM module");
-    }
-  }
+  // async init() {
+  //   try {
+  //     const module = await import("../renegade-utils");
+  //     const loadUtils = module.default;
+  //     await loadUtils(); // Ensure this is awaited
+  //     console.log("WASM module loaded successfully!");
+  //   } catch (error) {
+  //     console.error("Failed to load WASM module:", error);
+  //     throw new Error("Failed to load WASM module");
+  //   }
+  // }
 
   /**
    * Construct a URL from the given parameters.
