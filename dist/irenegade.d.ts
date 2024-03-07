@@ -106,7 +106,7 @@ export interface IRenegadeBalance {
      *
      * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
      */
-    deposit(accountId: AccountId, mint: Token, amount: bigint, fromAddr: string): Promise<void>;
+    deposit(accountId: AccountId, mint: Token, amount: bigint, fromAddr: string, permitNonce: bigint, permitDeadline: bigint, permitSignature: string): Promise<void>;
     /**
      * Withdraw an asset from an Account, triggering a L1 outbox transaction.
      *

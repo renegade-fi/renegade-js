@@ -2,6 +2,7 @@
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
 export function hex_to_field_scalar(a: number, b: number): number;
+export function bigint_to_limbs(a: number, b: number): number;
 export function add(a: number, b: number, c: number, d: number): number;
 export function subtract(a: number, b: number, c: number, d: number): number;
 export function compute_poseidon_hash(a: number, b: number): number;

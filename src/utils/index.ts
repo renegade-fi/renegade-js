@@ -1,6 +1,7 @@
-import * as uuid from "uuid";
 import WebSocket from "isomorphic-ws";
+import * as uuid from "uuid";
 
+import { sign_http_request } from "../../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "../errors";
 import { Keychain, Token } from "../state";
 import {
@@ -74,8 +75,13 @@ export class RenegadeWs {
       },
     };
     if (keychain) {
-      const [renegadeAuth, renegadeAuthExpiration] =
-        keychain.generateExpiringSignature(JSON.stringify(message.body));
+      const now = Date.now();
+      const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
+        JSON.stringify(message.body),
+        BigInt(now),
+        keychain.keyHierarchy.root.secretKey,
+      );
+
       message.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
       message.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
     }
@@ -106,8 +112,8 @@ export class RenegadeWs {
         this._topicCallbacks[callbackId](JSON.stringify(parsedMessage.event));
       }
     } catch (error) {
-      console.log("Websocket error: ", error);
-      console.log(`Error parsing message: ${message}`);
+      console.error("Websocket error: ", error);
+      console.error(`Error parsing message: ${message}`);
     }
   }
 

@@ -95,8 +95,6 @@ export default class Keychain {
     populateHierarchy(skRoot) {
         // Derive the root key.
         const root = new SigningKey(skRoot);
-        // Derive the match key.
-        const rootSignatureBytes = root.signMessage(Keychain.CREATE_SK_MATCH_MESSAGE);
         const skMatch = JSON.parse(get_key_hierarchy(root.secretKey)).private_keys.sk_match.replace("0x", "");
         const pkMatch = JSON.parse(get_key_hierarchy(root.secretKey)).public_keys.pk_match.replace("0x", "");
         const match = new IdentificationKey(skMatch, pkMatch);
@@ -111,7 +109,8 @@ export default class Keychain {
      * timestamp, to be appended as headers to the request.
      */
     generateExpiringSignature(dataBuffer) {
-        const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(dataBuffer, BigInt(Date.now()), this.keyHierarchy.root.secretKey);
+        const now = BigInt(Date.now());
+        const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(dataBuffer, now, this.keyHierarchy.root.secretKey);
         return [renegadeAuth, renegadeAuthExpiration];
     }
     /**
@@ -128,6 +127,7 @@ export default class Keychain {
      * @param filePath File path to load the keychain from.
      */
     loadFromFile(filePath) {
+        // TODO: Reenable for node.js
         // const keychainSerialized = readFileSync(filePath, "utf8");
         // const keychainDeserialized = Keychain.deserialize(
         //   JSON.parse(keychainSerialized),
@@ -142,12 +142,17 @@ export default class Keychain {
      * @returns The serialized keychain.
      */
     serialize() {
-        return get_key_hierarchy(this.keyHierarchy.root.secretKey);
+        const res = get_key_hierarchy(this.keyHierarchy.root.secretKey);
+        return res;
     }
     static deserialize(serializedKeychain) {
-        let skRoot = Buffer.from(serializedKeychain.private_keys.sk_root.replace("0x", ""), "hex");
-        if (skRoot.length < 32) {
-            skRoot = Buffer.concat([Buffer.alloc(32 - skRoot.length), skRoot]);
+        const trimmed = serializedKeychain.private_keys.sk_root.replace("0x", "");
+        let skRoot = Buffer.from(trimmed, "hex");
+        // Pad if it's less than 64 bytes
+        if (trimmed.length < 64) {
+            const paddingLength = 64 - trimmed.length;
+            const padding = "0".repeat(paddingLength);
+            skRoot = Buffer.from(padding + trimmed, "hex");
         }
         return new Keychain({ skRoot });
     }

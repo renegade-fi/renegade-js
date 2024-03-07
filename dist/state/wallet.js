@@ -1,18 +1,19 @@
 import { get_key_hierarchy_shares } from "../../renegade-utils";
 import { addFF, subtractFF } from "../utils/field";
 import Balance from "./balance";
-import Fee from "./fee";
 import Keychain from "./keychain";
 import Order from "./order";
 import { bigIntToLimbsLE, createWalletSharesWithRandomness, evaluateHashChain, generateId, limbsToBigIntLE, } from "./utils";
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
 export const MAX_ORDERS = 5;
-const MAX_FEES = 2;
+const MAX_FEES = 0;
 // Number of secret shares to represent each of balances, orders, and fees
-const SHARES_PER_BALANCE = 2;
-const SHARES_PER_ORDER = 6;
-const SHARES_PER_FEE = 4;
+const SHARES_PER_BALANCE = 4;
+const SHARES_PER_ORDER = 5;
+const SHARES_PER_FEE = 0;
+const SHARES_PER_MATCH_FEE = 1;
+const SHARES_PER_MANAGING_CLUSTER = 2;
 // The number of felt words to represent pk_root
 // Stored as the affine coordinates of the point
 const NUM_ROOT_KEY_WORDS = 4;
@@ -23,7 +24,8 @@ const SHARES_PER_BLINDER = 1;
 // The total number of shares per wallet
 const SHARES_PER_WALLET = MAX_BALANCES * SHARES_PER_BALANCE +
     MAX_ORDERS * SHARES_PER_ORDER +
-    MAX_FEES * SHARES_PER_FEE +
+    SHARES_PER_MATCH_FEE +
+    SHARES_PER_MANAGING_CLUSTER +
     SHARES_PER_KEYCHAIN +
     SHARES_PER_BLINDER;
 export default class Wallet {
@@ -79,6 +81,16 @@ export default class Wallet {
         const res = packedOrders.flat().concat(packedPadding.flat());
         return res;
     }
+    packMatchFee() {
+        return [0n];
+    }
+    packManagingCluster() {
+        // TODO: Test this
+        return [
+            19698561148652590122159747500897617769866003486955115824547446575314762165298n,
+            19298250018296453272277890825869354524455968081175474282777126169995084727839n,
+        ];
+    }
     packFees() {
         const packedFees = this.fees.map((fee) => fee.pack());
         const packedPadding = Array(MAX_FEES - this.fees.length).fill(Array(SHARES_PER_FEE).fill(0n));
@@ -97,8 +109,9 @@ export default class Wallet {
     packWallet() {
         return this.packBalances()
             .concat(this.packOrders())
-            .concat(this.packFees())
             .concat(this.packKeychain())
+            .concat(this.packMatchFee())
+            .concat(this.packManagingCluster())
             .concat(this.packBlinder());
     }
     /**
@@ -145,6 +158,8 @@ export default class Wallet {
       "orders": [${this.orders.map((o) => o.serialize()).join(",")}],
       "fees": [${this.fees.map((f) => f.serialize()).join(",")}],
       "key_chain": ${this.keychain.serialize()},
+      "managing_cluster": "0x326c87820d81d2594d347ead9a42bce37e924adfdee7411de3ca05b991fd8c2b1f861a672cfc76c26ae1c0db15117c2a767b27101fedac909e2058a7246caa2a",
+      "match_fee": 0,
       "blinder": [${bigIntToLimbsLE(this.blinder).join(",")}],
       "blinded_public_shares": [${serializedBlindedPublicShares.join(",")}],
       "private_shares": [${serializedPrivateShares.join(",")}],
@@ -152,10 +167,11 @@ export default class Wallet {
     }`.replace(/[\s\n]/g, "");
     }
     static deserialize(serializedWallet) {
+        console.log("[SDK] Wallet.deserialize: serializedWallet: ", serializedWallet);
         const id = serializedWallet.id;
         const balances = serializedWallet.balances.map((b) => Balance.deserialize(b));
         const orders = serializedWallet.orders.map((o) => Order.deserialize(o));
-        const fees = serializedWallet.fees.map((f) => Fee.deserialize(f));
+        const fees = [];
         const keychain = Keychain.deserialize(serializedWallet.key_chain);
         const updateLocked = serializedWallet.update_locked;
         const blindedPublicShares = serializedWallet.blinded_public_shares.map((share) => {

@@ -5,6 +5,22 @@ use serde::{Deserialize, Serialize};
 
 pub type ScalarField = Fr;
 
+// ----------------------
+// | EncryptionKey Type |
+// ----------------------
+
+/// A type alias representing an encryption key in the ElGamal over BabyJubJub
+/// cryptosystem
+pub type EncryptionKey = BabyJubJubPoint;
+
+/// The affine representation of a point on the BabyJubJub curve
+pub struct BabyJubJubPoint {
+    /// The x coordinate of the point
+    pub x: ScalarField,
+    /// The y coordinate of the point
+    pub y: ScalarField,
+}
+
 // ---------------------------
 // | IdentificationKey Types |
 // ---------------------------

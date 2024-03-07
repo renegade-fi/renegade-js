@@ -76,17 +76,18 @@ export default class Renegade {
     // /**
     //  * Initializes the WASM module for use in both browser and serverless environments.
     //  */
-    // async init() {
-    //   try {
-    //     const module = await import("../renegade-utils");
-    //     const loadUtils = module.default;
-    //     await loadUtils(); // Ensure this is awaited
-    //     console.log("WASM module loaded successfully!");
-    //   } catch (error) {
-    //     console.error("Failed to load WASM module:", error);
-    //     throw new Error("Failed to load WASM module");
-    //   }
-    // }
+    async init() {
+        try {
+            const module = await import("../renegade-utils");
+            const loadUtils = module.default;
+            await loadUtils(); // Ensure this is awaited
+            console.log("WASM module loaded successfully!");
+        }
+        catch (error) {
+            console.error("Failed to load WASM module:", error);
+            throw new Error("Failed to load WASM module");
+        }
+    }
     /**
      * Construct a URL from the given parameters.
      *
@@ -254,13 +255,13 @@ export default class Renegade {
     // -----------------------------------
     // | IRenegadeBalance Implementation |
     // -----------------------------------
-    async deposit(accountId, mint, amount, fromAddr) {
-        const [, taskJob] = await this._depositTaskJob(accountId, mint, amount, fromAddr);
+    async deposit(accountId, mint, amount, fromAddr, permitNonce, permitDeadline, permitSignature) {
+        const [, taskJob] = await this._depositTaskJob(accountId, mint, amount, fromAddr, permitNonce, permitDeadline, permitSignature);
         return await taskJob;
     }
-    async _depositTaskJob(accountId, mint, amount, fromAddr) {
+    async _depositTaskJob(accountId, mint, amount, fromAddr, permitNonce, permitDeadline, permitSignature) {
         const account = this._lookupAccount(accountId);
-        const taskId = await account.deposit(mint, amount, fromAddr);
+        const taskId = await account.deposit(mint, amount, fromAddr, permitNonce, permitDeadline, permitSignature);
         return [taskId, this.awaitTaskCompletion(taskId)];
     }
     async withdraw(accountId, mint, amount, destinationAddr) {
