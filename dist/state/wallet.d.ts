@@ -33,6 +33,8 @@ export default class Wallet {
     getBlinders(): [bigint, bigint, bigint];
     packBalances(): bigint[];
     packOrders(): bigint[];
+    packMatchFee(): bigint[];
+    packManagingCluster(): bigint[];
     packFees(): bigint[];
     packKeychain(): bigint[];
     packBlinder(): bigint[];

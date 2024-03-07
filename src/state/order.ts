@@ -18,7 +18,6 @@ export default class Order {
   public readonly amount: bigint;
   public readonly minimumAmount: bigint;
   public readonly worstPrice: number;
-  public readonly timestamp: number;
   constructor(params: {
     id?: OrderId;
     baseToken: Token;
@@ -28,7 +27,6 @@ export default class Order {
     amount: bigint;
     minimumAmount?: bigint;
     worstPrice?: number;
-    timestamp?: number;
   }) {
     if (params.type === "bidirectional") {
       throw new Error("Bidirectional LP orders are not yet supported.");
@@ -49,7 +47,6 @@ export default class Order {
         : params.side === "buy"
         ? MAX_PRICE
         : 0;
-    this.timestamp = params.timestamp || new Date().getTime();
   }
 
   pack(): bigint[] {
@@ -60,7 +57,6 @@ export default class Order {
       this.amount,
       // Relayer expects worstPrice to be a FixedPoint
       BigInt(Math.floor(this.worstPrice * 2 ** 32 || 0)),
-      BigInt(this.timestamp),
     ];
   }
 
@@ -79,10 +75,9 @@ export default class Order {
       "quote_mint": "${this.quoteToken.serialize()}",
       "side": "${this.side === "buy" ? "Buy" : "Sell"}",
       "type": "${this.type === "midpoint" ? "Midpoint" : "Limit"}",
-      "amount": [${bigIntToLimbsLE(this.amount).join(",")}],
+      "amount": ${this.amount},
       "minimum_amount": ${minimumAmountSerialized},
-      "worst_case_price": ${this.worstPrice},
-      "timestamp": ${this.timestamp}
+      "worst_case_price": ${this.worstPrice}
     }`.replace(/[\s\n]/g, "");
   }
 
@@ -101,10 +96,9 @@ export default class Order {
       quoteToken: Token.deserialize(serializedOrder.quote_mint),
       side: serializedOrder.side.toLowerCase(),
       type: serializedOrder.type.toLowerCase(),
-      amount: limbsToBigIntLE(serializedOrder.amount),
+      amount: BigInt(serializedOrder.amount),
       minimumAmount: minimumAmountDeserialized,
       worstPrice: Number(serializedOrder.worst_case_price),
-      timestamp: serializedOrder.timestamp,
     });
   }
 }

@@ -79,12 +79,13 @@ export interface RenegadeConfig {
  */
 export default class Renegade
   implements
-  IRenegadeAccount,
-  IRenegadeInformation,
-  IRenegadeBalance,
-  IRenegadeTrading,
-  IRenegadeFees,
-  IRenegadeStreaming {
+    IRenegadeAccount,
+    IRenegadeInformation,
+    IRenegadeBalance,
+    IRenegadeTrading,
+    IRenegadeFees,
+    IRenegadeStreaming
+{
   // --------------------------
   // | State and Constructors |
   // --------------------------
@@ -145,17 +146,17 @@ export default class Renegade
   // /**
   //  * Initializes the WASM module for use in both browser and serverless environments.
   //  */
-  // async init() {
-  //   try {
-  //     const module = await import("../renegade-utils");
-  //     const loadUtils = module.default;
-  //     await loadUtils(); // Ensure this is awaited
-  //     console.log("WASM module loaded successfully!");
-  //   } catch (error) {
-  //     console.error("Failed to load WASM module:", error);
-  //     throw new Error("Failed to load WASM module");
-  //   }
-  // }
+  async init() {
+    try {
+      const module = await import("../renegade-utils");
+      const loadUtils = module.default;
+      await loadUtils(); // Ensure this is awaited
+      console.log("WASM module loaded successfully!");
+    } catch (error) {
+      console.error("Failed to load WASM module:", error);
+      throw new Error("Failed to load WASM module");
+    }
+  }
 
   /**
    * Construct a URL from the given parameters.
@@ -396,12 +397,18 @@ export default class Renegade
     mint: Token,
     amount: bigint,
     fromAddr: string,
+    permitNonce: bigint,
+    permitDeadline: bigint,
+    permitSignature: string,
   ): Promise<void> {
     const [, taskJob] = await this._depositTaskJob(
       accountId,
       mint,
       amount,
       fromAddr,
+      permitNonce,
+      permitDeadline,
+      permitSignature,
     );
     return await taskJob;
   }
@@ -411,9 +418,19 @@ export default class Renegade
     mint: Token,
     amount: bigint,
     fromAddr: string,
+    permitNonce: bigint,
+    permitDeadline: bigint,
+    permitSignature: string,
   ): TaskJob<void> {
     const account = this._lookupAccount(accountId);
-    const taskId = await account.deposit(mint, amount, fromAddr);
+    const taskId = await account.deposit(
+      mint,
+      amount,
+      fromAddr,
+      permitNonce,
+      permitDeadline,
+      permitSignature,
+    );
     return [taskId, this.awaitTaskCompletion(taskId)];
   }
 

@@ -35,6 +35,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
      * @throws {InvalidPort} If the port is not a valid port.
      */
     constructor(config: RenegadeConfig);
+    init(): Promise<void>;
     /**
      * Construct a URL from the given parameters.
      *
@@ -79,7 +80,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     getOrders(accountId: AccountId): Record<OrderId, Order>;
     getFees(accountId: AccountId): Record<FeeId, Fee>;
     getKeychain(accountId: AccountId): Keychain;
-    deposit(accountId: AccountId, mint: Token, amount: bigint, fromAddr: string): Promise<void>;
+    deposit(accountId: AccountId, mint: Token, amount: bigint, fromAddr: string, permitNonce: bigint, permitDeadline: bigint, permitSignature: string): Promise<void>;
     private _depositTaskJob;
     withdraw(accountId: AccountId, mint: Token, amount: bigint, destinationAddr: string): Promise<void>;
     private _withdrawTaskJob;
@@ -112,7 +113,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
      */
     task: {
         initializeAccount: (accountId: AccountId) => Promise<[TaskId, Promise<void>]>;
-        deposit: (accountId: AccountId, mint: Token, amount: bigint, fromAddr: string) => Promise<[TaskId, Promise<void>]>;
+        deposit: (accountId: AccountId, mint: Token, amount: bigint, fromAddr: string, permitNonce: bigint, permitDeadline: bigint, permitSignature: string) => Promise<[TaskId, Promise<void>]>;
         withdraw: (accountId: AccountId, mint: Token, amount: bigint, destinationAddr: string) => Promise<[TaskId, Promise<void>]>;
         placeOrder: (accountId: AccountId, order: Order) => Promise<[TaskId, Promise<void>]>;
         modifyOrder: (accountId: AccountId, oldOrderId: OrderId, newOrder: Order) => Promise<[TaskId, Promise<void>]>;

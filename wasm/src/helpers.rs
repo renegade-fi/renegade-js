@@ -1,5 +1,6 @@
 use crate::types::{
-    ApiWallet, PublicIdentificationKey, ScalarField, SecretIdentificationKey, Wallet,
+    ApiWallet, BabyJubJubPoint, PublicIdentificationKey, ScalarField, SecretIdentificationKey,
+    Wallet,
 };
 use ark_ff::PrimeField;
 use k256::ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey};
@@ -39,9 +40,9 @@ pub fn point_coord_to_string(coord_bytes: &[u8]) -> Vec<String> {
         .collect::<Vec<String>>()
 }
 
-// -----------------------------------
+// -----------
 // | Helpers |
-// -----------------------------------
+// -----------
 
 /// Computes the Poseidon2 hash of the given scalar inputs, squeezing a single-element output
 pub fn _compute_poseidon_hash(inputs: &[ScalarField]) -> ScalarField {
@@ -97,3 +98,17 @@ pub fn split_biguint_into_words(mut val: BigUint) -> [ScalarField; 2] {
     }
     res.try_into().unwrap()
 }
+
+// /// Deserialize a Baby-JubJub point from a hex string
+// pub fn jubjub_from_hex_string(hex: &str) -> Result<BabyJubJubPoint, String> {
+//     // Deserialize as a string and remove "0x" if present
+//     let stripped = hex.strip_prefix("0x").unwrap_or(hex);
+//     let bytes = hex::decode(stripped)
+//         .map_err(|e| format!("error deserializing bytes from hex string: {e}"))?;
+
+//     let projective = Projective::<EmbeddedCurveConfig>::deserialize_uncompressed(bytes.as_slice())
+//         .map_err(raw_err_str!(
+//             "error deserializing projective point from bytes: {:?}"
+//         ))?;
+//     Ok(projective.into())
+// }

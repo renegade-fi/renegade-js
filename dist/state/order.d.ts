@@ -9,7 +9,6 @@ export default class Order {
     readonly amount: bigint;
     readonly minimumAmount: bigint;
     readonly worstPrice: number;
-    readonly timestamp: number;
     constructor(params: {
         id?: OrderId;
         baseToken: Token;
@@ -19,7 +18,6 @@ export default class Order {
         amount: bigint;
         minimumAmount?: bigint;
         worstPrice?: number;
-        timestamp?: number;
     });
     pack(): bigint[];
     serialize(): string;

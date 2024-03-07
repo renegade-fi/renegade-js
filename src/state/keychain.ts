@@ -131,11 +131,6 @@ export default class Keychain {
     // Derive the root key.
     const root = new SigningKey(skRoot);
 
-    // Derive the match key.
-    const rootSignatureBytes = root.signMessage(
-      Keychain.CREATE_SK_MATCH_MESSAGE,
-    );
-
     const skMatch = JSON.parse(
       get_key_hierarchy(root.secretKey),
     ).private_keys.sk_match.replace("0x", "");
@@ -156,9 +151,10 @@ export default class Keychain {
    * timestamp, to be appended as headers to the request.
    */
   generateExpiringSignature(dataBuffer: string): [string, number] {
+    const now = BigInt(Date.now());
     const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
       dataBuffer,
-      BigInt(Date.now()),
+      now,
       this.keyHierarchy.root.secretKey,
     );
     return [renegadeAuth, renegadeAuthExpiration];
@@ -179,6 +175,7 @@ export default class Keychain {
    * @param filePath File path to load the keychain from.
    */
   private loadFromFile(filePath: string): void {
+    // TODO: Reenable for node.js
     // const keychainSerialized = readFileSync(filePath, "utf8");
     // const keychainDeserialized = Keychain.deserialize(
     //   JSON.parse(keychainSerialized),
@@ -194,17 +191,22 @@ export default class Keychain {
    * @returns The serialized keychain.
    */
   serialize(): string {
-    return get_key_hierarchy(this.keyHierarchy.root.secretKey);
+    const res = get_key_hierarchy(this.keyHierarchy.root.secretKey);
+    return res;
   }
 
   static deserialize(serializedKeychain: any): Keychain {
-    let skRoot = Buffer.from(
-      serializedKeychain.private_keys.sk_root.replace("0x", ""),
-      "hex",
-    );
-    if (skRoot.length < 32) {
-      skRoot = Buffer.concat([Buffer.alloc(32 - skRoot.length), skRoot]);
+    const trimmed = serializedKeychain.private_keys.sk_root.replace("0x", "");
+
+    let skRoot = Buffer.from(trimmed, "hex");
+
+    // Pad if it's less than 64 bytes
+    if (trimmed.length < 64) {
+      const paddingLength = 64 - trimmed.length;
+      const padding = "0".repeat(paddingLength);
+      skRoot = Buffer.from(padding + trimmed, "hex");
     }
+
     return new Keychain({ skRoot });
   }
 }

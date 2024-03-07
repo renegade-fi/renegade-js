@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { z } from "zod";
-import { sign_http_request } from "../renegade-utils";
+import { bigint_to_limbs, sign_http_request } from "../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
 import {
@@ -214,7 +214,11 @@ export default class Account {
       if (parsedMessage.type !== "WalletUpdate") {
         return;
       }
-      this._wallet = Wallet.deserialize(parsedMessage.wallet);
+      const wallet = Wallet.deserialize(parsedMessage.wallet);
+      if (!wallet) {
+        console.error("Setting wallet to undefined");
+      }
+      this._wallet = wallet;
     };
     await this._ws.registerAccountCallback(
       callback,
@@ -235,10 +239,7 @@ export default class Account {
     const url = `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`;
 
     let headers = new Headers();
-    // Add or modify headers after instantiation if needed
     headers.append("Content-Type", "application/json");
-    // If there are authentication or other headers, add them here
-    // headers.append("Authorization", "Bearer your_token_here");
     const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
       "",
       BigInt(Date.now()),
@@ -270,7 +271,9 @@ export default class Account {
    * we want to force a refresh of the Wallet state.
    */
   async queryWallet(): Promise<void> {
-    this._wallet = await this._queryRelayerForWallet();
+    const wallet = await this._queryRelayerForWallet();
+    console.log("[SDK] Wallet: ", wallet);
+    this._wallet = wallet;
   }
 
   /**
@@ -341,7 +344,14 @@ export default class Account {
    * @param fromAddr The on-chain address to transfer from.
    */
   @assertSynced
-  async deposit(mint: Token, amount: bigint, fromAddr: string) {
+  async deposit(
+    mint: Token,
+    amount: bigint,
+    fromAddr: string,
+    _permitNonce: bigint,
+    _permitDeadline: bigint,
+    _permitSignature: string,
+  ) {
     // Fetch latest wallet from relayer
     // TODO: Temporary hacky fix, wallet should always be in sync with relayer
     const wallet = await this._queryRelayerForWallet();
@@ -349,12 +359,23 @@ export default class Account {
     // Sign wallet deposit statement
     const statement_sig = signWalletDeposit(wallet, mint, amount);
 
+    // Permit2 Fields
+    const permitNonce = bigint_to_limbs(_permitNonce.toString(16));
+    const permitDeadline = bigint_to_limbs(_permitDeadline.toString(16));
+    const permitSignatureBytes = new Uint8Array(
+      Buffer.from(_permitSignature.replace("0x", ""), "hex"),
+    );
+
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
       data: `{"public_var_sig":[],"from_addr":"${fromAddr}","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")}],"statement_sig":${statement_sig}}`,
+      ).join(
+        ",",
+      )}],"wallet_commitment_sig":${statement_sig},"permit_nonce":${permitNonce},"permit_deadline":${permitDeadline},"permit_signature":[${permitSignatureBytes.join(
+        ",",
+      )}]}`,
       validateStatus: () => true,
     };
     let response;
@@ -392,7 +413,7 @@ export default class Account {
       }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")}],"statement_sig":${statement_sig}}`,
+      ).join(",")}],"wallet_commitment_sig":${statement_sig}}`,
       validateStatus: () => true,
     };
     let response;

@@ -134,6 +134,9 @@ export interface IRenegadeBalance {
     mint: Token,
     amount: bigint,
     fromAddr: string,
+    permitNonce: bigint,
+    permitDeadline: bigint,
+    permitSignature: string,
   ): Promise<void>;
   /**
    * Withdraw an asset from an Account, triggering a L1 outbox transaction.
