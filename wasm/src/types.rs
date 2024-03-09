@@ -1,7 +1,13 @@
-use crate::helpers::{_compute_poseidon_hash, biguint_to_scalar};
+use crate::{
+    helpers::{_compute_poseidon_hash, biguint_to_scalar, deserialize_biguint_from_hex_string},
+    serde_def_types::{AddressDef, U256Def},
+};
+use alloy_primitives::{Address, U256};
 use ark_bn254::Fr;
+use ark_ec::{twisted_edwards::Projective, CurveGroup};
 use num_bigint::BigUint;
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 
 pub type ScalarField = Fr;
 
@@ -13,12 +19,25 @@ pub type ScalarField = Fr;
 /// cryptosystem
 pub type EncryptionKey = BabyJubJubPoint;
 
+/// The config of the embedded curve
+pub type EmbeddedCurveConfig = ark_ed_on_bn254::EdwardsConfig;
+
 /// The affine representation of a point on the BabyJubJub curve
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct BabyJubJubPoint {
     /// The x coordinate of the point
     pub x: ScalarField,
     /// The y coordinate of the point
     pub y: ScalarField,
+}
+impl From<Projective<EmbeddedCurveConfig>> for BabyJubJubPoint {
+    fn from(value: Projective<EmbeddedCurveConfig>) -> Self {
+        let affine = value.into_affine();
+        BabyJubJubPoint {
+            x: ScalarField::from(affine.x),
+            y: ScalarField::from(affine.y),
+        }
+    }
 }
 
 // ---------------------------
@@ -126,4 +145,45 @@ impl Wallet {
 /// Compute a commitment to a single share of a wallet
 pub fn compute_wallet_private_share_commitment(private_share: &Vec<ScalarField>) -> ScalarField {
     _compute_poseidon_hash(&private_share)
+}
+
+/// The type used to track an amount
+pub type Amount = u128;
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ExternalTransfer {
+    /// The address of the account contract to transfer to/from
+    #[serde(deserialize_with = "deserialize_biguint_from_hex_string")]
+    pub account_addr: BigUint,
+    /// The mint (ERC20 address) of the token to transfer
+    #[serde(deserialize_with = "deserialize_biguint_from_hex_string")]
+    pub mint: BigUint,
+    /// The amount of the token transferred
+    pub amount: Amount,
+    /// The direction of transfer
+    pub direction: ExternalTransferDirection,
+}
+
+/// Represents an external transfer of an ERC20 token
+#[serde_as]
+#[derive(Serialize, Deserialize, Default)]
+pub struct ContractExternalTransfer {
+    /// The address of the account contract to deposit from or withdraw to
+    #[serde_as(as = "AddressDef")]
+    pub account_addr: Address,
+    /// The mint (contract address) of the token being transferred
+    #[serde_as(as = "AddressDef")]
+    pub mint: Address,
+    /// The amount of the token transferred
+    #[serde_as(as = "U256Def")]
+    pub amount: U256,
+    /// Whether or not the transfer is a withdrawal (otherwise a deposit)
+    pub is_withdrawal: bool,
+}
+
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum ExternalTransferDirection {
+    /// Deposit an ERC20 into the darkpool from an external address
+    Deposit = 0,
+    /// Withdraw an ERC20 from the darkpool to an external address
+    Withdrawal,
 }

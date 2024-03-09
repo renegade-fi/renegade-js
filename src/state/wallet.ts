@@ -1,4 +1,7 @@
-import { get_key_hierarchy_shares } from "../../renegade-utils";
+import {
+  get_key_hierarchy_shares,
+  get_managing_cluster_shares,
+} from "../../renegade-utils";
 import { WalletId } from "../types";
 import { addFF, subtractFF } from "../utils/field";
 import Balance from "./balance";
@@ -55,6 +58,8 @@ export default class Wallet {
   public readonly privateBlinder: bigint;
   public readonly blindedPublicShares: bigint[];
   public readonly privateShares: bigint[];
+  public readonly managingCluster: string;
+  public readonly matchFee: number;
   constructor(params: {
     id?: WalletId;
     balances: Balance[];
@@ -69,6 +74,8 @@ export default class Wallet {
     updateLocked?: boolean;
     // TODO: Rethink how existing wallets are instantiated in memory
     exists?: boolean;
+    managingCluster?: string;
+    matchFee?: number;
   }) {
     this.walletId =
       params.id || generateId(params.keychain.keyHierarchy.root.secretKey);
@@ -81,6 +88,8 @@ export default class Wallet {
     this.privateBlinder = params.privateBlinder || 0n;
     this.blindedPublicShares = params.blindedPublicShares || [];
     this.privateShares = params.privateShares || [];
+    this.managingCluster = params.managingCluster || "0x0";
+    this.matchFee = params.matchFee || 0.0;
     if (!params.exists) {
       [this.blinder, this.privateBlinder, this.publicBlinder] =
         this.getBlinders();
@@ -125,15 +134,15 @@ export default class Wallet {
   }
 
   packMatchFee(): bigint[] {
-    return [0n];
+    return [BigInt(Math.floor(this.matchFee * 2 ** 32 || 0))];
   }
 
   packManagingCluster(): bigint[] {
-    // TODO: Test this
-    return [
-      19698561148652590122159747500897617769866003486955115824547446575314762165298n,
-      19298250018296453272277890825869354524455968081175474282777126169995084727839n,
-    ];
+    if (this.managingCluster === "0x0") {
+      return Array(SHARES_PER_MANAGING_CLUSTER).fill(0n);
+    }
+    const shares = get_managing_cluster_shares(this.managingCluster);
+    return shares.map((share: string) => BigInt(share));
   }
 
   packFees(): bigint[] {
@@ -228,6 +237,8 @@ export default class Wallet {
       blindedPublicShares: newPublicShares,
       privateShares: newPrivateShares,
       exists: true,
+      managingCluster: this.managingCluster,
+      matchFee: this.matchFee,
     });
   }
 
@@ -244,8 +255,8 @@ export default class Wallet {
       "orders": [${this.orders.map((o) => o.serialize()).join(",")}],
       "fees": [${this.fees.map((f) => f.serialize()).join(",")}],
       "key_chain": ${this.keychain.serialize()},
-      "managing_cluster": "0x326c87820d81d2594d347ead9a42bce37e924adfdee7411de3ca05b991fd8c2b1f861a672cfc76c26ae1c0db15117c2a767b27101fedac909e2058a7246caa2a",
-      "match_fee": 0,
+      "managing_cluster": "${this.managingCluster}",
+      "match_fee": ${this.matchFee},
       "blinder": [${bigIntToLimbsLE(this.blinder).join(",")}],
       "blinded_public_shares": [${serializedBlindedPublicShares.join(",")}],
       "private_shares": [${serializedPrivateShares.join(",")}],
@@ -254,10 +265,10 @@ export default class Wallet {
   }
 
   static deserialize(serializedWallet: any): Wallet {
-    console.log(
-      "[SDK] Wallet.deserialize: serializedWallet: ",
-      serializedWallet,
-    );
+    // console.log(
+    //   "[SDK] Wallet.deserialize: serializedWallet: ",
+    //   serializedWallet,
+    // );
     const id = serializedWallet.id;
     const balances = serializedWallet.balances.map((b: any) =>
       Balance.deserialize(b),
@@ -294,6 +305,8 @@ export default class Wallet {
       privateShares,
       updateLocked,
       exists: true,
+      matchFee: serializedWallet.match_fee,
+      managingCluster: serializedWallet.managing_cluster,
     });
   }
 }

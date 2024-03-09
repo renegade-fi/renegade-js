@@ -12,7 +12,7 @@ import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE,
 import { CreateWalletResponse, TaskStatus, createPostRequest, } from "./types/api";
 import { RenegadeWs } from "./utils";
 import { toFieldScalar } from "./utils/field";
-import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, } from "./utils/sign";
+import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, signWithdrawalTransfer, } from "./utils/sign";
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
  * Wallet is now managed by the relayer and wallet update events are actively
@@ -227,7 +227,7 @@ export default class Account {
      */
     async queryWallet() {
         const wallet = await this._queryRelayerForWallet();
-        console.log("[SDK] Wallet: ", wallet);
+        // console.log("[SDK] Wallet: ", wallet);
         this._wallet = wallet;
     }
     /**
@@ -289,6 +289,7 @@ export default class Account {
         // Fetch latest wallet from relayer
         // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
+        console.log("[SDK] Deposit: ", wallet);
         // Sign wallet deposit statement
         const statement_sig = signWalletDeposit(wallet, mint, amount);
         // Permit2 Fields
@@ -325,12 +326,13 @@ export default class Account {
         // Fetch latest wallet from relayer
         // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
-        // Sign wallet deposit statement
+        // Sign wallet withdrawal statement
         const statement_sig = signWalletWithdraw(wallet, mint, amount);
+        const external_transfer_sig = signWithdrawalTransfer(destinationAddr, mint, amount, this._wallet.keychain.keyHierarchy.root.secretKey);
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/${mint.serialize()}/withdraw`,
-            data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(amount).join(",")}],"wallet_commitment_sig":${statement_sig}}`,
+            data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(amount).join(",")}],"wallet_commitment_sig":${statement_sig},"external_transfer_sig":${external_transfer_sig}}`,
             validateStatus: () => true,
         };
         let response;
