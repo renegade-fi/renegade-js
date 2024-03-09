@@ -1,6 +1,19 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
+* Get the shares of the managing key cluster given the hex representation of the key.
+*
+* # Arguments
+*
+* * `managing_cluster_key` - The managing cluster key to compute the shares from.
+*
+* # Returns
+* * A vector of JavaScript values. The first element is the x coordinate of the key, and the second element is the y coordinate of the key, in decimal.
+* @param {string} managing_cluster_key
+* @returns {any[]}
+*/
+export function get_managing_cluster_shares(managing_cluster_key: string): any[];
+/**
 * Converts a bigint hex string to a scalar within the prime field's order and returns a BigInt as a string.
 *
 * # Arguments
@@ -88,6 +101,12 @@ export function compute_poseidon_hash(value: string): any;
 */
 export function generate_wallet_update_signature(wallet_str: string, sk_root: string): any;
 /**
+* @param {string} external_transfer_str
+* @param {string} sk_root
+* @returns {any}
+*/
+export function generate_external_transfer_signature(external_transfer_str: string, sk_root: string): any;
+/**
 * Get the shares of the key hierarchy computed from `sk_root`
 *
 * # Arguments
@@ -169,20 +188,22 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly get_managing_cluster_shares: (a: number, b: number, c: number) => void;
   readonly hex_to_field_scalar: (a: number, b: number) => number;
   readonly bigint_to_limbs: (a: number, b: number) => number;
   readonly add: (a: number, b: number, c: number, d: number) => number;
   readonly subtract: (a: number, b: number, c: number, d: number) => number;
   readonly compute_poseidon_hash: (a: number, b: number) => number;
   readonly generate_wallet_update_signature: (a: number, b: number, c: number, d: number) => number;
+  readonly generate_external_transfer_signature: (a: number, b: number, c: number, d: number) => number;
   readonly get_key_hierarchy_shares: (a: number, b: number, c: number) => void;
   readonly get_key_hierarchy: (a: number, b: number) => number;
   readonly get_shares_commitment: (a: number, b: number) => number;
   readonly sign_http_request: (a: number, b: number, c: number, d: number, e: number, f: number) => void;
   readonly sign_message: (a: number, b: number, c: number, d: number) => number;
+  readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
-  readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
 }
 

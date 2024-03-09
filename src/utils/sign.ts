@@ -1,4 +1,7 @@
-import { generate_wallet_update_signature } from "../../renegade-utils";
+import {
+  generate_external_transfer_signature,
+  generate_wallet_update_signature,
+} from "../../renegade-utils";
 import { Balance, Order, Token, Wallet } from "../state";
 import { MAX_ORDERS } from "../state/wallet";
 import { OrderId } from "../types";
@@ -14,7 +17,9 @@ const ERR_ORDERS_FULL = "orders full";
  */
 function signWalletShares(wallet: Wallet) {
   // Reblind the wallet, consuming the next set of blinders and secret shares
+  console.log("Wallet before reblind:   ", wallet.serialize());
   const reblindedWallet = wallet.reblind();
+  console.log("Wallet after reblind:    ", reblindedWallet.serialize());
   const serializedWallet = reblindedWallet.serialize();
   console.log("Wallet after update wallet", serializedWallet);
 
@@ -141,6 +146,23 @@ export function signWalletWithdraw(
     exists: true,
   });
   return signWalletShares(newWallet);
+}
+
+export function signWithdrawalTransfer(
+  destinationAddr: string,
+  mint: Token,
+  amount: bigint,
+  skRoot: string,
+) {
+  const transfer = `{"account_addr":"${destinationAddr}","mint":"0x${mint.address}","amount":${amount},"direction":"Withdrawal"}`;
+  const external_transfer_sig_hex = generate_external_transfer_signature(
+    transfer,
+    this._wallet.keychain.keyHierarchy.root.secretKey,
+  );
+  const external_transfer_sig_bytes = new Uint8Array(
+    Buffer.from(external_transfer_sig_hex, "hex"),
+  );
+  return `[${external_transfer_sig_bytes.toString()}]`;
 }
 
 /**

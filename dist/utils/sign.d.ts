@@ -16,6 +16,7 @@ export declare function signWalletDeposit(wallet: Wallet, mint: Token, amount: b
  * @param amount The amount to withdraw.
  */
 export declare function signWalletWithdraw(wallet: Wallet, mint: Token, amount: bigint): string;
+export declare function signWithdrawalTransfer(destinationAddr: string, mint: Token, amount: bigint, skRoot: string): string;
 /**
  * Sign wallet to place an order.
  *

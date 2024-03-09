@@ -1,8 +1,9 @@
 use base64::engine::{general_purpose as b64_general_purpose, Engine};
-use ethers_helpers::gen_update_wallet_signature;
+use ethers_helpers::{gen_external_transfer_signature, gen_update_wallet_signature};
 use helpers::{
-    _compute_poseidon_hash, biguint_from_hex_string, deserialize_wallet, get_match_key,
-    get_root_key, point_coord_to_string,
+    _compute_poseidon_hash, biguint_from_hex_string, deserialize_external_transfer,
+    deserialize_wallet, get_match_key, get_root_key, point_coord_to_string,
+    to_contract_external_transfer,
 };
 use k256::{
     ecdsa::{signature::Signer, Signature},
@@ -12,12 +13,33 @@ use num_bigint::BigUint;
 use types::ScalarField;
 use wasm_bindgen::prelude::*;
 
+use crate::helpers::jubjub_from_hex_string;
+
 const SIG_VALIDITY_WINDOW_MS: u64 = 10_000; // 10 seconds
 
 pub mod custom_serde;
+pub mod errors;
 pub mod ethers_helpers;
 pub mod helpers;
+pub mod serde_def_types;
 pub mod types;
+
+/// Get the shares of the managing key cluster given the hex representation of the key.
+///
+/// # Arguments
+///
+/// * `managing_cluster_key` - The managing cluster key to compute the shares from.
+///
+/// # Returns
+/// * A vector of JavaScript values. The first element is the x coordinate of the key, and the second element is the y coordinate of the key, in decimal.
+#[wasm_bindgen]
+pub fn get_managing_cluster_shares(managing_cluster_key: &str) -> Vec<JsValue> {
+    let key = jubjub_from_hex_string(managing_cluster_key).unwrap();
+    vec![
+        JsValue::from_str(&key.x.to_string()),
+        JsValue::from_str(&key.y.to_string()),
+    ]
+}
 
 /// Converts a bigint hex string to a scalar within the prime field's order and returns a BigInt as a string.
 ///
@@ -30,7 +52,7 @@ pub mod types;
 /// A `JsValue` containing the bigint within the prime field's order as a string.
 #[wasm_bindgen]
 pub fn hex_to_field_scalar(value: &str) -> JsValue {
-    let bigint = biguint_from_hex_string(value);
+    let bigint = biguint_from_hex_string(value).unwrap();
     let res = ScalarField::from(bigint);
     let result_bigint: BigUint = res.into();
     JsValue::from_str(&result_bigint.to_string())
@@ -47,7 +69,7 @@ pub fn hex_to_field_scalar(value: &str) -> JsValue {
 /// A `JsValue` containing the JSON string representation of the bigint's limbs.
 #[wasm_bindgen]
 pub fn bigint_to_limbs(value: &str) -> JsValue {
-    let bigint = biguint_from_hex_string(value);
+    let bigint = biguint_from_hex_string(value).unwrap();
     let serialized = serde_json::to_string(&bigint).unwrap();
     JsValue::from_str(&serialized)
 }
@@ -70,8 +92,8 @@ pub fn bigint_to_limbs_test(value: &str) -> String {
 /// A `JsValue` containing the decimal string representation of the result.
 #[wasm_bindgen]
 pub fn add(a: &str, b: &str) -> JsValue {
-    let a_scalar = ScalarField::from(biguint_from_hex_string(a));
-    let b_scalar = ScalarField::from(biguint_from_hex_string(b));
+    let a_scalar = ScalarField::from(biguint_from_hex_string(a).unwrap());
+    let b_scalar = ScalarField::from(biguint_from_hex_string(b).unwrap());
 
     // Perform addition
     let res = a_scalar + b_scalar;
@@ -91,8 +113,8 @@ pub fn add(a: &str, b: &str) -> JsValue {
 /// A `JsValue` containing the decimal string representation of the result.
 #[wasm_bindgen]
 pub fn subtract(a: &str, b: &str) -> JsValue {
-    let a_scalar = ScalarField::from(biguint_from_hex_string(a));
-    let b_scalar = ScalarField::from(biguint_from_hex_string(b));
+    let a_scalar = ScalarField::from(biguint_from_hex_string(a).unwrap());
+    let b_scalar = ScalarField::from(biguint_from_hex_string(b).unwrap());
 
     // Perform subtraction
     let res = a_scalar - b_scalar;
@@ -105,7 +127,7 @@ pub fn subtract(a: &str, b: &str) -> JsValue {
 /// Note: Ensure the input is within the field of the BN254 curve and is a BigInt formatted as a hex string.
 #[wasm_bindgen]
 pub fn compute_poseidon_hash(value: &str) -> JsValue {
-    let input = [ScalarField::from(biguint_from_hex_string(value))];
+    let input = [ScalarField::from(biguint_from_hex_string(value).unwrap())];
     let res = _compute_poseidon_hash(&input);
     // Convert the hash result to a JavaScript BigInt
     let result_bigint: BigUint = res.into();
@@ -130,6 +152,17 @@ pub fn generate_wallet_update_signature(wallet_str: &str, sk_root: &str) -> JsVa
     let wallet = deserialize_wallet(wallet_str);
     let (signing_key, _) = get_root_key(sk_root);
     let sig = gen_update_wallet_signature(wallet, &signing_key);
+    let sig_bytes = sig.to_vec();
+    JsValue::from_str(&hex::encode(sig_bytes))
+}
+
+#[wasm_bindgen]
+pub fn generate_external_transfer_signature(external_transfer_str: &str, sk_root: &str) -> JsValue {
+    let external_transfer = deserialize_external_transfer(external_transfer_str);
+    // JsValue::from_str(&serde_json::to_string(&external_transfer).unwrap())
+    let (signing_key, _) = get_root_key(sk_root);
+    let contract_external_transfer = to_contract_external_transfer(&external_transfer).unwrap();
+    let sig = gen_external_transfer_signature(contract_external_transfer, &signing_key);
     let sig_bytes = sig.to_vec();
     JsValue::from_str(&hex::encode(sig_bytes))
 }
@@ -254,8 +287,32 @@ pub fn sign_message(message: &str, key: &str) -> JsValue {
 
 #[cfg(test)]
 mod tests {
+    use crate::helpers::{jubjub_from_hex_string, to_contract_external_transfer};
+
     use super::*;
     use k256::ecdsa::signature::Verifier;
+
+    #[test]
+    fn test_managing_cluster() {
+        let managing_cluster_key = "0x5511c37be1a7b5d2d21d0d4acfad55fd1b97f9b8aee6ae9d1af14b062e717c20b90e115863911716ed002808a9d0df2ec8e95886fe5c611288a2da4567eb8724";
+        let key = jubjub_from_hex_string(managing_cluster_key).unwrap();
+        let shares = vec![key.x.to_string(), key.y.to_string()];
+        dbg!(shares);
+        return;
+    }
+
+    #[test]
+    fn test_external_transfer() {
+        let external_transfer_str = r#"{"account_addr":"0xf73eBD250F251DbAc8655a736Fc06a500A74a3c0","mint":"0xbeb41fc8fe10b648472cb4b98ed86cb454bf3f3b","amount":1000000000000000000,"direction":"Withdrawal"}"#;
+        let external_transfer = deserialize_external_transfer(external_transfer_str);
+        let contract_external_transfer = to_contract_external_transfer(&external_transfer).unwrap();
+        let serialized_contract_external_transfer =
+            serde_json::to_string(&contract_external_transfer).unwrap();
+        println!(
+            "Serialized Contract External Transfer: {}",
+            serialized_contract_external_transfer
+        );
+    }
 
     #[test]
     fn test_bigint() {

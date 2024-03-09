@@ -1,12 +1,16 @@
 // TODO: Should merge into helpers, separate because of named import conflicts
-use crate::custom_serde::BytesSerializable;
-use crate::helpers::_compute_poseidon_hash;
-use crate::types::Wallet;
+use crate::{
+    custom_serde::BytesSerializable,
+    helpers::_compute_poseidon_hash,
+    types::{ContractExternalTransfer, Wallet},
+};
 use ethers::{
     core::k256::ecdsa::SigningKey,
-    types::{Signature, U256},
+    types::{Bytes, Signature, U256},
     utils::keccak256,
 };
+use eyre::Result;
+use serde::Serialize;
 
 /// Generates a signature for updating a wallet by hashing the wallet's share commitments
 /// and using the provided signing key to sign the hash.
@@ -32,6 +36,20 @@ pub fn gen_update_wallet_signature(wallet: Wallet, signing_key: &SigningKey) -> 
 
     // Sign commitment
     hash_and_sign_message(&signing_key, &shares_commitment)
+}
+
+/// Serialize the given serializable type into a [`Bytes`] object
+/// that can be passed in as calldata
+pub fn serialize_to_calldata<T: Serialize>(t: &T) -> Result<Bytes> {
+    Ok(postcard::to_allocvec(t)?.into())
+}
+
+pub fn gen_external_transfer_signature(
+    external_transfer: ContractExternalTransfer,
+    signing_key: &SigningKey,
+) -> Signature {
+    let transfer_bytes = serialize_to_calldata(&external_transfer).unwrap();
+    hash_and_sign_message(signing_key, &transfer_bytes)
 }
 
 /// Hashes the given message and generates a signature over it using the signing

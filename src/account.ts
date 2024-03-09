@@ -23,6 +23,7 @@ import {
   signWalletModifyOrder,
   signWalletPlaceOrder,
   signWalletWithdraw,
+  signWithdrawalTransfer,
 } from "./utils/sign";
 
 /**
@@ -272,7 +273,7 @@ export default class Account {
    */
   async queryWallet(): Promise<void> {
     const wallet = await this._queryRelayerForWallet();
-    console.log("[SDK] Wallet: ", wallet);
+    // console.log("[SDK] Wallet: ", wallet);
     this._wallet = wallet;
   }
 
@@ -348,22 +349,23 @@ export default class Account {
     mint: Token,
     amount: bigint,
     fromAddr: string,
-    _permitNonce: bigint,
-    _permitDeadline: bigint,
-    _permitSignature: string,
+    permitNonce: bigint,
+    permitDeadline: bigint,
+    permitSignature: string,
   ) {
     // Fetch latest wallet from relayer
     // TODO: Temporary hacky fix, wallet should always be in sync with relayer
     const wallet = await this._queryRelayerForWallet();
+    console.log("[SDK] Deposit: ", wallet);
 
     // Sign wallet deposit statement
     const statement_sig = signWalletDeposit(wallet, mint, amount);
 
     // Permit2 Fields
-    const permitNonce = bigint_to_limbs(_permitNonce.toString(16));
-    const permitDeadline = bigint_to_limbs(_permitDeadline.toString(16));
-    const permitSignatureBytes = new Uint8Array(
-      Buffer.from(_permitSignature.replace("0x", ""), "hex"),
+    const _permitNonce = bigint_to_limbs(permitNonce.toString(16));
+    const _permitDeadline = bigint_to_limbs(permitDeadline.toString(16));
+    const _permitSignatureBytes = new Uint8Array(
+      Buffer.from(permitSignature.replace("0x", ""), "hex"),
     );
 
     const request: AxiosRequestConfig = {
@@ -373,7 +375,7 @@ export default class Account {
         amount,
       ).join(
         ",",
-      )}],"wallet_commitment_sig":${statement_sig},"permit_nonce":${permitNonce},"permit_deadline":${permitDeadline},"permit_signature":[${permitSignatureBytes.join(
+      )}],"wallet_commitment_sig":${statement_sig},"permit_nonce":${_permitNonce},"permit_deadline":${_permitDeadline},"permit_signature":[${_permitSignatureBytes.join(
         ",",
       )}]}`,
       validateStatus: () => true,
@@ -404,8 +406,15 @@ export default class Account {
     // TODO: Temporary hacky fix, wallet should always be in sync with relayer
     const wallet = await this._queryRelayerForWallet();
 
-    // Sign wallet deposit statement
+    // Sign wallet withdrawal statement
     const statement_sig = signWalletWithdraw(wallet, mint, amount);
+    const external_transfer_sig = signWithdrawalTransfer(
+      destinationAddr,
+      mint,
+      amount,
+      this._wallet.keychain.keyHierarchy.root.secretKey,
+    );
+
     const request: AxiosRequestConfig = {
       method: "POST",
       url: `${this._relayerHttpUrl}/v0/wallet/${
@@ -413,7 +422,9 @@ export default class Account {
       }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(
         amount,
-      ).join(",")}],"wallet_commitment_sig":${statement_sig}}`,
+      ).join(
+        ",",
+      )}],"wallet_commitment_sig":${statement_sig},"external_transfer_sig":${external_transfer_sig}}`,
       validateStatus: () => true,
     };
     let response;

@@ -1,12 +1,21 @@
-use crate::types::{
-    ApiWallet, BabyJubJubPoint, PublicIdentificationKey, ScalarField, SecretIdentificationKey,
-    Wallet,
+use crate::{
+    errors::ConversionError,
+    types::{
+        ApiWallet, BabyJubJubPoint, ContractExternalTransfer, EmbeddedCurveConfig,
+        ExternalTransfer, ExternalTransferDirection, PublicIdentificationKey, ScalarField,
+        SecretIdentificationKey, Wallet,
+    },
 };
+use alloy_primitives::Address;
+use ark_ec::twisted_edwards::Projective;
 use ark_ff::PrimeField;
+use ark_serialize::CanonicalDeserialize;
 use k256::ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey};
 use num_bigint::BigUint;
 use num_traits::Num;
 use renegade_crypto::hash::Poseidon2Sponge;
+use ruint::aliases::{U160, U256};
+use serde::{de::Error as DeserializeError, Deserialize, Deserializer, Serializer};
 use sha2::{Digest, Sha256};
 
 const CREATE_SK_MATCH_MESSAGE: &str = "Unlock your Renegade match key.\nTestnet v0";
@@ -20,6 +29,12 @@ pub fn deserialize_wallet(wallet_str: &str) -> Wallet {
     let wallet_bytes = wallet_str.as_bytes();
     let deserialized_wallet: ApiWallet = serde_json::from_reader(wallet_bytes).unwrap();
     deserialized_wallet.try_into().unwrap()
+}
+
+pub fn deserialize_external_transfer(transfer_str: &str) -> ExternalTransfer {
+    let transfer_bytes = transfer_str.as_bytes();
+    let deserialized_transfer: ExternalTransfer = serde_json::from_reader(transfer_bytes).unwrap();
+    deserialized_transfer
 }
 
 /// Convert a BigUint to a scalar
@@ -50,11 +65,35 @@ pub fn _compute_poseidon_hash(inputs: &[ScalarField]) -> ScalarField {
     sponge.hash(inputs)
 }
 
-/// Parse a biguint from a hex string
-pub fn biguint_from_hex_string(s: &str) -> BigUint {
-    // Remove "0x"
-    let s = s.strip_prefix("0x").unwrap_or(s);
-    BigUint::from_str_radix(s, 16 /* radix */).expect("error parsing biguint from hex string")
+/// A helper to deserialize a BigUint from a hex string
+pub fn biguint_from_hex_string(hex: &str) -> Result<BigUint, String> {
+    // Deserialize as a string and remove "0x" if present
+    let stripped = hex.strip_prefix("0x").unwrap_or(hex);
+    BigUint::from_str_radix(stripped, 16 /* radix */)
+        .map_err(|e| format!("error deserializing BigUint from hex string: {e}"))
+}
+
+/// A helper to serialize a BigUint to a hex string
+pub fn biguint_to_hex_string(val: &BigUint) -> String {
+    format!("0x{}", val.to_str_radix(16 /* radix */))
+}
+
+/// A helper to serialize a BigUint to a hex string
+pub fn serialize_biguint_to_hex_string<S>(val: &BigUint, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let hex = biguint_to_hex_string(val);
+    serializer.serialize_str(&hex)
+}
+
+/// A helper to deserialize a BigUint from a hex string
+pub fn deserialize_biguint_from_hex_string<'de, D>(deserializer: D) -> Result<BigUint, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let hex = String::deserialize(deserializer)?;
+    biguint_from_hex_string(&hex).map_err(D::Error::custom)
 }
 
 /// Computes the SHA256 hash of the input
@@ -81,7 +120,7 @@ pub fn get_match_key(sk_root: SigningKey) -> (SecretIdentificationKey, PublicIde
 
 /// Return a `SigningKey` and a `Verifying` from a hex string
 pub fn get_root_key(key: &str) -> (SigningKey, VerifyingKey) {
-    let key_bigint = biguint_from_hex_string(&key);
+    let key_bigint = biguint_from_hex_string(&key).unwrap();
     let signing_key = SigningKey::from_slice(&key_bigint.to_bytes_be()).unwrap();
     let verifying_key = signing_key.clone().verifying_key().to_owned();
     (signing_key, verifying_key)
@@ -99,16 +138,41 @@ pub fn split_biguint_into_words(mut val: BigUint) -> [ScalarField; 2] {
     res.try_into().unwrap()
 }
 
-// /// Deserialize a Baby-JubJub point from a hex string
-// pub fn jubjub_from_hex_string(hex: &str) -> Result<BabyJubJubPoint, String> {
-//     // Deserialize as a string and remove "0x" if present
-//     let stripped = hex.strip_prefix("0x").unwrap_or(hex);
-//     let bytes = hex::decode(stripped)
-//         .map_err(|e| format!("error deserializing bytes from hex string: {e}"))?;
+/// Deserialize a Baby-JubJub point from a hex string
+pub fn jubjub_from_hex_string(hex: &str) -> Result<BabyJubJubPoint, String> {
+    // Deserialize as a string and remove "0x" if present
+    let stripped = hex.strip_prefix("0x").unwrap_or(hex);
+    let bytes = hex::decode(stripped)
+        .map_err(|e| format!("error deserializing bytes from hex string: {e}"))?;
 
-//     let projective = Projective::<EmbeddedCurveConfig>::deserialize_uncompressed(bytes.as_slice())
-//         .map_err(raw_err_str!(
-//             "error deserializing projective point from bytes: {:?}"
-//         ))?;
-//     Ok(projective.into())
-// }
+    let projective = Projective::<EmbeddedCurveConfig>::deserialize_uncompressed(bytes.as_slice())
+        .map_err(|e| format!("error deserializing projective point from bytes: {:?}", e))?;
+    Ok(projective.into())
+}
+
+/// Convert an [`ExternalTransfer`] to its corresponding smart contract type
+pub fn to_contract_external_transfer(
+    external_transfer: &ExternalTransfer,
+) -> Result<ContractExternalTransfer, ConversionError> {
+    let account_addr: U160 = external_transfer
+        .account_addr
+        .clone()
+        .try_into()
+        .map_err(|_| ConversionError::InvalidUint)?;
+    let mint: U160 = external_transfer
+        .mint
+        .clone()
+        .try_into()
+        .map_err(|_| ConversionError::InvalidUint)?;
+    let amount: U256 = external_transfer
+        .amount
+        .try_into()
+        .map_err(|_| ConversionError::InvalidUint)?;
+
+    Ok(ContractExternalTransfer {
+        account_addr: Address::from(account_addr),
+        mint: Address::from(mint),
+        amount,
+        is_withdrawal: external_transfer.direction == ExternalTransferDirection::Withdrawal,
+    })
+}
