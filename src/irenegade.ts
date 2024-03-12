@@ -4,7 +4,6 @@ import {
   BalanceId,
   CallbackId,
   Exchange,
-  FeeId,
   OrderId,
   TaskId,
 } from "./types";
@@ -37,7 +36,7 @@ export interface IRenegadeAccount {
    * Initialize an Account that has already been registered with the Renegade object.
    *
    * If this Account already exists in the network, the Account will be
-   * populated with the current balances, orders, fees, etc.
+   * populated with the current balances, orders, etc.
    *
    * If the Account does not exist in the network, the Account will be
    * initialized with zeroes and sent to the relayer to create it on-chain.

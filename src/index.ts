@@ -3,7 +3,6 @@ import { Balance, Keychain, Order, Token } from "./state";
 import {
   BalanceId,
   OrderId,
-  FeeId,
   AccountId,
   TaskId,
   CallbackId,
@@ -19,7 +18,7 @@ import tokenMappings from "./tokens/testnet.json";
 
 export { Renegade, RenegadeConfig };
 export { Balance, Keychain, Order, Token };
-export { BalanceId, OrderId, FeeId, AccountId, TaskId, CallbackId, Exchange };
+export { BalanceId, OrderId, AccountId, TaskId, CallbackId, Exchange };
 export { ExchangeHealthState, HealthState, PriceReport };
 export { RenegadeErrorType };
 export { tokenMappings };

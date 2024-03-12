@@ -8,7 +8,6 @@ type Brand<K, T> = K & {
 export type WalletId = Brand<Uuid, "WalletId">;
 export type BalanceId = Brand<Uuid, "BalanceId">;
 export type OrderId = Brand<Uuid, "OrderId">;
-export type FeeId = Brand<Uuid, "FeeId">;
 /**
  * Brands and types for Renegade object related IDs.
  */
