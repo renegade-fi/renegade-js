@@ -5,18 +5,16 @@ import RenegadeError, { RenegadeErrorType } from "./errors";
 import {
   IRenegadeAccount,
   IRenegadeBalance,
-  IRenegadeFees,
   IRenegadeInformation,
   IRenegadeStreaming,
   IRenegadeTrading,
 } from "./irenegade";
-import { Balance, Fee, Keychain, Order, Token } from "./state";
+import { Balance, Keychain, Order, Token } from "./state";
 import {
   AccountId,
   BalanceId,
   CallbackId,
   Exchange,
-  FeeId,
   OrderId,
   TaskId,
 } from "./types";
@@ -32,7 +30,6 @@ import {
   createZodFetcher,
   unimplemented,
 } from "./utils";
-// import loadUtils from "../renegade-utils"
 
 /**
  * A decorator that asserts that the relayer has not been torn down.
@@ -83,7 +80,6 @@ export default class Renegade
     IRenegadeInformation,
     IRenegadeBalance,
     IRenegadeTrading,
-    IRenegadeFees,
     IRenegadeStreaming
 {
   // --------------------------
@@ -376,12 +372,6 @@ export default class Renegade
   }
 
   @assertNotTornDown
-  getFees(accountId: AccountId): Record<FeeId, Fee> {
-    const account = this._lookupAccount(accountId);
-    return account.fees;
-  }
-
-  @assertNotTornDown
   getKeychain(accountId: AccountId): Keychain {
     const account = this._lookupAccount(accountId);
     return account.keychain;
@@ -519,34 +509,6 @@ export default class Renegade
     return [taskId, this.awaitTaskCompletion(taskId)];
   }
 
-  // --------------------------------
-  // | IRenegadeFees Implementation |
-  // --------------------------------
-
-  @assertNotTornDown
-  async queryDesiredFee(): Promise<Fee> {
-    unimplemented();
-  }
-
-  @assertNotTornDown
-  async approveFee(accountId: AccountId, fee: Fee): Promise<void> {
-    unimplemented();
-  }
-
-  @assertNotTornDown
-  async modifyFee(
-    accountId: AccountId,
-    oldFeeId: FeeId,
-    newFee: Fee,
-  ): Promise<void> {
-    unimplemented();
-  }
-
-  @assertNotTornDown
-  async revokeFee(accountId: AccountId, feeId: FeeId): Promise<void> {
-    unimplemented();
-  }
-
   // -------------------------------------
   // | IRenegadeStreaming Implementation |
   // -------------------------------------
@@ -659,14 +621,5 @@ export default class Renegade
       await this._modifyOrderTaskJob(...args),
     cancelOrder: async (...args: Parameters<typeof this._cancelOrderTaskJob>) =>
       await this._cancelOrderTaskJob(...args),
-    // approveFee: async (
-    //   ...args: Parameters<typeof this._approveFeeTaskJob>
-    // ) => await this._approveFeeTaskJob(...args),
-    // modifyFee: async (
-    //   ...args: Parameters<typeof this._modifyFeeTaskJob>
-    // ) => await this._modifyFeeTaskJob(...args),
-    // revokeFee: async (
-    //   ...args: Parameters<typeof this._revokeFeeTaskJob>
-    // ) => await this._revokeFeeTaskJob(...args),
   };
 }

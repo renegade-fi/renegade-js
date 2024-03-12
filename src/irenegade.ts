@@ -1,4 +1,4 @@
-import { Balance, Fee, Keychain, Order, Token } from "./state";
+import { Balance, Keychain, Order, Token } from "./state";
 import {
   AccountId,
   BalanceId,
@@ -93,15 +93,6 @@ export interface IRenegadeInformation {
    */
   getOrders(accountId: AccountId): Record<OrderId, Order>;
   /**
-   * Get the current fees for an Account. Note that this is an immediate
-   * snapshot; we do not await any pending tasks.
-   *
-   * @param accountId The AccountId of the Account to get fees for.
-   *
-   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
-   */
-  getFees(accountId: AccountId): Record<FeeId, Fee>;
-  /**
    * Get the Keychain of an Account.
    *
    * @param accountId The AccountId of the Account to get the keychain for.
@@ -195,48 +186,6 @@ export interface IRenegadeTrading {
    * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
    */
   cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void>;
-}
-
-// ---------------------
-// | Fee Configuration |
-// ---------------------
-
-/**
- * Interface for manipulation of fee approvals.
- */
-export interface IRenegadeFees {
-  /**
-   * Query the relayer for its desired fee.
-   */
-  queryDesiredFee(): Promise<Fee>;
-  /**
-   * Approve a fee for an Account.
-   *
-   * @param accountId The AccountId of the Account for which to approve the fee.
-   * @param fee The fee to approve.
-   *
-   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
-   */
-  approveFee(accountId: AccountId, fee: Fee): Promise<void>;
-  /**
-   * Modify a fee for an Account.
-   *
-   * @param accountId The AccountId of the Account for which to modify the fee.
-   * @param oldFeeId The id of the old fee to modify.
-   * @param newFee The new fee to approve.
-   *
-   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
-   */
-  modifyFee(accountId: AccountId, oldFeeId: FeeId, newFee: Fee): Promise<void>;
-  /**
-   * Revoke a fee for an Account.
-   *
-   * @param accountId The AccountId of the Account for which to revoke the fee.
-   * @param feeId The id of the fee to revoke.
-   *
-   * @throws {AccountNotRegistered} If the Account corresponding to this AccountId is not registered with the Renegade object.
-   */
-  revokeFee(accountId: AccountId, feeId: FeeId): Promise<void>;
 }
 
 // ---------------------

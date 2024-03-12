@@ -83,7 +83,6 @@ export default class Account {
         this._wallet = new Wallet({
             balances: [],
             orders: [],
-            fees: [],
             keychain: keychain || this._wallet.keychain,
             blinder: toFieldScalar(blinder),
         });
@@ -226,9 +225,7 @@ export default class Account {
      * we want to force a refresh of the Wallet state.
      */
     async queryWallet() {
-        const wallet = await this._queryRelayerForWallet();
-        // console.log("[SDK] Wallet: ", wallet);
-        this._wallet = wallet;
+        this._wallet = await this._queryRelayerForWallet();
     }
     /**
      * Query the on-chain state to lookup the Wallet corresponding to this
@@ -285,7 +282,7 @@ export default class Account {
      * @param amount The amount to deposit.
      * @param fromAddr The on-chain address to transfer from.
      */
-    async deposit(mint, amount, fromAddr, _permitNonce, _permitDeadline, _permitSignature) {
+    async deposit(mint, amount, fromAddr, permitNonce, permitDeadline, permitSignature) {
         // Fetch latest wallet from relayer
         // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
@@ -293,13 +290,13 @@ export default class Account {
         // Sign wallet deposit statement
         const statement_sig = signWalletDeposit(wallet, mint, amount);
         // Permit2 Fields
-        const permitNonce = bigint_to_limbs(_permitNonce.toString(16));
-        const permitDeadline = bigint_to_limbs(_permitDeadline.toString(16));
-        const permitSignatureBytes = new Uint8Array(Buffer.from(_permitSignature.replace("0x", ""), "hex"));
+        const _permitNonce = bigint_to_limbs(permitNonce.toString(16));
+        const _permitDeadline = bigint_to_limbs(permitDeadline.toString(16));
+        const _permitSignatureBytes = new Uint8Array(Buffer.from(permitSignature.replace("0x", ""), "hex"));
         const request = {
             method: "POST",
             url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId}/balances/deposit`,
-            data: `{"public_var_sig":[],"from_addr":"${fromAddr}","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(amount).join(",")}],"wallet_commitment_sig":${statement_sig},"permit_nonce":${permitNonce},"permit_deadline":${permitDeadline},"permit_signature":[${permitSignatureBytes.join(",")}]}`,
+            data: `{"public_var_sig":[],"from_addr":"${fromAddr}","mint":"${mint.serialize()}","amount":[${bigIntToLimbsLE(amount).join(",")}],"wallet_commitment_sig":${statement_sig},"permit_nonce":${_permitNonce},"permit_deadline":${_permitDeadline},"permit_signature":[${_permitSignatureBytes.join(",")}]}`,
             validateStatus: () => true,
         };
         let response;
@@ -475,17 +472,6 @@ export default class Account {
         }, {});
     }
     /**
-     * Getter for Fees.
-     *
-     * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
-     */
-    get fees() {
-        return this._wallet.fees.reduce((acc, fee) => {
-            acc[fee.feeId] = fee;
-            return acc;
-        }, {});
-    }
-    /**
      * Getter for the Keychain.
      */
     get keychain() {
@@ -529,6 +515,3 @@ __decorate([
 __decorate([
     assertSynced
 ], Account.prototype, "orders", null);
-__decorate([
-    assertSynced
-], Account.prototype, "fees", null);
