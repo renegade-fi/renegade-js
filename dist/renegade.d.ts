@@ -38,7 +38,6 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     /**
     * Initializes the WASM module for use in both browser and serverless environments.
     */
-    init(): Promise<void>;
     /**
      * Construct a URL from the given parameters.
      *

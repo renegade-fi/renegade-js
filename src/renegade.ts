@@ -141,16 +141,16 @@ export default class Renegade
   /**
   * Initializes the WASM module for use in both browser and serverless environments.
   */
-  async init() {
-    try {
-      const module = await import("../renegade-utils");
-      await module.default();
-      console.log("WASM module loaded successfully!");
-    } catch (error) {
-      console.error("Failed to load WASM module:", error);
-      throw new Error("Failed to load WASM module");
-    }
-  }
+  // async init() {
+  //   try {
+  //     const module = await import("../renegade-utils");
+  //     await module.default();
+  //     console.log("WASM module loaded successfully!");
+  //   } catch (error) {
+  //     console.error("Failed to load WASM module:", error);
+  //     throw new Error("Failed to load WASM module");
+  //   }
+  // }
 
   /**
    * Construct a URL from the given parameters.
