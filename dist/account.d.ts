@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { Balance, Fee, Keychain, Order, Token } from "./state";
-import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
+import { Balance, Keychain, Order, Token } from "./state";
+import { AccountId, BalanceId, OrderId, TaskId } from "./types";
 import { TaskStatus } from "./types/api";
 import { RenegadeWs, TaskJob } from "./utils";
 /**
@@ -97,7 +97,7 @@ export default class Account {
      * @param amount The amount to deposit.
      * @param fromAddr The on-chain address to transfer from.
      */
-    deposit(mint: Token, amount: bigint, fromAddr: string, _permitNonce: bigint, _permitDeadline: bigint, _permitSignature: string): Promise<any>;
+    deposit(mint: Token, amount: bigint, fromAddr: string, permitNonce: bigint, permitDeadline: bigint, permitSignature: string): Promise<any>;
     /**
      * Withdraw funds from an account.
      *
@@ -146,12 +146,6 @@ export default class Account {
      * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
      */
     get orders(): Record<OrderId, Order>;
-    /**
-     * Getter for Fees.
-     *
-     * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
-     */
-    get fees(): Record<FeeId, Fee>;
     /**
      * Getter for the Keychain.
      */

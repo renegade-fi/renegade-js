@@ -9,7 +9,6 @@ import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { GetExchangeHealthStatesResponse, parseExchangeHealthStates, } from "./types/schema";
 import { RenegadeWs, createZodFetcher, unimplemented, } from "./utils";
-// import loadUtils from "../renegade-utils"
 /**
  * A decorator that asserts that the relayer has not been torn down.
  *
@@ -244,10 +243,6 @@ export default class Renegade {
         const account = this._lookupAccount(accountId);
         return account.orders;
     }
-    getFees(accountId) {
-        const account = this._lookupAccount(accountId);
-        return account.fees;
-    }
     getKeychain(accountId) {
         const account = this._lookupAccount(accountId);
         return account.keychain;
@@ -302,21 +297,6 @@ export default class Renegade {
         const account = this._lookupAccount(accountId);
         const taskId = await account.cancelOrder(orderId);
         return [taskId, this.awaitTaskCompletion(taskId)];
-    }
-    // --------------------------------
-    // | IRenegadeFees Implementation |
-    // --------------------------------
-    async queryDesiredFee() {
-        unimplemented();
-    }
-    async approveFee(accountId, fee) {
-        unimplemented();
-    }
-    async modifyFee(accountId, oldFeeId, newFee) {
-        unimplemented();
-    }
-    async revokeFee(accountId, feeId) {
-        unimplemented();
     }
     // -------------------------------------
     // | IRenegadeStreaming Implementation |
@@ -373,15 +353,6 @@ export default class Renegade {
         placeOrder: async (...args) => await this._placeOrderTaskJob(...args),
         modifyOrder: async (...args) => await this._modifyOrderTaskJob(...args),
         cancelOrder: async (...args) => await this._cancelOrderTaskJob(...args),
-        // approveFee: async (
-        //   ...args: Parameters<typeof this._approveFeeTaskJob>
-        // ) => await this._approveFeeTaskJob(...args),
-        // modifyFee: async (
-        //   ...args: Parameters<typeof this._modifyFeeTaskJob>
-        // ) => await this._modifyFeeTaskJob(...args),
-        // revokeFee: async (
-        //   ...args: Parameters<typeof this._revokeFeeTaskJob>
-        // ) => await this._revokeFeeTaskJob(...args),
     };
 }
 __decorate([
@@ -419,9 +390,6 @@ __decorate([
 ], Renegade.prototype, "getOrders", null);
 __decorate([
     assertNotTornDown
-], Renegade.prototype, "getFees", null);
-__decorate([
-    assertNotTornDown
 ], Renegade.prototype, "getKeychain", null);
 __decorate([
     assertNotTornDown
@@ -438,18 +406,6 @@ __decorate([
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "cancelOrder", null);
-__decorate([
-    assertNotTornDown
-], Renegade.prototype, "queryDesiredFee", null);
-__decorate([
-    assertNotTornDown
-], Renegade.prototype, "approveFee", null);
-__decorate([
-    assertNotTornDown
-], Renegade.prototype, "modifyFee", null);
-__decorate([
-    assertNotTornDown
-], Renegade.prototype, "revokeFee", null);
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "registerAccountCallback", null);

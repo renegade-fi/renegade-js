@@ -1,6 +1,5 @@
 import { WalletId } from "../types";
 import Balance from "./balance";
-import Fee from "./fee";
 import Keychain from "./keychain";
 import Order from "./order";
 export declare const MAX_ORDERS = 5;
@@ -8,7 +7,6 @@ export default class Wallet {
     readonly walletId: WalletId;
     readonly balances: Balance[];
     readonly orders: Order[];
-    readonly fees: Fee[];
     readonly keychain: Keychain;
     readonly blinder: bigint;
     readonly publicBlinder: bigint;
@@ -21,14 +19,12 @@ export default class Wallet {
         id?: WalletId;
         balances: Balance[];
         orders: Order[];
-        fees: Fee[];
         keychain: Keychain;
         blinder: bigint;
         publicBlinder?: bigint;
         privateBlinder?: bigint;
         blindedPublicShares?: bigint[];
         privateShares?: bigint[];
-        updateLocked?: boolean;
         exists?: boolean;
         managingCluster?: string;
         matchFee?: number;
@@ -39,7 +35,6 @@ export default class Wallet {
     packOrders(): bigint[];
     packMatchFee(): bigint[];
     packManagingCluster(): bigint[];
-    packFees(): bigint[];
     packKeychain(): bigint[];
     packBlinder(): bigint[];
     /**

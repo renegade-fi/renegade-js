@@ -5,7 +5,6 @@ import {
 import { WalletId } from "../types";
 import { addFF, subtractFF } from "../utils/field";
 import Balance from "./balance";
-import Fee from "./fee";
 import Keychain from "./keychain";
 import Order from "./order";
 import {
@@ -19,12 +18,10 @@ import {
 // The maximum number of balances, orders, and fees that can be stored in a wallet
 const MAX_BALANCES = 5;
 export const MAX_ORDERS = 5;
-const MAX_FEES = 0;
 
 // Number of secret shares to represent each of balances, orders, and fees
 const SHARES_PER_BALANCE = 4;
 const SHARES_PER_ORDER = 5;
-const SHARES_PER_FEE = 0;
 
 const SHARES_PER_MATCH_FEE = 1;
 const SHARES_PER_MANAGING_CLUSTER = 2;
@@ -51,7 +48,6 @@ export default class Wallet {
   public readonly walletId: WalletId;
   public readonly balances: Balance[];
   public readonly orders: Order[];
-  public readonly fees: Fee[];
   public readonly keychain: Keychain;
   public readonly blinder: bigint;
   public readonly publicBlinder: bigint;
@@ -64,14 +60,12 @@ export default class Wallet {
     id?: WalletId;
     balances: Balance[];
     orders: Order[];
-    fees: Fee[];
     keychain: Keychain;
     blinder: bigint;
     publicBlinder?: bigint;
     privateBlinder?: bigint;
     blindedPublicShares?: bigint[];
     privateShares?: bigint[];
-    updateLocked?: boolean;
     // TODO: Rethink how existing wallets are instantiated in memory
     exists?: boolean;
     managingCluster?: string;
@@ -81,7 +75,6 @@ export default class Wallet {
       params.id || generateId(params.keychain.keyHierarchy.root.secretKey);
     this.balances = params.balances;
     this.orders = params.orders;
-    this.fees = params.fees;
     this.keychain = params.keychain;
     this.blinder = params.blinder;
     this.publicBlinder = params.publicBlinder || 0n;
@@ -143,14 +136,6 @@ export default class Wallet {
     }
     const shares = get_managing_cluster_shares(this.managingCluster);
     return shares.map((share: string) => BigInt(share));
-  }
-
-  packFees(): bigint[] {
-    const packedFees = this.fees.map((fee) => fee.pack());
-    const packedPadding = Array(MAX_FEES - this.fees.length).fill(
-      Array(SHARES_PER_FEE).fill(0n),
-    );
-    return packedFees.flat().concat(packedPadding.flat());
   }
 
   packKeychain(): bigint[] {
@@ -229,7 +214,6 @@ export default class Wallet {
       id: this.walletId,
       balances: this.balances,
       orders: this.orders,
-      fees: this.fees,
       keychain: this.keychain,
       blinder: newBlinder,
       privateBlinder: newBlinderPrivateShare,
@@ -253,22 +237,16 @@ export default class Wallet {
       "id": "${this.walletId}",
       "balances": [${this.balances.map((b) => b.serialize()).join(",")}],
       "orders": [${this.orders.map((o) => o.serialize()).join(",")}],
-      "fees": [${this.fees.map((f) => f.serialize()).join(",")}],
       "key_chain": ${this.keychain.serialize()},
       "managing_cluster": "${this.managingCluster}",
       "match_fee": ${this.matchFee},
       "blinder": [${bigIntToLimbsLE(this.blinder).join(",")}],
       "blinded_public_shares": [${serializedBlindedPublicShares.join(",")}],
       "private_shares": [${serializedPrivateShares.join(",")}],
-      "update_locked": false
     }`.replace(/[\s\n]/g, "");
   }
 
   static deserialize(serializedWallet: any): Wallet {
-    // console.log(
-    //   "[SDK] Wallet.deserialize: serializedWallet: ",
-    //   serializedWallet,
-    // );
     const id = serializedWallet.id;
     const balances = serializedWallet.balances.map((b: any) =>
       Balance.deserialize(b),
@@ -276,9 +254,7 @@ export default class Wallet {
     const orders = serializedWallet.orders.map((o: any) =>
       Order.deserialize(o),
     );
-    const fees = [];
     const keychain = Keychain.deserialize(serializedWallet.key_chain);
-    const updateLocked = serializedWallet.update_locked;
     const blindedPublicShares = serializedWallet.blinded_public_shares.map(
       (share: number[]) => {
         return limbsToBigIntLE(share);
@@ -296,14 +272,12 @@ export default class Wallet {
       id,
       balances,
       orders,
-      fees,
       keychain,
       blinder: derivedBlinder,
       publicBlinder,
       privateBlinder,
       blindedPublicShares,
       privateShares,
-      updateLocked,
       exists: true,
       matchFee: serializedWallet.match_fee,
       managingCluster: serializedWallet.managing_cluster,

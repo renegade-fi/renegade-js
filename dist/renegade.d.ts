@@ -1,6 +1,6 @@
-import { IRenegadeAccount, IRenegadeBalance, IRenegadeFees, IRenegadeInformation, IRenegadeStreaming, IRenegadeTrading } from "./irenegade";
-import { Balance, Fee, Keychain, Order, Token } from "./state";
-import { AccountId, BalanceId, CallbackId, Exchange, FeeId, OrderId, TaskId } from "./types";
+import { IRenegadeAccount, IRenegadeBalance, IRenegadeInformation, IRenegadeStreaming, IRenegadeTrading } from "./irenegade";
+import { Balance, Keychain, Order, Token } from "./state";
+import { AccountId, BalanceId, CallbackId, Exchange, OrderId, TaskId } from "./types";
 import { ExchangeHealthState } from "./types/schema";
 import { Priority } from "./utils";
 /**
@@ -18,7 +18,7 @@ export interface RenegadeConfig {
  * The Renegade object is the primary method of interacting with the Renegade
  * relayer.
  */
-export default class Renegade implements IRenegadeAccount, IRenegadeInformation, IRenegadeBalance, IRenegadeTrading, IRenegadeFees, IRenegadeStreaming {
+export default class Renegade implements IRenegadeAccount, IRenegadeInformation, IRenegadeBalance, IRenegadeTrading, IRenegadeStreaming {
     readonly relayerHttpUrl: string;
     readonly relayerWsUrl: string;
     private _verbose;
@@ -78,7 +78,6 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     delegateAccount(accountId: AccountId, sendRoot?: boolean): Promise<void>;
     getBalances(accountId: AccountId): Record<BalanceId, Balance>;
     getOrders(accountId: AccountId): Record<OrderId, Order>;
-    getFees(accountId: AccountId): Record<FeeId, Fee>;
     getKeychain(accountId: AccountId): Keychain;
     deposit(accountId: AccountId, mint: Token, amount: bigint, fromAddr: string, permitNonce: bigint, permitDeadline: bigint, permitSignature: string): Promise<void>;
     private _depositTaskJob;
@@ -90,10 +89,6 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     private _modifyOrderTaskJob;
     cancelOrder(accountId: AccountId, orderId: OrderId): Promise<void>;
     private _cancelOrderTaskJob;
-    queryDesiredFee(): Promise<Fee>;
-    approveFee(accountId: AccountId, fee: Fee): Promise<void>;
-    modifyFee(accountId: AccountId, oldFeeId: FeeId, newFee: Fee): Promise<void>;
-    revokeFee(accountId: AccountId, feeId: FeeId): Promise<void>;
     registerAccountCallback(callback: (message: string) => void, accountId: AccountId, priority?: Priority): Promise<CallbackId>;
     registerPriceReportCallback(callback: (message: string) => void, exchange: Exchange, baseToken: Token, quoteToken: Token, priority?: Priority): Promise<CallbackId>;
     registerTaskCallback(callback: (message: string) => void, taskId: TaskId, priority?: Priority): Promise<CallbackId>;

@@ -2,13 +2,13 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { z } from "zod";
 import { bigint_to_limbs, sign_http_request } from "../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
-import { Balance, Fee, Keychain, Order, Token, Wallet } from "./state";
+import { Balance, Keychain, Order, Token, Wallet } from "./state";
 import {
   RENEGADE_AUTH_EXPIRATION_HEADER,
   RENEGADE_AUTH_HEADER,
   bigIntToLimbsLE,
 } from "./state/utils";
-import { AccountId, BalanceId, FeeId, OrderId, TaskId } from "./types";
+import { AccountId, BalanceId, OrderId, TaskId } from "./types";
 import {
   CreateWalletRequest,
   CreateWalletResponse,
@@ -109,7 +109,6 @@ export default class Account {
     this._wallet = new Wallet({
       balances: [],
       orders: [],
-      fees: [],
       keychain: keychain || this._wallet.keychain,
       blinder: toFieldScalar(blinder),
     });
@@ -272,9 +271,7 @@ export default class Account {
    * we want to force a refresh of the Wallet state.
    */
   async queryWallet(): Promise<void> {
-    const wallet = await this._queryRelayerForWallet();
-    // console.log("[SDK] Wallet: ", wallet);
-    this._wallet = wallet;
+    this._wallet = await this._queryRelayerForWallet();
   }
 
   /**
@@ -576,19 +573,6 @@ export default class Account {
         acc[order.orderId] = order;
         return acc;
       }, {} as Record<OrderId, Order>);
-  }
-
-  /**
-   * Getter for Fees.
-   *
-   * @throws {AccountNotSynced} If the Account has not yet been synced to the relayer.
-   */
-  @assertSynced
-  get fees(): Record<FeeId, Fee> {
-    return this._wallet.fees.reduce((acc, fee) => {
-      acc[fee.feeId] = fee;
-      return acc;
-    }, {} as Record<FeeId, Fee>);
   }
 
   /**
