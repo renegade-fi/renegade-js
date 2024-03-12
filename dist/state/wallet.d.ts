@@ -25,7 +25,6 @@ export default class Wallet {
         privateBlinder?: bigint;
         blindedPublicShares?: bigint[];
         privateShares?: bigint[];
-        updateLocked?: boolean;
         exists?: boolean;
         managingCluster?: string;
         matchFee?: number;

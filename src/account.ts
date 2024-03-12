@@ -271,9 +271,7 @@ export default class Account {
    * we want to force a refresh of the Wallet state.
    */
   async queryWallet(): Promise<void> {
-    const wallet = await this._queryRelayerForWallet();
-    // console.log("[SDK] Wallet: ", wallet);
-    this._wallet = wallet;
+    this._wallet = await this._queryRelayerForWallet();
   }
 
   /**

@@ -9,7 +9,6 @@ import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { GetExchangeHealthStatesResponse, parseExchangeHealthStates, } from "./types/schema";
 import { RenegadeWs, createZodFetcher, unimplemented, } from "./utils";
-// import loadUtils from "../renegade-utils"
 /**
  * A decorator that asserts that the relayer has not been torn down.
  *
@@ -73,14 +72,13 @@ export default class Renegade {
         this._registeredAccounts = {};
         this._isTornDown = false;
     }
-    // // /**
-    // //  * Initializes the WASM module for use in both browser and serverless environments.
-    // //  */
+    /**
+    * Initializes the WASM module for use in both browser and serverless environments.
+    */
     async init() {
         try {
             const module = await import("../renegade-utils");
-            const loadUtils = module.default;
-            await loadUtils(); // Ensure this is awaited
+            await module.default();
             console.log("WASM module loaded successfully!");
         }
         catch (error) {
@@ -308,7 +306,7 @@ export default class Renegade {
         // race conditions.
         //
         // Since each individual Account streams account events to update its
-        // internal balances, orders, and fees, directly registering an account
+        // internal balances and orders directly registering an account
         // callback with the Renegade websocket does not guarantee ordering of these
         // messages.
         //
