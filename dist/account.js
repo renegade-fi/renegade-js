@@ -65,8 +65,8 @@ export default class Account {
         this._isSynced = false;
     }
     /**
-     * Reset the Wallet to its initial state by clearing its balances, orders, and
-     * fees. Resets are useful in the case of desync from the relayer, allowing us
+     * Reset the Wallet to its initial state by clearing its balances and orders.
+     * Resets are useful in the case of desync from the relayer, allowing us
      * to re-query the relayer for the current wallet state.
      */
     _reset(keychain) {
@@ -225,7 +225,9 @@ export default class Account {
      * we want to force a refresh of the Wallet state.
      */
     async queryWallet() {
-        this._wallet = await this._queryRelayerForWallet();
+        const wallet = await this._queryRelayerForWallet();
+        // console.log("[SDK] Wallet: ", wallet);
+        this._wallet = wallet;
     }
     /**
      * Query the on-chain state to lookup the Wallet corresponding to this

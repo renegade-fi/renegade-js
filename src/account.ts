@@ -89,8 +89,8 @@ export default class Account {
   }
 
   /**
-   * Reset the Wallet to its initial state by clearing its balances, orders, and
-   * fees. Resets are useful in the case of desync from the relayer, allowing us
+   * Reset the Wallet to its initial state by clearing its balances and orders.
+   * Resets are useful in the case of desync from the relayer, allowing us
    * to re-query the relayer for the current wallet state.
    */
   private _reset(keychain?: Keychain): void {
@@ -271,7 +271,9 @@ export default class Account {
    * we want to force a refresh of the Wallet state.
    */
   async queryWallet(): Promise<void> {
-    this._wallet = await this._queryRelayerForWallet();
+    const wallet = await this._queryRelayerForWallet();
+    // console.log("[SDK] Wallet: ", wallet);
+    this._wallet = wallet;
   }
 
   /**
@@ -414,9 +416,8 @@ export default class Account {
 
     const request: AxiosRequestConfig = {
       method: "POST",
-      url: `${this._relayerHttpUrl}/v0/wallet/${
-        this.accountId
-      }/balances/${mint.serialize()}/withdraw`,
+      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId
+        }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(
         amount,
       ).join(

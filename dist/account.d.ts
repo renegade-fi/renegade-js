@@ -21,8 +21,8 @@ export default class Account {
     private _isSynced;
     constructor(keychain: Keychain, relayerHttpUrl: string, relayerWsUrl: string, verbose?: boolean);
     /**
-     * Reset the Wallet to its initial state by clearing its balances, orders, and
-     * fees. Resets are useful in the case of desync from the relayer, allowing us
+     * Reset the Wallet to its initial state by clearing its balances and orders.
+     * Resets are useful in the case of desync from the relayer, allowing us
      * to re-query the relayer for the current wallet state.
      */
     private _reset;
