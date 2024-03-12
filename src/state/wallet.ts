@@ -15,14 +15,13 @@ import {
   limbsToBigIntLE,
 } from "./utils";
 
-// The maximum number of balances, orders, and fees that can be stored in a wallet
+// The maximum number of balances and orders and that can be stored in a wallet
 const MAX_BALANCES = 5;
 export const MAX_ORDERS = 5;
 
-// Number of secret shares to represent each of balances, orders, and fees
+// Number of secret shares to represent each of balances and orders.
 const SHARES_PER_BALANCE = 4;
 const SHARES_PER_ORDER = 5;
-const SHARES_PER_FEE = 0;
 
 const SHARES_PER_MATCH_FEE = 1;
 const SHARES_PER_MANAGING_CLUSTER = 2;
@@ -67,7 +66,6 @@ export default class Wallet {
     privateBlinder?: bigint;
     blindedPublicShares?: bigint[];
     privateShares?: bigint[];
-    updateLocked?: boolean;
     // TODO: Rethink how existing wallets are instantiated in memory
     exists?: boolean;
     managingCluster?: string;
@@ -244,16 +242,11 @@ export default class Wallet {
       "match_fee": ${this.matchFee},
       "blinder": [${bigIntToLimbsLE(this.blinder).join(",")}],
       "blinded_public_shares": [${serializedBlindedPublicShares.join(",")}],
-      "private_shares": [${serializedPrivateShares.join(",")}],
-      "update_locked": false
+      "private_shares": [${serializedPrivateShares.join(",")}]
     }`.replace(/[\s\n]/g, "");
   }
 
   static deserialize(serializedWallet: any): Wallet {
-    // console.log(
-    //   "[SDK] Wallet.deserialize: serializedWallet: ",
-    //   serializedWallet,
-    // );
     const id = serializedWallet.id;
     const balances = serializedWallet.balances.map((b: any) =>
       Balance.deserialize(b),
@@ -261,9 +254,7 @@ export default class Wallet {
     const orders = serializedWallet.orders.map((o: any) =>
       Order.deserialize(o),
     );
-    const fees = [];
     const keychain = Keychain.deserialize(serializedWallet.key_chain);
-    const updateLocked = serializedWallet.update_locked;
     const blindedPublicShares = serializedWallet.blinded_public_shares.map(
       (share: number[]) => {
         return limbsToBigIntLE(share);
@@ -287,7 +278,6 @@ export default class Wallet {
       privateBlinder,
       blindedPublicShares,
       privateShares,
-      updateLocked,
       exists: true,
       matchFee: serializedWallet.match_fee,
       managingCluster: serializedWallet.managing_cluster,

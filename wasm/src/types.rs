@@ -93,7 +93,7 @@ impl SecretIdentificationKey {
 // | Wallet API Types |
 // --------------------
 
-/// The wallet type, holds all balances, orders, fees, and randomness
+/// The wallet type, holds all balances, orders, and randomness
 /// for a trader
 ///
 /// Also the unit of commitment in the state tree
