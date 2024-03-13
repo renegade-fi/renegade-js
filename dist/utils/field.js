@@ -4,6 +4,7 @@ export function toFieldScalar(value) {
     const fieldScalarString = hex_to_field_scalar(hexString);
     return BigInt(fieldScalarString);
 }
+// TODO: check_add is a better name
 export function addFF(a, b) {
     const hexA = a.toString(16);
     const hexB = b.toString(16);

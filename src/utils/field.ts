@@ -11,6 +11,7 @@ export function toFieldScalar(value: bigint): bigint {
   return BigInt(fieldScalarString);
 }
 
+// TODO: check_add is a better name
 export function addFF(a: bigint, b: bigint): bigint {
   const hexA: string = a.toString(16);
   const hexB: string = b.toString(16);

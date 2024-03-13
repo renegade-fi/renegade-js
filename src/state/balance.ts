@@ -1,22 +1,26 @@
 import * as uuid from "uuid";
 
-import { limbsToBigIntLE } from "../state/utils";
 import { BalanceId } from "../types";
 import Token from "./token";
 
 export default class Balance {
   public readonly balanceId: BalanceId;
   public readonly mint: Token;
-  public readonly amount: bigint;
+  public amount: bigint;
   public readonly relayer_fee_balance: bigint;
   public readonly protocol_fee_balance: bigint;
 
-  constructor(params: { mint: Token; amount: bigint }) {
+  constructor(params: {
+    mint: Token;
+    amount: bigint;
+    relayer_fee_balance: bigint;
+    protocol_fee_balance: bigint;
+  }) {
     this.balanceId = uuid.v4() as BalanceId;
     this.mint = params.mint;
     this.amount = params.amount;
-    this.relayer_fee_balance = BigInt(0);
-    this.protocol_fee_balance = BigInt(0);
+    this.relayer_fee_balance = params.relayer_fee_balance;
+    this.protocol_fee_balance = params.protocol_fee_balance;
   }
 
   pack(): bigint[] {
@@ -41,6 +45,8 @@ export default class Balance {
     return new Balance({
       mint: Token.deserialize(serializedBalance.mint),
       amount: BigInt(serializedBalance.amount),
+      relayer_fee_balance: BigInt(serializedBalance.relayer_fee_balance),
+      protocol_fee_balance: BigInt(serializedBalance.protocol_fee_balance),
     });
   }
 }

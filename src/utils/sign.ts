@@ -5,6 +5,7 @@ import {
 import { Balance, Order, Token, Wallet } from "../state";
 import { MAX_ORDERS } from "../state/wallet";
 import { OrderId } from "../types";
+import { addFF } from "./field";
 
 const ERR_INSUFFICIENT_BALANCE = "insufficient balance";
 const ERR_BALANCES_FULL = "balances full";
@@ -17,11 +18,9 @@ const ERR_ORDERS_FULL = "orders full";
  */
 function signWalletShares(wallet: Wallet) {
   // Reblind the wallet, consuming the next set of blinders and secret shares
-  console.log("Wallet before reblind:   ", wallet.serialize());
   const reblindedWallet = wallet.reblind();
-  console.log("Wallet after reblind:    ", reblindedWallet.serialize());
   const serializedWallet = reblindedWallet.serialize();
-  console.log("Wallet after update wallet", serializedWallet);
+  console.log("Updated wallet", serializedWallet);
 
   const statement_sig_hex = generate_wallet_update_signature(
     serializedWallet,
@@ -45,10 +44,10 @@ function add_balance(wallet: Wallet, balance: Balance) {
   );
   // If the balance exists, increment it
   if (index !== -1) {
-    newBalances[index] = new Balance({
-      mint: balance.mint,
-      amount: newBalances[index].amount + balance.amount,
-    });
+    newBalances[index].amount = addFF(
+      newBalances[index].amount,
+      balance.amount,
+    );
     return newBalances;
   }
 
@@ -79,13 +78,21 @@ export function signWalletDeposit(wallet: Wallet, mint: Token, amount: bigint) {
   try {
     console.log(
       "Balances before deposit: ",
-      wallet.balances.map(
-        (balance) =>
-          new Balance({ mint: balance.mint, amount: balance.amount }),
-      ),
+      wallet.balances.map((balance) => new Balance({ ...balance })),
     );
-    const newBalances = add_balance(wallet, new Balance({ mint, amount }));
-    console.log("Balances after deposit: ", newBalances);
+    const newBalances = add_balance(
+      wallet,
+      new Balance({
+        mint,
+        amount,
+        relayer_fee_balance: 0n,
+        protocol_fee_balance: 0n,
+      }),
+    );
+    console.log(
+      "Balances after deposit: ",
+      newBalances.map((balance) => new Balance({ ...balance })),
+    );
     const newWallet = new Wallet({
       ...wallet,
       balances: newBalances,
@@ -111,9 +118,7 @@ export function signWalletWithdraw(
 ) {
   console.log(
     "Balances before withdraw: ",
-    wallet.balances.map(
-      (balance) => new Balance({ mint: balance.mint, amount: balance.amount }),
-    ),
+    wallet.balances.map((balance) => new Balance({ ...balance })),
   );
   // Find the balance to withdraw from
   const newBalances = [...wallet.balances];
@@ -127,18 +132,13 @@ export function signWalletWithdraw(
 
   // Apply the withdrawal to the wallet
   if (newBalances[index].amount >= amount) {
-    newBalances[index] = new Balance({
-      mint,
-      amount: newBalances[index].amount - amount,
-    });
+    newBalances[index].amount -= amount;
   } else {
     throw new Error(ERR_INSUFFICIENT_BALANCE);
   }
   console.log(
     "Balances after withdraw: ",
-    newBalances.map(
-      (balance) => new Balance({ mint: balance.mint, amount: balance.amount }),
-    ),
+    newBalances.map((balance) => new Balance({ ...balance })),
   );
   const newWallet = new Wallet({
     ...wallet,

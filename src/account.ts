@@ -25,6 +25,7 @@ import {
   signWalletWithdraw,
   signWithdrawalTransfer,
 } from "./utils/sign";
+import JSONBigInt from "json-bigint";
 
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -255,8 +256,10 @@ export default class Account {
       });
 
       if (response.status === 200) {
-        const data = await response.json(); // Assuming the response is JSON
-        return Wallet.deserialize(data.wallet);
+        const data = await response.text(); // Assuming the response is JSON
+        return Wallet.deserialize(
+          JSONBigInt({ storeAsString: true }).parse(data).wallet,
+        );
       } else {
         return undefined;
       }
@@ -414,8 +417,9 @@ export default class Account {
 
     const request: AxiosRequestConfig = {
       method: "POST",
-      url: `${this._relayerHttpUrl}/v0/wallet/${this.accountId
-        }/balances/${mint.serialize()}/withdraw`,
+      url: `${this._relayerHttpUrl}/v0/wallet/${
+        this.accountId
+      }/balances/${mint.serialize()}/withdraw`,
       data: `{"public_var_sig":[],"destination_addr":"${destinationAddr}","amount":[${bigIntToLimbsLE(
         amount,
       ).join(
