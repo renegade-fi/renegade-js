@@ -10,8 +10,8 @@ export default class Balance {
         this.balanceId = uuid.v4();
         this.mint = params.mint;
         this.amount = params.amount;
-        this.relayer_fee_balance = BigInt(0);
-        this.protocol_fee_balance = BigInt(0);
+        this.relayer_fee_balance = params.relayer_fee_balance;
+        this.protocol_fee_balance = params.protocol_fee_balance;
     }
     pack() {
         return [
@@ -33,6 +33,8 @@ export default class Balance {
         return new Balance({
             mint: Token.deserialize(serializedBalance.mint),
             amount: BigInt(serializedBalance.amount),
+            relayer_fee_balance: BigInt(serializedBalance.relayer_fee_balance),
+            protocol_fee_balance: BigInt(serializedBalance.protocol_fee_balance),
         });
     }
 }

@@ -13,6 +13,7 @@ import { CreateWalletResponse, TaskStatus, createPostRequest, } from "./types/ap
 import { RenegadeWs } from "./utils";
 import { toFieldScalar } from "./utils/field";
 import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, signWithdrawalTransfer, } from "./utils/sign";
+import JSONBigInt from "json-bigint";
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
  * Wallet is now managed by the relayer and wallet update events are actively
@@ -208,8 +209,8 @@ export default class Account {
                 headers: headers,
             });
             if (response.status === 200) {
-                const data = await response.json(); // Assuming the response is JSON
-                return Wallet.deserialize(data.wallet);
+                const data = await response.text(); // Assuming the response is JSON
+                return Wallet.deserialize(JSONBigInt({ storeAsString: true }).parse(data).wallet);
             }
             else {
                 return undefined;
