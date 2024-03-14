@@ -7,9 +7,6 @@
     "index.js",
     "index.d.ts"
   ],
-  "module": "index.js",
-  "types": "index.d.ts",
-  "sideEffects": [
-    "./snippets/*"
-  ]
+  "main": "index.js",
+  "types": "index.d.ts"
 }
