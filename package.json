@@ -1,6 +1,6 @@
 {
   "name": "@renegade-fi/renegade-js",
-  "version": "0.4.21-cjs",
+  "version": "0.4.22",
   "description": "Typescript bindings for the Renegade relayer API.",
   "author": "Christopher Bender <chris@renegade.fi>",
   "repository": "https://github.com/renegade-fi/renegade-js",
