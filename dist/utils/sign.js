@@ -108,7 +108,7 @@ export function signWalletWithdraw(wallet, mint, amount) {
 }
 export function signWithdrawalTransfer(destinationAddr, mint, amount, skRoot) {
     const transfer = `{"account_addr":"${destinationAddr}","mint":"0x${mint.address}","amount":${amount},"direction":"Withdrawal"}`;
-    const external_transfer_sig_hex = generate_external_transfer_signature(transfer, this._wallet.keychain.keyHierarchy.root.secretKey);
+    const external_transfer_sig_hex = generate_external_transfer_signature(transfer, skRoot);
     const external_transfer_sig_bytes = new Uint8Array(Buffer.from(external_transfer_sig_hex, "hex"));
     return `[${external_transfer_sig_bytes.toString()}]`;
 }

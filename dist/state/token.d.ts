@@ -6,7 +6,7 @@ export default class Token {
         address?: string;
         ticker?: string;
     });
-    get ticker(): string | null;
+    get ticker(): string;
     get decimals(): number | null;
     serialize(): string;
     static deserialize(serializedToken: string): Token;

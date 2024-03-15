@@ -33,10 +33,10 @@ export default class Token {
         this.address = params.address.toLowerCase().replace("0x", "");
     }
     get ticker() {
-        const ticker = Token.addressToTicker[this.address];
+        const ticker = Token.addressToTicker[`0x${this.address}`];
         if (!ticker) {
             console.error(`Ticker not found for address: ${this.address}`);
-            return null;
+            throw new Error(`Ticker not found for address: ${this.address}`);
         }
         return ticker;
     }
