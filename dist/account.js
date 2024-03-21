@@ -144,6 +144,7 @@ export default class Account {
         let wallet;
         let taskId;
         if ((wallet = await this._queryRelayerForWallet())) {
+            console.log("🚀 ~ Account ~ sync ~ wallet:", wallet);
             // Query the relayer to see if this Account is already registered in relayer state.
             this._wallet = wallet;
             await this._setupWebSocket();
@@ -198,9 +199,11 @@ export default class Account {
      */
     async _queryRelayerForWallet() {
         const url = `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`;
+        console.log("Querying relayer for wallet using skroot: ", this._wallet.keychain.keyHierarchy.root.secretKey);
         let headers = new Headers();
         headers.append("Content-Type", "application/json");
         const [renegadeAuth, renegadeAuthExpiration] = sign_http_request("", BigInt(Date.now()), this._wallet.keychain.keyHierarchy.root.secretKey);
+        console.log("🚀 ~ Account ~ _queryRelayerForWallet ~ renegadeAuth:", renegadeAuth);
         headers.append(RENEGADE_AUTH_HEADER, renegadeAuth);
         headers.append(RENEGADE_AUTH_EXPIRATION_HEADER, renegadeAuthExpiration);
         try {
@@ -270,6 +273,7 @@ export default class Account {
      */
     async _createNewWallet() {
         // TODO: Assert that Balances and Orders are empty.
+        console.log("Creating wallet with keychain: ", this._wallet.keychain.serialize());
         const body = {
             wallet: this._wallet,
         };

@@ -1,11 +1,8 @@
-let imports = {};
-imports['__wbindgen_placeholder__'] = module.exports;
 let wasm;
-const { TextDecoder, TextEncoder } = require(`util`);
 
-let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+const cachedTextDecoder = (typeof TextDecoder !== 'undefined' ? new TextDecoder('utf-8', { ignoreBOM: true, fatal: true }) : { decode: () => { throw Error('TextDecoder not available') } } );
 
-cachedTextDecoder.decode();
+if (typeof TextDecoder !== 'undefined') { cachedTextDecoder.decode(); };
 
 let cachedUint8Memory0 = null;
 
@@ -36,9 +33,40 @@ function addHeapObject(obj) {
     return idx;
 }
 
+function getObject(idx) { return heap[idx]; }
+
+function dropObject(idx) {
+    if (idx < 132) return;
+    heap[idx] = heap_next;
+    heap_next = idx;
+}
+
+function takeObject(idx) {
+    const ret = getObject(idx);
+    dropObject(idx);
+    return ret;
+}
+
 let WASM_VECTOR_LEN = 0;
 
-let cachedTextEncoder = new TextEncoder('utf-8');
+function passArray8ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 1, 1) >>> 0;
+    getUint8Memory0().set(arg, ptr / 1);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
+}
+/**
+* @param {Uint8Array} msg
+* @returns {any}
+*/
+export function derive_signing_key_from_signature(msg) {
+    const ptr0 = passArray8ToWasm0(msg, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.derive_signing_key_from_signature(ptr0, len0);
+    return takeObject(ret);
+}
+
+const cachedTextEncoder = (typeof TextEncoder !== 'undefined' ? new TextEncoder('utf-8') : { encode: () => { throw Error('TextEncoder not available') } } );
 
 const encodeString = (typeof cachedTextEncoder.encodeInto === 'function'
     ? function (arg, view) {
@@ -85,6 +113,7 @@ function passStringToWasm0(arg, malloc, realloc) {
         const ret = encodeString(arg, view);
 
         offset += ret.written;
+        ptr = realloc(ptr, len, offset, 1) >>> 0;
     }
 
     WASM_VECTOR_LEN = offset;
@@ -109,20 +138,6 @@ function getUint32Memory0() {
     return cachedUint32Memory0;
 }
 
-function getObject(idx) { return heap[idx]; }
-
-function dropObject(idx) {
-    if (idx < 132) return;
-    heap[idx] = heap_next;
-    heap_next = idx;
-}
-
-function takeObject(idx) {
-    const ret = getObject(idx);
-    dropObject(idx);
-    return ret;
-}
-
 function getArrayJsValueFromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     const mem = getUint32Memory0();
@@ -133,6 +148,53 @@ function getArrayJsValueFromWasm0(ptr, len) {
     }
     return result;
 }
+/**
+* Get the shares of the key hierarchy computed from `sk_root`
+*
+* # Arguments
+*
+* * `sk_root` - The root key to compute the hierarchy from.
+*
+* # Returns
+* * String representation of the shares of the key hierarchy.
+* @param {string} sk_root
+* @returns {any[]}
+*/
+export function get_key_hierarchy_shares(sk_root) {
+    try {
+        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+        const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        wasm.get_key_hierarchy_shares(retptr, ptr0, len0);
+        var r0 = getInt32Memory0()[retptr / 4 + 0];
+        var r1 = getInt32Memory0()[retptr / 4 + 1];
+        var v2 = getArrayJsValueFromWasm0(r0, r1).slice();
+        wasm.__wbindgen_free(r0, r1 * 4, 4);
+        return v2;
+    } finally {
+        wasm.__wbindgen_add_to_stack_pointer(16);
+    }
+}
+
+/**
+* Get the string representation of the key hierarchy computed from `sk_root`
+*
+* # Arguments
+*
+* * `sk_root` - The root key to compute the hierarchy from.
+*
+* # Returns
+* * String representation of the key hierarchy.
+* @param {string} sk_root
+* @returns {any}
+*/
+export function get_key_hierarchy(sk_root) {
+    const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.get_key_hierarchy(ptr0, len0);
+    return takeObject(ret);
+}
+
 /**
 * Get the shares of the managing key cluster given the hex representation of the key.
 *
@@ -145,7 +207,7 @@ function getArrayJsValueFromWasm0(ptr, len) {
 * @param {string} managing_cluster_key
 * @returns {any[]}
 */
-module.exports.get_managing_cluster_shares = function(managing_cluster_key) {
+export function get_managing_cluster_shares(managing_cluster_key) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passStringToWasm0(managing_cluster_key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -159,10 +221,10 @@ module.exports.get_managing_cluster_shares = function(managing_cluster_key) {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
-};
+}
 
 /**
-* Converts a bigint hex string to a scalar within the prime field's order and returns a BigInt as a string.
+* Ensures a value fits within the base field.
 *
 * # Arguments
 *
@@ -174,12 +236,12 @@ module.exports.get_managing_cluster_shares = function(managing_cluster_key) {
 * @param {string} value
 * @returns {any}
 */
-module.exports.hex_to_field_scalar = function(value) {
+export function hex_to_field_scalar(value) {
     const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.hex_to_field_scalar(ptr0, len0);
     return takeObject(ret);
-};
+}
 
 /**
 * Converts a hexadecimal string representation of a bigint into its limbs representation and returns it as a `JsValue`.
@@ -194,12 +256,12 @@ module.exports.hex_to_field_scalar = function(value) {
 * @param {string} value
 * @returns {any}
 */
-module.exports.bigint_to_limbs = function(value) {
+export function bigint_to_limbs(value) {
     const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.bigint_to_limbs(ptr0, len0);
     return takeObject(ret);
-};
+}
 
 /**
 * Adds two numbers in the prime field and returns the result as a string. Inputs are hex strings.
@@ -216,14 +278,14 @@ module.exports.bigint_to_limbs = function(value) {
 * @param {string} b
 * @returns {any}
 */
-module.exports.add = function(a, b) {
+export function add(a, b) {
     const ptr0 = passStringToWasm0(a, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(b, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.add(ptr0, len0, ptr1, len1);
     return takeObject(ret);
-};
+}
 
 /**
 * Subtracts the second number from the first in the prime field and returns the result as a string. Inputs are hex strings.
@@ -240,14 +302,14 @@ module.exports.add = function(a, b) {
 * @param {string} b
 * @returns {any}
 */
-module.exports.subtract = function(a, b) {
+export function subtract(a, b) {
     const ptr0 = passStringToWasm0(a, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(b, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.subtract(ptr0, len0, ptr1, len1);
     return takeObject(ret);
-};
+}
 
 /**
 * Computes the Poseidon2 hash of the input string and returns a BigInt as a string.
@@ -256,23 +318,20 @@ module.exports.subtract = function(a, b) {
 * @param {string} value
 * @returns {any}
 */
-module.exports.compute_poseidon_hash = function(value) {
+export function compute_poseidon_hash(value) {
     const ptr0 = passStringToWasm0(value, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.compute_poseidon_hash(ptr0, len0);
     return takeObject(ret);
-};
+}
 
 /**
-* Generates a signature for a wallet update operation.
-*
-* This function takes a serialized wallet and the root secret key as inputs,
-* generates a signature for the wallet update, and returns the signature as a hex-encoded string.
+* Generates wallet update statement signature.
 *
 * # Arguments
 *
-* * `wallet_str` - A string slice that holds the serialized wallet data.
-* * `sk_root` - A string slice that holds the root secret key.
+* * `wallet_str` - Serialized wallet data.
+* * `sk_root` - sk_root in hex.
 *
 * # Returns
 *
@@ -281,106 +340,47 @@ module.exports.compute_poseidon_hash = function(value) {
 * @param {string} sk_root
 * @returns {any}
 */
-module.exports.generate_wallet_update_signature = function(wallet_str, sk_root) {
+export function generate_wallet_update_signature(wallet_str, sk_root) {
     const ptr0 = passStringToWasm0(wallet_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.generate_wallet_update_signature(ptr0, len0, ptr1, len1);
     return takeObject(ret);
-};
+}
 
 /**
+* Generates external transfer signature for withdrawals.
+*
+* # Arguments
+*
+* * `external_transfer_str` - Serialized external transfer data.
+* * `sk_root` - sk_root in hex.
+*
+* # Returns
+*
+* A `JsValue` containing the hex-encoded signature string.
 * @param {string} external_transfer_str
 * @param {string} sk_root
 * @returns {any}
 */
-module.exports.generate_external_transfer_signature = function(external_transfer_str, sk_root) {
+export function generate_external_transfer_signature(external_transfer_str, sk_root) {
     const ptr0 = passStringToWasm0(external_transfer_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ptr1 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.generate_external_transfer_signature(ptr0, len0, ptr1, len1);
     return takeObject(ret);
-};
+}
 
 /**
-* Get the shares of the key hierarchy computed from `sk_root`
-*
-* # Arguments
-*
-* * `sk_root` - The root key to compute the hierarchy from.
-*
-* # Returns
-* * String representation of the shares of the key hierarchy.
-* @param {string} sk_root
-* @returns {any[]}
-*/
-module.exports.get_key_hierarchy_shares = function(sk_root) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        const len0 = WASM_VECTOR_LEN;
-        wasm.get_key_hierarchy_shares(retptr, ptr0, len0);
-        var r0 = getInt32Memory0()[retptr / 4 + 0];
-        var r1 = getInt32Memory0()[retptr / 4 + 1];
-        var v2 = getArrayJsValueFromWasm0(r0, r1).slice();
-        wasm.__wbindgen_free(r0, r1 * 4, 4);
-        return v2;
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-    }
-};
-
-/**
-* Get the string representation of the key hierarchy computed from `sk_root`
-*
-* # Arguments
-*
-* * `sk_root` - The root key to compute the hierarchy from.
-*
-* # Returns
-* * String representation of the key hierarchy.
-* @param {string} sk_root
-* @returns {any}
-*/
-module.exports.get_key_hierarchy = function(sk_root) {
-    const ptr0 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.get_key_hierarchy(ptr0, len0);
-    return takeObject(ret);
-};
-
-/**
-* Generates a signature for updating a wallet by hashing the wallet's share commitments
-* and using the provided signing key to sign the hash.
-*
-* # Arguments
-*
-* * `wallet` - The `Wallet` instance containing the share commitments to be signed.
-* * `signing_key` - A reference to the `SigningKey` used to sign the hash of the commitments.
-*
-* # Returns
-*
-* * A `Signature` object representing the ECDSA signature of the hashed commitments.
-* @param {string} wallet_str
-* @returns {any}
-*/
-module.exports.get_shares_commitment = function(wallet_str) {
-    const ptr0 = passStringToWasm0(wallet_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.get_shares_commitment(ptr0, len0);
-    return takeObject(ret);
-};
-
-/**
-* Sign the body of a request with `sk_root`
+* Generates authorization headers for HTTP requests to a relayer.
 *
 * # Arguments
 *
 * * `message` - The message to be signed.
-* * `expiration` - The expiration time of the signature TODO
-* * `key` - Hex representatino of the key to sign the message with.
+* * `timestamp` - The current timestamp.
+* * `sk_root` - sk_root in hex.
 *
 * # Returns
 *
@@ -388,15 +388,15 @@ module.exports.get_shares_commitment = function(wallet_str) {
 *   and the second element is the expiration time of the signature.
 * @param {string} message
 * @param {bigint} timestamp
-* @param {string} key
+* @param {string} sk_root
 * @returns {any[]}
 */
-module.exports.sign_http_request = function(message, timestamp, key) {
+export function sign_http_request(message, timestamp, sk_root) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len0 = WASM_VECTOR_LEN;
-        const ptr1 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const ptr1 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len1 = WASM_VECTOR_LEN;
         wasm.sign_http_request(retptr, ptr0, len0, timestamp, ptr1, len1);
         var r0 = getInt32Memory0()[retptr / 4 + 0];
@@ -407,46 +407,132 @@ module.exports.sign_http_request = function(message, timestamp, key) {
     } finally {
         wasm.__wbindgen_add_to_stack_pointer(16);
     }
-};
+}
 
 /**
-* Sign a message with a given key
+* Sign a message with sk_root
 *
 * # Arguments
 *
 * * `message` - The message to be signed.
-* * `key` - The key to sign the message with.
+* * `sk_root` - sk_root in hex.
 *
 * # Returns
 *
 * * A `JsValue` containing the hexadecimal string representation of the signature.
 * @param {string} message
-* @param {string} key
+* @param {string} sk_root
 * @returns {any}
 */
-module.exports.sign_message = function(message, key) {
+export function sign_message(message, sk_root) {
     const ptr0 = passStringToWasm0(message, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
-    const ptr1 = passStringToWasm0(key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const ptr1 = passStringToWasm0(sk_root, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len1 = WASM_VECTOR_LEN;
     const ret = wasm.sign_message(ptr0, len0, ptr1, len1);
     return takeObject(ret);
-};
+}
 
-module.exports.__wbindgen_string_new = function(arg0, arg1) {
-    const ret = getStringFromWasm0(arg0, arg1);
-    return addHeapObject(ret);
-};
+async function __wbg_load(module, imports) {
+    if (typeof Response === 'function' && module instanceof Response) {
+        if (typeof WebAssembly.instantiateStreaming === 'function') {
+            try {
+                return await WebAssembly.instantiateStreaming(module, imports);
 
-module.exports.__wbindgen_throw = function(arg0, arg1) {
-    throw new Error(getStringFromWasm0(arg0, arg1));
-};
+            } catch (e) {
+                if (module.headers.get('Content-Type') != 'application/wasm') {
+                    console.warn("`WebAssembly.instantiateStreaming` failed because your server does not serve wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n", e);
 
-const path = require('path').join(__dirname, 'index_bg.wasm');
-const bytes = require('fs').readFileSync(path);
+                } else {
+                    throw e;
+                }
+            }
+        }
 
-const wasmModule = new WebAssembly.Module(bytes);
-const wasmInstance = new WebAssembly.Instance(wasmModule, imports);
-wasm = wasmInstance.exports;
-module.exports.__wasm = wasm;
+        const bytes = await module.arrayBuffer();
+        return await WebAssembly.instantiate(bytes, imports);
 
+    } else {
+        const instance = await WebAssembly.instantiate(module, imports);
+
+        if (instance instanceof WebAssembly.Instance) {
+            return { instance, module };
+
+        } else {
+            return instance;
+        }
+    }
+}
+
+function __wbg_get_imports() {
+    const imports = {};
+    imports.wbg = {};
+    imports.wbg.__wbindgen_string_new = function(arg0, arg1) {
+        const ret = getStringFromWasm0(arg0, arg1);
+        return addHeapObject(ret);
+    };
+    imports.wbg.__wbindgen_object_drop_ref = function(arg0) {
+        takeObject(arg0);
+    };
+    imports.wbg.__wbg_log_1746d5c75ec89963 = function(arg0, arg1) {
+        console.log(getObject(arg0), getObject(arg1));
+    };
+    imports.wbg.__wbindgen_throw = function(arg0, arg1) {
+        throw new Error(getStringFromWasm0(arg0, arg1));
+    };
+
+    return imports;
+}
+
+function __wbg_init_memory(imports, maybe_memory) {
+
+}
+
+function __wbg_finalize_init(instance, module) {
+    wasm = instance.exports;
+    __wbg_init.__wbindgen_wasm_module = module;
+    cachedInt32Memory0 = null;
+    cachedUint32Memory0 = null;
+    cachedUint8Memory0 = null;
+
+
+    return wasm;
+}
+
+function initSync(module) {
+    if (wasm !== undefined) return wasm;
+
+    const imports = __wbg_get_imports();
+
+    __wbg_init_memory(imports);
+
+    if (!(module instanceof WebAssembly.Module)) {
+        module = new WebAssembly.Module(module);
+    }
+
+    const instance = new WebAssembly.Instance(module, imports);
+
+    return __wbg_finalize_init(instance, module);
+}
+
+async function __wbg_init(input) {
+    if (wasm !== undefined) return wasm;
+
+    if (typeof input === 'undefined') {
+        input = new URL('index_bg.wasm', import.meta.url);
+    }
+    const imports = __wbg_get_imports();
+
+    if (typeof input === 'string' || (typeof Request === 'function' && input instanceof Request) || (typeof URL === 'function' && input instanceof URL)) {
+        input = fetch(input);
+    }
+
+    __wbg_init_memory(imports);
+
+    const { instance, module } = await __wbg_load(await input, imports);
+
+    return __wbg_finalize_init(instance, module);
+}
+
+export { initSync }
+export default __wbg_init;
