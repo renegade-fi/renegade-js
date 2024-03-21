@@ -133,10 +133,15 @@ export class RenegadeWs {
                     parsedMessage.event.type !== "TaskStatusUpdate") {
                     return;
                 }
-                if (this._verbose) {
-                    console.log(`[WebSocket] New task state for ${taskId}: ${parsedMessage.event.state}`);
+                console.log("🚀 ~ RenegadeWs ~ taskCompletionPromise ~ parsedMessage:", parsedMessage);
+                const state = parsedMessage.event.status.state;
+                if (!state) {
+                    throw new Error("Could not find state in task update");
                 }
-                if (parsedMessage.event.state === "Completed") {
+                if (this._verbose) {
+                    console.log(`[WebSocket] New task state for ${taskId}: ${state}`);
+                }
+                if (state === "Completed") {
                     resolve();
                 }
             });

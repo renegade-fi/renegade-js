@@ -11,12 +11,13 @@ export default class Balance {
   public readonly protocol_fee_balance: bigint;
 
   constructor(params: {
+    id?: BalanceId;
     mint: Token;
     amount: bigint;
     relayer_fee_balance: bigint;
     protocol_fee_balance: bigint;
   }) {
-    this.balanceId = uuid.v4() as BalanceId;
+    this.balanceId = params.id ?? (uuid.v4() as BalanceId);
     this.mint = params.mint;
     this.amount = params.amount;
     this.relayer_fee_balance = params.relayer_fee_balance;

@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import JSONBigInt from "json-bigint";
 import { z } from "zod";
 import { bigint_to_limbs, sign_http_request } from "../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
@@ -11,7 +12,6 @@ import {
 import { AccountId, BalanceId, OrderId, TaskId } from "./types";
 import {
   CreateWalletRequest,
-  CreateWalletResponse,
   TaskStatus,
   createPostRequest,
 } from "./types/api";
@@ -25,7 +25,6 @@ import {
   signWalletWithdraw,
   signWithdrawalTransfer,
 } from "./utils/sign";
-import JSONBigInt from "json-bigint";
 
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -294,28 +293,23 @@ export default class Account {
    */
   @assertSynced
   async queryTaskQueue(): Promise<Array<z.infer<typeof TaskStatus>>> {
-    const request: AxiosRequestConfig = {
-      method: "GET",
-      url: `${this._relayerHttpUrl}/v0/task_queue/${this.accountId}`,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
     const [renegadeAuth, renegadeAuthExpiration] = sign_http_request(
       "",
       BigInt(Date.now()),
       this._wallet.keychain.keyHierarchy.root.secretKey,
     );
-    request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
-    request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
-    // const fetchWithZod = createZodFetcher(axios.request);
-    // const response = await fetchWithZod(TaskQueueListResponse, request)
-    const response = await axios.request(request);
+    const response = await axios.get(
+      `${this._relayerHttpUrl}/v0/task_queue/${this.accountId}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          [RENEGADE_AUTH_HEADER]: renegadeAuth,
+          [RENEGADE_AUTH_EXPIRATION_HEADER]: renegadeAuthExpiration,
+        },
+      },
+    );
     const parsedRes = response.data.tasks.map((task) => {
-      return TaskStatus.parse({
-        ...task,
-        status: JSON.parse(task.status),
-      });
+      return TaskStatus.parse(task);
     });
     return parsedRes;
   }
@@ -329,12 +323,11 @@ export default class Account {
     const body: CreateWalletRequest = {
       wallet: this._wallet,
     };
-    const response = createPostRequest(
+    const res = await createPostRequest(
       `${this._relayerHttpUrl}/v0/wallet`,
       body,
-      CreateWalletResponse,
     );
-    return await response.then((res) => res.data.task_id as TaskId);
+    return res.data.task_id as TaskId;
   }
 
   /**
@@ -453,7 +446,7 @@ export default class Account {
     // TODO: Temporary hacky fix, wallet should always be in sync with relayer
     const wallet = await this._queryRelayerForWallet();
 
-    // Sign wallet deposit statement
+    // Sign wallet update statement
     const statement_sig = signWalletPlaceOrder(wallet, order);
 
     const request: AxiosRequestConfig = {

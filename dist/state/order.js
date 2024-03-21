@@ -61,7 +61,7 @@ export default class Order {
       "type": "${this.type === "midpoint" ? "Midpoint" : "Limit"}",
       "amount": ${this.amount},
       "minimum_amount": ${minimumAmountSerialized},
-      "worst_case_price": ${this.worstPrice}
+      "worst_case_price": "${this.worstPrice}"
     }`.replace(/[\s\n]/g, "");
     }
     static deserialize(serializedOrder) {

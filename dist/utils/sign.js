@@ -56,14 +56,14 @@ function add_balance(wallet, balance) {
  */
 export function signWalletDeposit(wallet, mint, amount) {
     try {
-        console.log("Balances before deposit: ", wallet.balances.map((balance) => new Balance({ ...balance })));
+        console.log("Balances before deposit: ", wallet.balances.map((balance) => new Balance({ ...balance, id: balance.balanceId })));
         const newBalances = add_balance(wallet, new Balance({
             mint,
             amount,
             relayer_fee_balance: 0n,
             protocol_fee_balance: 0n,
         }));
-        console.log("Balances after deposit: ", newBalances.map((balance) => new Balance({ ...balance })));
+        console.log("Balances after deposit: ", newBalances);
         const newWallet = new Wallet({
             ...wallet,
             balances: newBalances,
@@ -73,6 +73,7 @@ export function signWalletDeposit(wallet, mint, amount) {
     }
     catch (error) {
         console.error("Error signing wallet update: ", error);
+        throw error;
     }
 }
 /**
@@ -83,7 +84,7 @@ export function signWalletDeposit(wallet, mint, amount) {
  * @param amount The amount to withdraw.
  */
 export function signWalletWithdraw(wallet, mint, amount) {
-    console.log("Balances before withdraw: ", wallet.balances.map((balance) => new Balance({ ...balance })));
+    console.log("Balances before withdraw: ", wallet.balances.map((balance) => new Balance({ ...balance, id: balance.balanceId })));
     // Find the balance to withdraw from
     const newBalances = [...wallet.balances];
     const mintAddress = mint.address.replace("0x", "");
@@ -91,13 +92,11 @@ export function signWalletWithdraw(wallet, mint, amount) {
     if (index === -1) {
         throw new Error("No balance to withdraw");
     }
-    // Apply the withdrawal to the wallet
-    if (newBalances[index].amount >= amount) {
-        newBalances[index].amount -= amount;
-    }
-    else {
+    // Withdraw an amount from the balance for the given mint
+    if (newBalances[index].amount < amount) {
         throw new Error(ERR_INSUFFICIENT_BALANCE);
     }
+    newBalances[index].amount -= amount;
     console.log("Balances after withdraw: ", newBalances.map((balance) => new Balance({ ...balance })));
     const newWallet = new Wallet({
         ...wallet,
@@ -115,22 +114,24 @@ export function signWithdrawalTransfer(destinationAddr, mint, amount, skRoot) {
 /**
  * Add an order to the wallet, replacing the first default order if the wallet is full
  */
-function addOrder(wallet, order) {
+function add_order(wallet, order) {
     // Append if the orders are not full
-    const newOrders = [...wallet.orders];
-    if (newOrders.length < MAX_ORDERS) {
+    const idx = find_first_default_order(wallet);
+    if (idx !== -1) {
+        const newOrders = [...wallet.orders];
+        newOrders.splice(idx, 1, order);
+        return newOrders;
+    }
+    else if (wallet.orders.length < MAX_ORDERS) {
+        const newOrders = [...wallet.orders];
         newOrders.push(order);
         return newOrders;
     }
-    // Otherwise try to find an order to overwrite
-    const idx = newOrders.findIndex((order) => order.amount === 0n);
-    if (idx !== -1) {
-        newOrders[idx] = order;
-        return newOrders;
-    }
-    else {
-        throw new Error(ERR_ORDERS_FULL);
-    }
+    throw new Error(ERR_ORDERS_FULL);
+}
+// Find the index of the first default order in the wallet
+function find_first_default_order(wallet) {
+    return wallet.orders.findIndex((order) => order.amount === 0n);
 }
 /**
  * Sign wallet to place an order.
@@ -142,8 +143,8 @@ function addOrder(wallet, order) {
  */
 export function signWalletPlaceOrder(wallet, order) {
     try {
-        console.log("Orders before placing order: ", wallet.orders.map((order) => new Order({ ...order })));
-        const newOrders = addOrder(wallet, order);
+        console.log("Orders before placing order: ", wallet.orders.map((order) => new Order({ ...order, id: order.orderId })));
+        const newOrders = add_order(wallet, order);
         console.log("Orders after placing order: ", newOrders);
         const newWallet = new Wallet({
             ...wallet,
@@ -154,6 +155,7 @@ export function signWalletPlaceOrder(wallet, order) {
     }
     catch (error) {
         console.error("Error signing wallet update: ", error);
+        throw error;
     }
 }
 /**
@@ -165,9 +167,11 @@ export function signWalletPlaceOrder(wallet, order) {
  *
  */
 export function signWalletModifyOrder(wallet, oldOrderId, newOrder) {
+    console.log("Orders before modifying order: ", wallet.orders.map((order) => new Order({ ...order, id: order.orderId })));
     const newOrders = [...wallet.orders];
-    const index = newOrders.findIndex((order) => order.orderId === oldOrderId);
-    newOrders[index] = newOrder;
+    const idx = newOrders.findIndex((order) => order.orderId === oldOrderId);
+    newOrders.splice(idx, 1, newOrder);
+    console.log("Orders after modifying order: ", newOrders);
     const newWallet = new Wallet({
         ...wallet,
         orders: newOrders,
@@ -182,9 +186,11 @@ export function signWalletModifyOrder(wallet, oldOrderId, newOrder) {
  * @param orderId The ID of the order to cancel.
  */
 export function signWalletCancelOrder(wallet, orderId) {
+    console.log("Orders before cancelling order: ", wallet.orders.map((order) => new Order({ ...order, id: order.orderId })));
     const newOrders = [...wallet.orders];
-    const index = newOrders.findIndex((order) => order.orderId === orderId);
-    newOrders.splice(index, 1);
+    const idx = newOrders.findIndex((order) => order.orderId === orderId);
+    newOrders.splice(idx, 1);
+    console.log("Orders after cancelling order: ", newOrders);
     const newWallet = new Wallet({
         ...wallet,
         orders: newOrders,

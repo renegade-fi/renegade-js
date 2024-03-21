@@ -5,15 +5,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import axios from "axios";
+import JSONBigInt from "json-bigint";
 import { bigint_to_limbs, sign_http_request } from "../renegade-utils";
 import RenegadeError, { RenegadeErrorType } from "./errors";
 import { Wallet } from "./state";
 import { RENEGADE_AUTH_EXPIRATION_HEADER, RENEGADE_AUTH_HEADER, bigIntToLimbsLE, } from "./state/utils";
-import { CreateWalletResponse, TaskStatus, createPostRequest, } from "./types/api";
+import { TaskStatus, createPostRequest, } from "./types/api";
 import { RenegadeWs } from "./utils";
 import { toFieldScalar } from "./utils/field";
 import { signWalletCancelOrder, signWalletDeposit, signWalletModifyOrder, signWalletPlaceOrder, signWalletWithdraw, signWithdrawalTransfer, } from "./utils/sign";
-import JSONBigInt from "json-bigint";
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
  * Wallet is now managed by the relayer and wallet update events are actively
@@ -144,7 +144,6 @@ export default class Account {
         let wallet;
         let taskId;
         if ((wallet = await this._queryRelayerForWallet())) {
-            console.log("🚀 ~ Account ~ sync ~ wallet:", wallet);
             // Query the relayer to see if this Account is already registered in relayer state.
             this._wallet = wallet;
             await this._setupWebSocket();
@@ -199,11 +198,9 @@ export default class Account {
      */
     async _queryRelayerForWallet() {
         const url = `${this._relayerHttpUrl}/v0/wallet/${this.accountId}`;
-        console.log("Querying relayer for wallet using skroot: ", this._wallet.keychain.keyHierarchy.root.secretKey);
         let headers = new Headers();
         headers.append("Content-Type", "application/json");
         const [renegadeAuth, renegadeAuthExpiration] = sign_http_request("", BigInt(Date.now()), this._wallet.keychain.keyHierarchy.root.secretKey);
-        console.log("🚀 ~ Account ~ _queryRelayerForWallet ~ renegadeAuth:", renegadeAuth);
         headers.append(RENEGADE_AUTH_HEADER, renegadeAuth);
         headers.append(RENEGADE_AUTH_EXPIRATION_HEADER, renegadeAuthExpiration);
         try {
@@ -246,24 +243,16 @@ export default class Account {
      * with a VALID WALLET CREATE proof.
      */
     async queryTaskQueue() {
-        const request = {
-            method: "GET",
-            url: `${this._relayerHttpUrl}/v0/task_queue/${this.accountId}`,
+        const [renegadeAuth, renegadeAuthExpiration] = sign_http_request("", BigInt(Date.now()), this._wallet.keychain.keyHierarchy.root.secretKey);
+        const response = await axios.get(`${this._relayerHttpUrl}/v0/task_queue/${this.accountId}`, {
             headers: {
                 "Content-Type": "application/json",
+                [RENEGADE_AUTH_HEADER]: renegadeAuth,
+                [RENEGADE_AUTH_EXPIRATION_HEADER]: renegadeAuthExpiration,
             },
-        };
-        const [renegadeAuth, renegadeAuthExpiration] = sign_http_request("", BigInt(Date.now()), this._wallet.keychain.keyHierarchy.root.secretKey);
-        request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
-        request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
-        // const fetchWithZod = createZodFetcher(axios.request);
-        // const response = await fetchWithZod(TaskQueueListResponse, request)
-        const response = await axios.request(request);
+        });
         const parsedRes = response.data.tasks.map((task) => {
-            return TaskStatus.parse({
-                ...task,
-                status: JSON.parse(task.status),
-            });
+            return TaskStatus.parse(task);
         });
         return parsedRes;
     }
@@ -273,12 +262,11 @@ export default class Account {
      */
     async _createNewWallet() {
         // TODO: Assert that Balances and Orders are empty.
-        console.log("Creating wallet with keychain: ", this._wallet.keychain.serialize());
         const body = {
             wallet: this._wallet,
         };
-        const response = createPostRequest(`${this._relayerHttpUrl}/v0/wallet`, body, CreateWalletResponse);
-        return await response.then((res) => res.data.task_id);
+        const res = await createPostRequest(`${this._relayerHttpUrl}/v0/wallet`, body);
+        return res.data.task_id;
     }
     /**
      * Deposit funds into the Account.
@@ -361,7 +349,7 @@ export default class Account {
         // Fetch latest wallet from relayer
         // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
-        // Sign wallet deposit statement
+        // Sign wallet update statement
         const statement_sig = signWalletPlaceOrder(wallet, order);
         const request = {
             method: "POST",

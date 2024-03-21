@@ -1,8 +1,7 @@
-import axios, { AxiosRequestConfig } from "axios";
-import { ZodSchema, z, infer as zInfer } from "zod";
+import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { z } from "zod";
 import { sign_http_request } from "../../renegade-utils";
 import { Wallet } from "../state";
-import { createZodFetcher } from "../utils";
 
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
@@ -17,12 +16,11 @@ export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
  * @param {S} schema - A Zod schema to validate the response. The function returns a promise of the schema's inferred type.
  * @param {boolean} [isAuthenticated=false] - Optional. If true, authentication headers are added to the request.
  */
-export function createPostRequest<S extends ZodSchema>(
+export function createPostRequest(
   url: string,
   data: any,
-  schema: S,
   secretKey?: string,
-): Promise<zInfer<S>> {
+): Promise<AxiosResponse> {
   const serializedData = customSerializer(data);
   const request: AxiosRequestConfig = {
     method: "POST",
@@ -44,21 +42,19 @@ export function createPostRequest<S extends ZodSchema>(
     request.headers[RENEGADE_AUTH_HEADER] = renegadeAuth;
     request.headers[RENEGADE_AUTH_EXPIRATION_HEADER] = renegadeAuthExpiration;
   }
-  const fetchWithZod = createZodFetcher(axios.request);
-  const response = fetchWithZod(schema, request)
+  const response = axios
+    .request(request)
     .then((response) => {
-      // TODO: Sync error messages with frontend expected errors
       if (response.status !== 200) {
-        // Handle non-200 responses
         const errorMessage =
-          response.statusText || "Error occurred during the request in.";
-        // TODO: Use RenegadeError
+          response.data ||
+          response.statusText ||
+          `HTTP error ${response.status}`;
         return Promise.reject(new Error(errorMessage));
       }
-      return response; // Return response for status 200
+      return response;
     })
     .catch((error) => {
-      // Handle errors in fetchWithZod or non-200 status
       throw new Error(error.message || "Network or parsing error occurred.");
     });
   return response;
@@ -90,12 +86,12 @@ export type CreateWalletRequest = {
   wallet: Wallet;
 };
 
-export const AxiosResponse = z.object({
+export const AxiosResponseSchema = z.object({
   status: z.number(),
   statusText: z.string(),
 });
 
-export const CreateWalletResponse = AxiosResponse.extend({
+export const CreateWalletResponse = AxiosResponseSchema.extend({
   data: z.object({
     wallet_id: z.string().uuid(),
     task_id: z.string().uuid(),
@@ -104,14 +100,12 @@ export const CreateWalletResponse = AxiosResponse.extend({
 
 export const TaskStatus = z.object({
   id: z.string().uuid(),
-  status: z.object({
-    task_type: z.string(),
-    state: z.string(),
-  }),
+  state: z.string(),
+  description: z.string(),
   committed: z.boolean(),
 });
 
-export const TaskQueueListResponse = AxiosResponse.extend({
+export const TaskQueueListResponse = AxiosResponseSchema.extend({
   data: z.object({
     tasks: z.array(
       z.object({
@@ -123,7 +117,7 @@ export const TaskQueueListResponse = AxiosResponse.extend({
   }),
 });
 
-export const TaskStatusResponse = AxiosResponse.extend({
+export const TaskStatusResponse = AxiosResponseSchema.extend({
   data: z.object({
     id: z.string().uuid(),
     status: z.string(),
