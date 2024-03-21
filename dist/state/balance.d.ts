@@ -7,6 +7,7 @@ export default class Balance {
     readonly relayer_fee_balance: bigint;
     readonly protocol_fee_balance: bigint;
     constructor(params: {
+        id?: BalanceId;
         mint: Token;
         amount: bigint;
         relayer_fee_balance: bigint;

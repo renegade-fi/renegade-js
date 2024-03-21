@@ -68,8 +68,7 @@ export default class Keychain {
         let skRoot;
         if (options.seed) {
             const sig = new Uint8Array(Buffer.from(options.seed, "hex"));
-            const skRootHex = derive_signing_key_from_signature(sig);
-            skRoot = Buffer.from(skRootHex, "hex");
+            skRoot = Buffer.from(derive_signing_key_from_signature(sig), "hex");
         }
         else if (options.filePath) {
             this.loadFromFile(options.filePath);

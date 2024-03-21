@@ -78,6 +78,13 @@ export default class Token {
     }
   }
 
+  /**
+   * Finds and returns the ticker symbol for a given token address.
+   *
+   * @param {string} address - The token address to find the ticker for.
+   * @returns `0x{string}` The ticker symbol associated with the given address.
+   * @throws {Error} If the address is not found in the tokenMappings.
+   */
   public static findTickerByAddress(address: string): string {
     try {
       return tokenMappings.tokens.find((token) => token.address === address)

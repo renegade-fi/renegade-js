@@ -7,7 +7,7 @@ export default class Balance {
     relayer_fee_balance;
     protocol_fee_balance;
     constructor(params) {
-        this.balanceId = uuid.v4();
+        this.balanceId = params.id ?? uuid.v4();
         this.mint = params.mint;
         this.amount = params.amount;
         this.relayer_fee_balance = params.relayer_fee_balance;

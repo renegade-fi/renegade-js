@@ -61,10 +61,8 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     queryWallet(accountId: AccountId): Promise<void>;
     queryTaskQueue(accountId: AccountId): Promise<{
         id?: string;
-        status?: {
-            task_type?: string;
-            state?: string;
-        };
+        state?: string;
+        description?: string;
         committed?: boolean;
     }[]>;
     /**

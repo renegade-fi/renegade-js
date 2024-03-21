@@ -82,7 +82,7 @@ export default class Wallet {
     this.blindedPublicShares = params.blindedPublicShares || [];
     this.privateShares = params.privateShares || [];
     this.managingCluster = params.managingCluster || "0x0";
-    this.matchFee = params.matchFee || 0.0;
+    this.matchFee = params.matchFee || 0.1999;
     if (!params.exists) {
       [this.blinder, this.privateBlinder, this.publicBlinder] =
         this.getBlinders();
@@ -239,10 +239,10 @@ export default class Wallet {
       "orders": [${this.orders.map((o) => o.serialize()).join(",")}],
       "key_chain": ${this.keychain.serialize()},
       "managing_cluster": "${this.managingCluster}",
-      "match_fee": ${this.matchFee},
-      "blinder": [${bigIntToLimbsLE(this.blinder).join(",")}],
+      "match_fee": "${BigInt(Math.floor(this.matchFee * 2 ** 32))}",
       "blinded_public_shares": [${serializedBlindedPublicShares.join(",")}],
-      "private_shares": [${serializedPrivateShares.join(",")}]
+      "private_shares": [${serializedPrivateShares.join(",")}],
+      "blinder": [${bigIntToLimbsLE(this.blinder).join(",")}]
     }`.replace(/[\s\n]/g, "");
   }
 
@@ -267,6 +267,8 @@ export default class Wallet {
     );
     const [derivedBlinder, privateBlinder, publicBlinder] =
       Wallet.getBlindersFromShares(privateShares, blindedPublicShares);
+    const matchFee =
+      parseFloat(BigInt(serializedWallet.match_fee).toString()) / 2 ** 32;
 
     return new Wallet({
       id,
@@ -279,7 +281,7 @@ export default class Wallet {
       blindedPublicShares,
       privateShares,
       exists: true,
-      matchFee: serializedWallet.match_fee,
+      matchFee,
       managingCluster: serializedWallet.managing_cluster,
     });
   }
