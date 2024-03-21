@@ -120,7 +120,7 @@ pub fn get_match_key(sk_root: SigningKey) -> (SecretIdentificationKey, PublicIde
 
 /// Return a `SigningKey` and a `Verifying` from a hex string
 pub fn get_root_key(key: &str) -> (SigningKey, VerifyingKey) {
-    let key_bigint = biguint_from_hex_string(&key).unwrap();
+    let key_bigint = biguint_from_hex_string(key).unwrap();
     let signing_key = SigningKey::from_slice(&key_bigint.to_bytes_be()).unwrap();
     let verifying_key = signing_key.clone().verifying_key().to_owned();
     (signing_key, verifying_key)

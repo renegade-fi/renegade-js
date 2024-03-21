@@ -10,7 +10,7 @@ declare class SigningKey {
      * The hexadecimal representation of the public key.
      */
     publicKey: string;
-    constructor(secretKey: Uint8Array);
+    constructor(secretKey: string, publicKey: string);
     signMessage(message: string): string;
 }
 declare class IdentificationKey {

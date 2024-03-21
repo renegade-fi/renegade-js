@@ -144,7 +144,7 @@ impl Wallet {
 
 /// Compute a commitment to a single share of a wallet
 pub fn compute_wallet_private_share_commitment(private_share: &Vec<ScalarField>) -> ScalarField {
-    _compute_poseidon_hash(&private_share)
+    _compute_poseidon_hash(private_share)
 }
 
 /// The type used to track an amount

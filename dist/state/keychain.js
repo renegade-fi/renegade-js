@@ -1,6 +1,5 @@
-import { sha256 } from "@noble/hashes/sha256";
 // import { readFileSync, writeFileSync } from "fs";
-import { get_key_hierarchy, sign_http_request, sign_message, } from "../../renegade-utils";
+import { derive_signing_key_from_signature, get_key_hierarchy, sign_http_request, sign_message, } from "../../renegade-utils";
 import { getRandomBytes } from "../state/utils";
 /**
  * Represents a signing key used for signing messages.
@@ -14,12 +13,9 @@ class SigningKey {
      * The hexadecimal representation of the public key.
      */
     publicKey;
-    constructor(secretKey) {
-        if (secretKey.length !== 32) {
-            throw new Error("SigningKey secretKey must be 32 bytes.");
-        }
-        this.secretKey = Buffer.from(secretKey).toString("hex");
-        this.publicKey = JSON.parse(get_key_hierarchy(this.secretKey)).public_keys.pk_root.replace("0x", "");
+    constructor(secretKey, publicKey) {
+        this.secretKey = secretKey;
+        this.publicKey = publicKey;
     }
     signMessage(message) {
         return sign_message(message, this.secretKey);
@@ -71,7 +67,9 @@ export default class Keychain {
         // Extract skRoot from the inputs
         let skRoot;
         if (options.seed) {
-            skRoot = sha256(Buffer.from(options.seed));
+            const sig = new Uint8Array(Buffer.from(options.seed, "hex"));
+            const skRootHex = derive_signing_key_from_signature(sig);
+            skRoot = Buffer.from(skRootHex, "hex");
         }
         else if (options.filePath) {
             this.loadFromFile(options.filePath);
@@ -92,13 +90,15 @@ export default class Keychain {
     /**
      * Given a seed buffer, computes the entire Renegade key hierarchy.
      */
-    populateHierarchy(skRoot) {
-        // Derive the root key.
-        const root = new SigningKey(skRoot);
-        const skMatch = JSON.parse(get_key_hierarchy(root.secretKey)).private_keys.sk_match.replace("0x", "");
-        const pkMatch = JSON.parse(get_key_hierarchy(root.secretKey)).public_keys.pk_match.replace("0x", "");
+    populateHierarchy(_skRoot) {
+        // Derive the keychain.
+        const keychain = JSON.parse(get_key_hierarchy(Buffer.from(_skRoot).toString("hex")));
+        const skRoot = keychain.private_keys.sk_root.replace("0x", "");
+        const pkRoot = keychain.public_keys.pk_root.replace("0x", "");
+        const skMatch = keychain.private_keys.sk_match.replace("0x", "");
+        const pkMatch = keychain.public_keys.pk_match.replace("0x", "");
+        const root = new SigningKey(skRoot, pkRoot);
         const match = new IdentificationKey(skMatch, pkMatch);
-        // Save the key hierarchy.
         this.keyHierarchy = { root, match };
     }
     /**
