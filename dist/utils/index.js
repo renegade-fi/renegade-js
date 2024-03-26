@@ -133,7 +133,6 @@ export class RenegadeWs {
                     parsedMessage.event.type !== "TaskStatusUpdate") {
                     return;
                 }
-                console.log("🚀 ~ RenegadeWs ~ taskCompletionPromise ~ parsedMessage:", parsedMessage);
                 const state = parsedMessage.event.status.state;
                 if (!state) {
                     throw new Error("Could not find state in task update");
