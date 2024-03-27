@@ -20,8 +20,12 @@ lazy_static! {
 
 // Get sk_root from signature over ROOT_KEY_MESSAGE
 #[wasm_bindgen]
-pub fn derive_signing_key_from_signature(msg: &[u8]) -> JsValue {
-    let sk_root = derive_signing_key(msg).unwrap();
+pub fn derive_signing_key_from_signature(msg: &str) -> JsValue {
+    let stripped = msg.strip_prefix("0x").unwrap_or(msg);
+    let bytes = hex::decode(stripped).unwrap();
+    let bytes_slice = bytes.as_slice();
+
+    let sk_root = derive_signing_key(bytes_slice).unwrap();
     JsValue::from_str(&hex::encode(sk_root.to_bytes()))
 }
 

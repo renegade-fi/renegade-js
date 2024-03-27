@@ -1,4 +1,3 @@
-import { sha256 } from "@noble/hashes/sha256";
 // import { readFileSync, writeFileSync } from "fs";
 import {
   derive_signing_key_from_signature,
@@ -104,8 +103,10 @@ export default class Keychain {
     // Extract skRoot from the inputs
     let skRoot: Uint8Array;
     if (options.seed) {
-      const sig = new Uint8Array(Buffer.from(options.seed, "hex"));
-      skRoot = Buffer.from(derive_signing_key_from_signature(sig), "hex");
+      skRoot = Buffer.from(
+        derive_signing_key_from_signature(options.seed),
+        "hex",
+      );
     } else if (options.filePath) {
       this.loadFromFile(options.filePath);
       return;

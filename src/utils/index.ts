@@ -168,9 +168,7 @@ export class RenegadeWs {
             throw new Error("Could not find state in task update");
           }
           if (this._verbose) {
-            console.log(
-              `[WebSocket] New task state for ${taskId}: ${state}`,
-            );
+            console.log(`[WebSocket] New task state for ${taskId}: ${state}`);
           }
           if (state === "Completed") {
             resolve();
