@@ -38,6 +38,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
     /**
      * Initializes the WASM module for use in both browser and serverless environments.
      */
+    init(): Promise<void>;
     /**
      * Construct a URL from the given parameters.
      *
@@ -56,6 +57,7 @@ export default class Renegade implements IRenegadeAccount, IRenegadeInformation,
      */
     ping(): Promise<void>;
     queryExchangeHealthStates(baseToken: Token, quoteToken: Token): Promise<ExchangeHealthState>;
+    queryPriceReporter(baseToken: Token, quoteToken: Token): Promise<any>;
     queryOrders(): Promise<any>;
     queryWallet(accountId: AccountId): Promise<void>;
     queryTaskQueue(accountId: AccountId): Promise<{

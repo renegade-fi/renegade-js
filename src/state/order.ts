@@ -77,7 +77,7 @@ export default class Order {
       "type": "${this.type === "midpoint" ? "Midpoint" : "Limit"}",
       "amount": ${this.amount},
       "minimum_amount": ${minimumAmountSerialized},
-      "worst_case_price": "${this.worstPrice}"
+      "worst_case_price": "${Math.floor(this.worstPrice * 2 ** 32)}"
     }`.replace(/[\s\n]/g, "");
   }
 
@@ -90,6 +90,8 @@ export default class Order {
     } else {
       minimumAmountDeserialized = undefined;
     }
+    const worstPrice =
+      parseFloat(BigInt(serializedOrder.worst_case_price).toString()) / 2 ** 32;
     return new Order({
       id: serializedOrder.id,
       baseToken: Token.deserialize(serializedOrder.base_mint),
@@ -98,7 +100,7 @@ export default class Order {
       type: serializedOrder.type.toLowerCase(),
       amount: BigInt(serializedOrder.amount),
       minimumAmount: minimumAmountDeserialized,
-      worstPrice: Number(serializedOrder.worst_case_price),
+      worstPrice,
     });
   }
 }
