@@ -7,6 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 import axios from "axios";
 import Account from "./account";
 import RenegadeError, { RenegadeErrorType } from "./errors";
+import { Token } from "./state";
 import { GetExchangeHealthStatesResponse, parseExchangeHealthStates, } from "./types/schema";
 import { RenegadeWs, createZodFetcher, unimplemented, } from "./utils";
 /**
@@ -75,16 +76,17 @@ export default class Renegade {
     /**
      * Initializes the WASM module for use in both browser and serverless environments.
      */
-    // async init() {
-    //   try {
-    //     const module = await import("../renegade-utils");
-    //     await module.default();
-    //     console.log("WASM module loaded successfully.");
-    //   } catch (error) {
-    //     console.error("Failed to load WASM module:", error);
-    //     throw new Error("Failed to load WASM module");
-    //   }
-    // }
+    async init() {
+        try {
+            const module = await import("../renegade-utils");
+            await module.default();
+            console.log("WASM module loaded successfully.");
+        }
+        catch (error) {
+            console.error("Failed to load WASM module:", error);
+            throw new Error("Failed to load WASM module");
+        }
+    }
     /**
      * Construct a URL from the given parameters.
      *
@@ -152,6 +154,20 @@ export default class Renegade {
             throw new RenegadeError(RenegadeErrorType.RelayerError);
         }
         return parseExchangeHealthStates(response.data);
+    }
+    async queryPriceReporter(baseToken, quoteToken) {
+        const request = {
+            method: "POST",
+            url: `${this.relayerHttpUrl}/v0/price_report`,
+            data: `{"base_token": {"addr": "${baseToken.serialize()}"}, "quote_token": {"addr": "${new Token({ address: Token.findAddressByTicker("USDT") }).serialize()}"}}`,
+        };
+        try {
+            const response = await axios.request(request);
+            return response.data;
+        }
+        catch (e) {
+            throw new Error(e);
+        }
     }
     async queryOrders() {
         const request = {
@@ -359,6 +375,9 @@ __decorate([
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "queryExchangeHealthStates", null);
+__decorate([
+    assertNotTornDown
+], Renegade.prototype, "queryPriceReporter", null);
 __decorate([
     assertNotTornDown
 ], Renegade.prototype, "queryOrders", null);

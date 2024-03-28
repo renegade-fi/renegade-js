@@ -17,6 +17,10 @@ export declare function createPostRequest(url: string, data: any, secretKey?: st
 export type CreateWalletRequest = {
     wallet: Wallet;
 };
+export type GetPriceReportRequest = {
+    base_token: string;
+    quote_token: string;
+};
 export declare const AxiosResponseSchema: z.ZodObject<{
     status: z.ZodNumber;
     statusText: z.ZodString;

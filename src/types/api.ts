@@ -1,7 +1,7 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import { z } from "zod";
 import { sign_http_request } from "../../renegade-utils";
-import { Wallet } from "../state";
+import { Token, Wallet } from "../state";
 
 export const RENEGADE_AUTH_HEADER = "renegade-auth";
 export const RENEGADE_AUTH_EXPIRATION_HEADER = "renegade-auth-expiration";
@@ -84,6 +84,11 @@ const customSerializers = {
 
 export type CreateWalletRequest = {
   wallet: Wallet;
+};
+
+export type GetPriceReportRequest = {
+  base_token: string;
+  quote_token: string;
 };
 
 export const AxiosResponseSchema = z.object({
