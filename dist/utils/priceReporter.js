@@ -1,10 +1,14 @@
+import axios from "axios";
 import Token from "../state/token";
 import WebSocket from "isomorphic-ws";
+import { Exchange } from "../types";
 export class PriceReporterWs {
     _ws;
     _callbacks;
-    constructor(priceReporterWsUrl) {
-        this._ws = new WebSocket(priceReporterWsUrl);
+    _baseUrl;
+    constructor(baseUrl) {
+        this._baseUrl = baseUrl;
+        this._ws = new WebSocket(`wss://${baseUrl}:4000`);
         this._ws.addEventListener("open", () => {
             // No subscription is made when the WebSocket is opened
         });
@@ -12,6 +16,15 @@ export class PriceReporterWs {
             this._handleWsMessage(messageEvent.data);
         });
         this._callbacks = new Map();
+    }
+    async getPrice(baseToken, quoteToken = "USDT", exchange = Exchange.Binance) {
+        const topic = `${exchange}-${Token.findAddressByTicker(baseToken)}-${Token.findAddressByTicker(quoteToken)}`;
+        const request = {
+            method: "GET",
+            url: `https://${this._baseUrl}:3000/price/${topic}`,
+        };
+        const response = await axios(request);
+        return response.data;
     }
     _subscribeToTopic(topic) {
         console.log("Subscribing to topic", topic);
