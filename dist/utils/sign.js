@@ -1,7 +1,6 @@
 import { generate_external_transfer_signature, generate_wallet_update_signature, } from "../../renegade-utils";
 import { Balance, Order, Wallet } from "../state";
-import { MAX_ORDERS } from "../state/wallet";
-import { addFF } from "./field";
+import { MAX_BALANCES, MAX_ORDERS } from "../state/wallet";
 const ERR_INSUFFICIENT_BALANCE = "insufficient balance";
 const ERR_BALANCES_FULL = "balances full";
 const ERR_ORDERS_FULL = "orders full";
@@ -24,28 +23,34 @@ function signWalletShares(wallet) {
  * Add a balance to the wallet, replacing the first default balance
  */
 function add_balance(wallet, balance) {
+    // If the balance exists, increment it
     const newBalances = wallet.balances;
     const mintAddress = balance.mint.address.replace("0x", "");
     const index = newBalances.findIndex((balance) => balance.mint.address === mintAddress);
-    // If the balance exists, increment it
     if (index !== -1) {
-        newBalances[index].amount = addFF(newBalances[index].amount, balance.amount);
+        newBalances[index].amount += balance.amount;
         return newBalances;
     }
-    // Otherwise add the balance
-    if (newBalances.length < 5) {
-        newBalances.push(balance);
-        return newBalances;
-    }
-    // If the balances are full, try to find a balance to overwrite
-    const idx = newBalances.findIndex((balance) => balance.amount === 0n);
+    const idx = find_first_replaceable_balance(wallet);
     if (idx !== -1) {
-        newBalances[idx] = balance;
+        const newBalances = [...wallet.balances];
+        newBalances.splice(idx, 1, balance);
+        return newBalances;
+    }
+    else if (wallet.balances.length < MAX_BALANCES) {
+        const newBalances = [...wallet.balances];
+        newBalances.push(balance);
         return newBalances;
     }
     else {
         throw new Error(ERR_BALANCES_FULL);
     }
+}
+// Find the index of the first default order in the wallet
+function find_first_replaceable_balance(wallet) {
+    return wallet.balances.findIndex((balance) => balance.amount === 0n &&
+        balance.protocol_fee_balance === 0n &&
+        balance.relayer_fee_balance === 0n);
 }
 /**
  * Sign the shares of a wallet after performing a deposit.
@@ -116,7 +121,7 @@ export function signWithdrawalTransfer(destinationAddr, mint, amount, skRoot) {
  */
 function add_order(wallet, order) {
     // Append if the orders are not full
-    const idx = find_first_default_order(wallet);
+    const idx = find_first_replaceable_order(wallet);
     if (idx !== -1) {
         const newOrders = [...wallet.orders];
         newOrders.splice(idx, 1, order);
@@ -127,10 +132,12 @@ function add_order(wallet, order) {
         newOrders.push(order);
         return newOrders;
     }
-    throw new Error(ERR_ORDERS_FULL);
+    else {
+        throw new Error(ERR_ORDERS_FULL);
+    }
 }
 // Find the index of the first default order in the wallet
-function find_first_default_order(wallet) {
+function find_first_replaceable_order(wallet) {
     return wallet.orders.findIndex((order) => order.amount === 0n);
 }
 /**

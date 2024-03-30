@@ -3,7 +3,7 @@ import {
   generate_wallet_update_signature,
 } from "../../renegade-utils";
 import { Balance, Order, Token, Wallet } from "../state";
-import { MAX_ORDERS } from "../state/wallet";
+import { MAX_BALANCES, MAX_ORDERS } from "../state/wallet";
 import { OrderId } from "../types";
 import { addFF } from "./field";
 
@@ -37,34 +37,39 @@ function signWalletShares(wallet: Wallet) {
  * Add a balance to the wallet, replacing the first default balance
  */
 function add_balance(wallet: Wallet, balance: Balance) {
+  // If the balance exists, increment it
   const newBalances = wallet.balances;
   const mintAddress = balance.mint.address.replace("0x", "");
   const index = newBalances.findIndex(
     (balance) => balance.mint.address === mintAddress,
   );
-  // If the balance exists, increment it
   if (index !== -1) {
-    newBalances[index].amount = addFF(
-      newBalances[index].amount,
-      balance.amount,
-    );
+    newBalances[index].amount += balance.amount;
     return newBalances;
   }
 
-  // Otherwise add the balance
-  if (newBalances.length < 5) {
-    newBalances.push(balance);
-    return newBalances;
-  }
-
-  // If the balances are full, try to find a balance to overwrite
-  const idx = newBalances.findIndex((balance) => balance.amount === 0n);
+  const idx = find_first_replaceable_balance(wallet);
   if (idx !== -1) {
-    newBalances[idx] = balance;
+    const newBalances = [...wallet.balances];
+    newBalances.splice(idx, 1, balance);
+    return newBalances;
+  } else if (wallet.balances.length < MAX_BALANCES) {
+    const newBalances = [...wallet.balances];
+    newBalances.push(balance);
     return newBalances;
   } else {
     throw new Error(ERR_BALANCES_FULL);
   }
+}
+
+// Find the index of the first default order in the wallet
+function find_first_replaceable_balance(wallet: Wallet) {
+  return wallet.balances.findIndex(
+    (balance) =>
+      balance.amount === 0n &&
+      balance.protocol_fee_balance === 0n &&
+      balance.relayer_fee_balance === 0n,
+  );
 }
 
 /**
@@ -171,7 +176,7 @@ export function signWithdrawalTransfer(
  */
 function add_order(wallet: Wallet, order: Order) {
   // Append if the orders are not full
-  const idx = find_first_default_order(wallet);
+  const idx = find_first_replaceable_order(wallet);
   if (idx !== -1) {
     const newOrders = [...wallet.orders];
     newOrders.splice(idx, 1, order);
@@ -180,12 +185,13 @@ function add_order(wallet: Wallet, order: Order) {
     const newOrders = [...wallet.orders];
     newOrders.push(order);
     return newOrders;
+  } else {
+    throw new Error(ERR_ORDERS_FULL);
   }
-  throw new Error(ERR_ORDERS_FULL);
 }
 
 // Find the index of the first default order in the wallet
-function find_first_default_order(wallet: Wallet) {
+function find_first_replaceable_order(wallet: Wallet) {
   return wallet.orders.findIndex((order) => order.amount === 0n);
 }
 
