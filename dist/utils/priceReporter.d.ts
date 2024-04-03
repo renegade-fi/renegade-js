@@ -6,6 +6,14 @@ export declare class PriceReporterWs {
     private _baseUrl;
     constructor(baseUrl: string);
     getPrice(baseToken: string, quoteToken?: string, exchange?: Exchange): Promise<number>;
+    getExchangePrices(baseToken: string, quoteToken?: string): Promise<{
+        median: number;
+        binance: number;
+        coinbase: number;
+        kraken: number;
+        okx: number;
+        uniswapv3: number;
+    }>;
     private _subscribeToTopic;
     private _handleWsMessage;
     teardown(): void;
