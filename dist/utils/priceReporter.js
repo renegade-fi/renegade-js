@@ -26,8 +26,27 @@ export class PriceReporterWs {
         const response = await axios(request);
         return response.data;
     }
+    async getExchangePrices(baseToken, quoteToken = "USDT") {
+        const prices = {
+            [Exchange.Median]: 0,
+            [Exchange.Uniswapv3]: 0,
+            [Exchange.Binance]: 0,
+            [Exchange.Coinbase]: 0,
+            [Exchange.Kraken]: 0,
+            [Exchange.Okx]: 0,
+        };
+        await Promise.all([Exchange.Binance, Exchange.Coinbase, Exchange.Kraken, Exchange.Okx].map(async (exchange) => {
+            try {
+                const price = await this.getPrice(baseToken, quoteToken, exchange);
+                prices[exchange] = price;
+            }
+            catch (error) {
+                console.error(`Error getting price from ${exchange}:`, error);
+            }
+        }));
+        return prices;
+    }
     _subscribeToTopic(topic) {
-        console.log("Subscribing to topic", topic);
         this._ws.send(JSON.stringify({ method: "subscribe", topic }));
     }
     _handleWsMessage(message) {
@@ -47,7 +66,6 @@ export class PriceReporterWs {
         // TODO: USDT is hardcoded here
         const topic = `${exchange}-${Token.findAddressByTicker(baseToken.ticker)}-${Token.findAddressByTicker("USDT")}`;
         if (this._callbacks.has(topic)) {
-            console.log("Topic already exists, skipping subscription");
             return;
         }
         this._callbacks.set(topic, callback);
