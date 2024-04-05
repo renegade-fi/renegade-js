@@ -3,6 +3,15 @@ import Token from "../state/token";
 import WebSocket from "isomorphic-ws";
 import { Exchange } from "../types";
 
+const DEFAULT_QUOTE = {
+  [Exchange.Binance]: `0x${Token.findAddressByTicker("USDT")}`,
+  [Exchange.Coinbase]: `0x${Token.findAddressByTicker("USDC")}`,
+  [Exchange.Kraken]: "0x0000000000000000000000000000000000000000",
+  [Exchange.Okx]: `0x${Token.findAddressByTicker("USDT")}`,
+  [Exchange.Median]: `0x${Token.findAddressByTicker("USDT")}`,
+  [Exchange.Uniswapv3]: `0x${Token.findAddressByTicker("USDT")}`,
+};
+
 export class PriceReporterWs {
   private _ws: WebSocket;
   private _callbacks: Map<string, (price: string) => void>;
@@ -24,13 +33,18 @@ export class PriceReporterWs {
   }
 
   async getPrice(
-    baseToken: string,
-    quoteToken: string = "USDT",
+    base: string,
+    quote?: string,
     exchange: Exchange = Exchange.Binance,
   ): Promise<number> {
-    const topic = `${exchange}-${Token.findAddressByTicker(
-      baseToken,
-    )}-${Token.findAddressByTicker(quoteToken)}`;
+    let quoteToken = new Token({ address: DEFAULT_QUOTE[exchange] });
+    if (quote) {
+      quoteToken = new Token({ ticker: quote });
+    }
+    const topic = `${exchange}-${Token.findAddressByTicker(base)}-0x${
+      quoteToken.address
+    }`;
+    console.log("🚀 ~ PriceReporterWs ~ topic:", topic);
     const request: AxiosRequestConfig = {
       method: "GET",
       url: `https://${this._baseUrl}:3000/price/${topic}`,
@@ -39,7 +53,7 @@ export class PriceReporterWs {
     return response.data;
   }
 
-  async getExchangePrices(baseToken: string, quoteToken: string = "USDT") {
+  async getExchangePrices(baseToken: string, quoteToken?: string) {
     const prices: { [key in Exchange]: number } = {
       [Exchange.Median]: 0,
       [Exchange.Uniswapv3]: 0,
@@ -48,18 +62,22 @@ export class PriceReporterWs {
       [Exchange.Kraken]: 0,
       [Exchange.Okx]: 0,
     };
-    await Promise.all(
-      [Exchange.Binance, Exchange.Coinbase, Exchange.Kraken, Exchange.Okx].map(
-        async (exchange) => {
-          try {
-            const price = await this.getPrice(baseToken, quoteToken, exchange);
-            prices[exchange] = price;
-          } catch (error) {
-            console.error(`Error getting price from ${exchange}:`, error);
-          }
-        },
-      ),
-    );
+
+    try {
+      await Promise.all(
+        [
+          Exchange.Binance,
+          Exchange.Coinbase,
+          Exchange.Kraken,
+          Exchange.Okx,
+        ].map(async (exchange) => {
+          const price = await this.getPrice(baseToken, quoteToken, exchange);
+          prices[exchange] = price;
+        }),
+      );
+    } catch (error) {
+      console.error("An error occurred while fetching exchange prices:", error);
+    }
     return prices;
   }
 
