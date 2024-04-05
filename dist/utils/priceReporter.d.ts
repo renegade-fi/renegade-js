@@ -5,7 +5,7 @@ export declare class PriceReporterWs {
     private _callbacks;
     private _baseUrl;
     constructor(baseUrl: string);
-    getPrice(baseToken: string, quoteToken?: string, exchange?: Exchange): Promise<number>;
+    getPrice(base: string, quote?: string, exchange?: Exchange): Promise<number>;
     getExchangePrices(baseToken: string, quoteToken?: string): Promise<{
         median: number;
         binance: number;
