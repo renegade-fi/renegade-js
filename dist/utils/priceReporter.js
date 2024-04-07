@@ -3,12 +3,12 @@ import Token from "../state/token";
 import WebSocket from "isomorphic-ws";
 import { Exchange } from "../types";
 const DEFAULT_QUOTE = {
-    [Exchange.Binance]: `0x${Token.findAddressByTicker("USDT")}`,
-    [Exchange.Coinbase]: `0x${Token.findAddressByTicker("USDC")}`,
+    [Exchange.Binance]: `${Token.findAddressByTicker("USDT")}`,
+    [Exchange.Coinbase]: `${Token.findAddressByTicker("USDC")}`,
     [Exchange.Kraken]: "0x0000000000000000000000000000000000000000",
-    [Exchange.Okx]: `0x${Token.findAddressByTicker("USDT")}`,
-    [Exchange.Median]: `0x${Token.findAddressByTicker("USDT")}`,
-    [Exchange.Uniswapv3]: `0x${Token.findAddressByTicker("USDT")}`,
+    [Exchange.Okx]: `${Token.findAddressByTicker("USDT")}`,
+    [Exchange.Median]: `${Token.findAddressByTicker("USDT")}`,
+    [Exchange.Uniswapv3]: `${Token.findAddressByTicker("USDT")}`,
 };
 export class PriceReporterWs {
     _ws;
@@ -31,10 +31,10 @@ export class PriceReporterWs {
             quoteToken = new Token({ ticker: quote });
         }
         const topic = `${exchange}-${Token.findAddressByTicker(base)}-0x${quoteToken.address}`;
-        console.log("🚀 ~ PriceReporterWs ~ topic:", topic);
         const request = {
             method: "GET",
             url: `https://${this._baseUrl}:3000/price/${topic}`,
+            timeout: 4000,
         };
         const response = await axios(request);
         return response.data;
@@ -48,20 +48,22 @@ export class PriceReporterWs {
             [Exchange.Kraken]: 0,
             [Exchange.Okx]: 0,
         };
-        try {
-            await Promise.all([
-                Exchange.Binance,
-                Exchange.Coinbase,
-                Exchange.Kraken,
-                Exchange.Okx,
-            ].map(async (exchange) => {
+        const exchanges = [
+            Exchange.Binance,
+            Exchange.Coinbase,
+            Exchange.Kraken,
+            Exchange.Okx,
+        ];
+        await Promise.all(exchanges.map(async (exchange) => {
+            try {
                 const price = await this.getPrice(baseToken, quoteToken, exchange);
                 prices[exchange] = price;
-            }));
-        }
-        catch (error) {
-            console.error("An error occurred while fetching exchange prices:", error);
-        }
+            }
+            catch (error) {
+                console.error(`An error occurred while fetching price for ${exchange}:`, error.response.data);
+                prices[exchange] = 0; // Set price to 0 in case of an error
+            }
+        }));
         return prices;
     }
     _subscribeToTopic(topic) {
