@@ -31,6 +31,8 @@ export default class Wallet {
         matchFee?: number;
     });
     static getBlindersFromShares(privateShares: bigint[], publicShares: bigint[]): [bigint, bigint, bigint];
+    getBlinderSeed(): bigint;
+    getShareSeed(): bigint;
     getBlinders(): [bigint, bigint, bigint];
     packBalances(): bigint[];
     packOrders(): bigint[];

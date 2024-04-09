@@ -141,33 +141,35 @@ export default class Account {
      * @returns A TaskId representing the task of creating a new Wallet, if applicable.
      */
     async sync() {
+        const taskWaiter = new RenegadeWs(this._relayerWsUrl, this._verbose);
         let wallet;
         let taskId;
-        if ((wallet = await this._queryRelayerForWallet())) {
+        wallet = await this._queryRelayerForWallet();
+        if (wallet) {
             // Query the relayer to see if this Account is already registered in relayer state.
             this._wallet = wallet;
             await this._setupWebSocket();
             this._isSynced = true;
             return ["DONE", Promise.resolve()];
         }
-        else if ((wallet = await this._queryChainForWallet())) {
-            // Query the relayer to see if this Account is present in on-chain state.
-            this._wallet = wallet;
-            await this._setupWebSocket();
-            this._isSynced = true;
-            return ["DONE", Promise.resolve()];
-        }
-        else {
-            // The Wallet is not present in on-chain state, so we need to create it.
-            taskId = await this._createNewWallet();
-            const taskPromise = new RenegadeWs(this._relayerWsUrl, this._verbose)
-                .awaitTaskCompletion(taskId)
-                .then(() => this._setupWebSocket())
-                .then(() => {
+        taskId = await this._queryChainForWallet();
+        const taskPromise = taskWaiter
+            .awaitTaskCompletion(taskId)
+            .then(async () => {
+            wallet = await this._queryRelayerForWallet();
+            if (wallet) {
+                this._wallet = wallet;
+                await this._setupWebSocket();
                 this._isSynced = true;
-            });
-            return [taskId, taskPromise];
-        }
+            }
+            else {
+                taskId = await this._createNewWallet();
+                await taskWaiter.awaitTaskCompletion(taskId);
+                await this._setupWebSocket();
+                this._isSynced = true;
+            }
+        });
+        return [taskId, taskPromise];
     }
     /**
      * Set up the WebSocket connect to the relayer, and start streaming Wallet
@@ -236,7 +238,30 @@ export default class Account {
      * not yet been created.
      */
     async _queryChainForWallet() {
-        return undefined;
+        const url = `${this._relayerHttpUrl}/v0/wallet/lookup`;
+        const body = `{
+      "wallet_id": "${this.accountId}",
+      "blinder_seed": ${bigint_to_limbs(this._wallet.getBlinderSeed().toString(16))},
+      "secret_share_seed": ${bigint_to_limbs(this._wallet.getShareSeed().toString(16))},
+      "key_chain": ${this._wallet.keychain.serialize()}
+    }`;
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                body,
+            });
+            if (response.status === 200) {
+                const res = await response.json();
+                return res.task_id;
+            }
+            else {
+                return undefined;
+            }
+        }
+        catch (e) {
+            console.error("Error querying relayer for wallet: ", e);
+            return undefined;
+        }
     }
     /**
      * Given the currently-populated Wallet values, create this Wallet on-chain
@@ -279,7 +304,6 @@ export default class Account {
         // Fetch latest wallet from relayer
         // TODO: Temporary hacky fix, wallet should always be in sync with relayer
         const wallet = await this._queryRelayerForWallet();
-        console.log("[SDK] Deposit: ", wallet);
         // Sign wallet deposit statement
         const statement_sig = signWalletDeposit(wallet, mint, amount);
         // Permit2 Fields
