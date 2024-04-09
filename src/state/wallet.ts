@@ -100,10 +100,17 @@ export default class Wallet {
     return [blinder, blinderPrivateShare, blinderPublicShare];
   }
 
+  getBlinderSeed(): bigint {
+    return BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 1n;
+  }
+
+  getShareSeed(): bigint {
+    return BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 2n;
+  }
+
   getBlinders(): [bigint, bigint, bigint] {
     // TODO: Generate blinder seed from Ethereum private key signature
-    const blinderSeed =
-      BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 1n;
+    const blinderSeed = this.getBlinderSeed();
     const [blinder, blinderPrivateShare] = evaluateHashChain(blinderSeed, 2);
     const blinderPublicShare = subtractFF(blinder, blinderPrivateShare);
     return [blinder, blinderPrivateShare, blinderPublicShare];
@@ -166,8 +173,7 @@ export default class Wallet {
    */
   deriveShares(): [bigint[], bigint[]] {
     // TODO: Generate seed from Ethereuem private key signature
-    const shareStreamSeed =
-      BigInt(`0x${this.keychain.keyHierarchy.root.secretKey}`) + 2n;
+    const shareStreamSeed = this.getShareSeed();
     const secretShares = evaluateHashChain(shareStreamSeed, SHARES_PER_WALLET);
 
     const [privateShares, blindedPublicShares] =
