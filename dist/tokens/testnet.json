@@ -15,13 +15,13 @@
         {
             "name": "BNB",
             "ticker": "BNB",
-            "address": "0x8e1308925a26cb5cF400afb402d67B3523473379",
+            "address": "0x8e1308925a26cb5cf400afb402d67b3523473379",
             "decimals": 18
         },
         {
             "name": "MATIC",
             "ticker": "MATIC",
-            "address": "0xCe5303b8e8BFCa9d1857976F300fb29928522c6F",
+            "address": "0xce5303b8e8bfca9d1857976f300fb29928522c6f",
             "decimals": 18
         },
         {
@@ -45,73 +45,73 @@
         {
             "name": "LINK",
             "ticker": "LINK",
-            "address": "0xd9bF5428C4a93aA2DEdd0161F299071b9D1FEc0a",
+            "address": "0xd9bf5428c4a93aa2dedd0161f299071b9d1fec0a",
             "decimals": 18
         },
         {
             "name": "UNI",
             "ticker": "UNI",
-            "address": "0xD92773693917F0fF664f85c3cB698c33420947ff",
+            "address": "0xd92773693917f0ff664f85c3cb698c33420947ff",
             "decimals": 18
         },
         {
             "name": "SUSHI",
             "ticker": "SUSHI",
-            "address": "0x33FA6ca777CC0CA84D39e5F4feF5e0E1bD87a68D",
+            "address": "0x33fa6ca777cc0ca84d39e5f4fef5e0e1bd87a68d",
             "decimals": 18
         },
         {
             "name": "1INCH",
             "ticker": "1INCH",
-            "address": "0x7AF2571dC86B7608DDc6AcfBf01B2BE6F0EfC244",
+            "address": "0x7af2571dc86b7608ddc6acfbf01b2be6f0efc244",
             "decimals": 18
         },
         {
             "name": "AAVE",
             "ticker": "AAVE",
-            "address": "0x5f9f988cE4d2DcDcf57790548682728BaAeA8943",
+            "address": "0x5f9f988ce4d2dcdcf57790548682728baaea8943",
             "decimals": 18
         },
         {
             "name": "COMP",
             "ticker": "COMP",
-            "address": "0xBd7f7c83BdBABfD65a98c6D2AFc9261F3d2Eb03B",
+            "address": "0xbd7f7c83bdbabfd65a98c6d2afc9261f3d2eb03b",
             "decimals": 18
         },
         {
             "name": "MKR",
             "ticker": "MKR",
-            "address": "0x11673B5eF84c5e30898246fBf5499a6080Ce50Ca",
+            "address": "0x11673b5ef84c5e30898246fbf5499a6080ce50ca",
             "decimals": 18
         },
         {
             "name": "REN",
             "ticker": "REN",
-            "address": "0x72219e4C1b76276253A852aB058374D1dD5529be",
+            "address": "0x72219e4c1b76276253a852ab058374d1dd5529be",
             "decimals": 18
         },
         {
             "name": "MANA",
             "ticker": "MANA",
-            "address": "0x3d76278b12eD405618aB335b64979A3C91445EfA",
+            "address": "0x3d76278b12ed405618ab335b64979a3c91445efa",
             "decimals": 18
         },
         {
             "name": "ENS",
             "ticker": "ENS",
-            "address": "0xd1Aa1B583f2C086D0964600E0c79A95aCbc30A65",
+            "address": "0xd1aa1b583f2c086d0964600e0c79a95acbc30a65",
             "decimals": 18
         },
         {
             "name": "DYDX",
             "ticker": "DYDX",
-            "address": "0xd01207dD6Eb9359F7572f658de0CB4eC98858Da5",
+            "address": "0xd01207dd6eb9359f7572f658de0cb4ec98858da5",
             "decimals": 18
         },
         {
             "name": "CRV",
             "ticker": "CRV",
-            "address": "0xb8F30164C4D1f62155F7a1115E68e605069689E4",
+            "address": "0xb8f30164c4d1f62155f7a1115e68e605069689e4",
             "decimals": 18
         }
     ]
