@@ -64,6 +64,7 @@ export default class Keychain {
      * Given a seed buffer, computes the entire Renegade key hierarchy.
      */
     private populateHierarchy;
+    getPkRoot(): bigint[];
     /**
      * Sign a data buffer (concretely, a request's body) with an expiring
      * signature using sk_root.
