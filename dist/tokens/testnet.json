@@ -15,103 +15,103 @@
         {
             "name": "BNB",
             "ticker": "BNB",
-            "address": "0xc6464a3072270a3da814bb0ec2907df935ff839d",
+            "address": "0x8e1308925a26cb5cF400afb402d67B3523473379",
             "decimals": 18
         },
         {
             "name": "MATIC",
             "ticker": "MATIC",
-            "address": "0xac3b14cb55c2242bb8ca1dc8269701948cb0c348",
+            "address": "0xCe5303b8e8BFCa9d1857976F300fb29928522c6F",
             "decimals": 18
         },
         {
             "name": "LDO",
             "ticker": "LDO",
-            "address": "0x15f7fe757a582634e1ed105ea68f07f6cf240b37",
+            "address": "0x84401cd7abbebb22acb7af2becfd9be56c30bcf1",
             "decimals": 18
         },
         {
             "name": "USDC",
             "ticker": "USDC",
-            "address": "0xe7e96cef8812d2d24add2de592b5c786f915f64b",
+            "address": "0x1d55838a9ec169488d360783d65e6cd985007b72",
             "decimals": 18
         },
         {
             "name": "USDT",
             "ticker": "USDT",
-            "address": "0xb66ff14a830d5527f06e384b309288b843d555c4",
+            "address": "0x79b994d378518eae46917aa19f05ce6545faac26",
             "decimals": 18
         },
         {
             "name": "LINK",
             "ticker": "LINK",
-            "address": "0xf5c43ef3d79caf5680584d9087f95d81e75e2ddf",
+            "address": "0xd9bF5428C4a93aA2DEdd0161F299071b9D1FEc0a",
             "decimals": 18
         },
         {
             "name": "UNI",
             "ticker": "UNI",
-            "address": "0xe85035f1145ac49333d105632a0d254e479a75be",
+            "address": "0xD92773693917F0fF664f85c3cB698c33420947ff",
             "decimals": 18
         },
         {
             "name": "SUSHI",
             "ticker": "SUSHI",
-            "address": "0x47b8399a8a3ad9665e4257904f99eafe043c4f50",
+            "address": "0x33FA6ca777CC0CA84D39e5F4feF5e0E1bD87a68D",
             "decimals": 18
         },
         {
             "name": "1INCH",
             "ticker": "1INCH",
-            "address": "0x7696e37e86b993ac1ce27feed48fa154cb8b2eda",
+            "address": "0x7AF2571dC86B7608DDc6AcfBf01B2BE6F0EfC244",
             "decimals": 18
         },
         {
             "name": "AAVE",
             "ticker": "AAVE",
-            "address": "0xc779dbf393fccd770ea85153e8189c96f2a1eab6",
+            "address": "0x5f9f988cE4d2DcDcf57790548682728BaAeA8943",
             "decimals": 18
         },
         {
             "name": "COMP",
             "ticker": "COMP",
-            "address": "0x1a3ef0413fde0bf110a363f25c3fe6b527f3a8d4",
+            "address": "0xBd7f7c83BdBABfD65a98c6D2AFc9261F3d2Eb03B",
             "decimals": 18
         },
         {
             "name": "MKR",
             "ticker": "MKR",
-            "address": "0xec6c3df641bde740992898f25a780aab35d0062f",
+            "address": "0x11673B5eF84c5e30898246fBf5499a6080Ce50Ca",
             "decimals": 18
         },
         {
             "name": "REN",
             "ticker": "REN",
-            "address": "0xcb593e5f96363a4919b583f07fe45880a1daf94e",
+            "address": "0x72219e4C1b76276253A852aB058374D1dD5529be",
             "decimals": 18
         },
         {
             "name": "MANA",
             "ticker": "MANA",
-            "address": "0xe7e8b4930802ce5909cb2a2b8d2e447837158660",
+            "address": "0x3d76278b12eD405618aB335b64979A3C91445EfA",
             "decimals": 18
         },
         {
             "name": "ENS",
             "ticker": "ENS",
-            "address": "0x534465d16b43cb0e0f5277357df77b0006940c95",
+            "address": "0xd1Aa1B583f2C086D0964600E0c79A95aCbc30A65",
             "decimals": 18
         },
         {
             "name": "DYDX",
             "ticker": "DYDX",
-            "address": "0x2cc42f00be0fe77ff5ba18e6e039f373e62c13f2",
+            "address": "0xd01207dD6Eb9359F7572f658de0CB4eC98858Da5",
             "decimals": 18
         },
         {
             "name": "CRV",
             "ticker": "CRV",
-            "address": "0x9e607dbb3e6d7458b7570d1b2f6ceb96e597acc2",
+            "address": "0xb8F30164C4D1f62155F7a1115E68e605069689E4",
             "decimals": 18
         }
     ]
