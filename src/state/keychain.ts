@@ -2,6 +2,7 @@
 import {
   derive_signing_key_from_signature,
   get_key_hierarchy,
+  get_key_hierarchy_shares,
   sign_http_request,
   sign_message,
 } from "../../renegade-utils";
@@ -139,6 +140,14 @@ export default class Keychain {
     const match = new IdentificationKey(skMatch, pkMatch);
 
     this.keyHierarchy = { root, match };
+  }
+
+  getPkRoot(): bigint[] {
+    const keychainShares = get_key_hierarchy_shares(
+      this.keyHierarchy.root.secretKey,
+    ).map((share: string) => BigInt(share));
+    console.log("🚀 ~ Keychain ~ getPkRoot ~ keychainShares:", keychainShares);
+    return keychainShares.slice(0, 4).map((share) => BigInt(share));
   }
 
   /**

@@ -1,5 +1,5 @@
 // import { readFileSync, writeFileSync } from "fs";
-import { derive_signing_key_from_signature, get_key_hierarchy, sign_http_request, sign_message, } from "../../renegade-utils";
+import { derive_signing_key_from_signature, get_key_hierarchy, get_key_hierarchy_shares, sign_http_request, sign_message, } from "../../renegade-utils";
 import { getRandomBytes } from "../state/utils";
 /**
  * Represents a signing key used for signing messages.
@@ -98,6 +98,11 @@ export default class Keychain {
         const root = new SigningKey(skRoot, pkRoot);
         const match = new IdentificationKey(skMatch, pkMatch);
         this.keyHierarchy = { root, match };
+    }
+    getPkRoot() {
+        const keychainShares = get_key_hierarchy_shares(this.keyHierarchy.root.secretKey).map((share) => BigInt(share));
+        console.log("🚀 ~ Keychain ~ getPkRoot ~ keychainShares:", keychainShares);
+        return keychainShares.slice(0, 4).map((share) => BigInt(share));
     }
     /**
      * Sign a data buffer (concretely, a request's body) with an expiring
