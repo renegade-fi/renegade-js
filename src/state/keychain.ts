@@ -146,7 +146,6 @@ export default class Keychain {
     const keychainShares = get_key_hierarchy_shares(
       this.keyHierarchy.root.secretKey,
     ).map((share: string) => BigInt(share));
-    console.log("🚀 ~ Keychain ~ getPkRoot ~ keychainShares:", keychainShares);
     return keychainShares.slice(0, 4).map((share) => BigInt(share));
   }
 
