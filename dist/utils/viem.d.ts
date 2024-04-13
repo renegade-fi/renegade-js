@@ -23,10 +23,10 @@ export declare const stylusDevnetEc2: {
     };
     rpcUrls: {
         readonly default: {
-            readonly http: readonly ["http://35.183.100.90:8547/"];
+            readonly http: readonly ["https://sequencer.renegade.fi/"];
         };
         readonly public: {
-            readonly http: readonly ["http://35.183.100.90:8547/"];
+            readonly http: readonly ["https://sequencer.renegade.fi/"];
         };
     };
     sourceId?: number;
@@ -73,10 +73,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -121,10 +121,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -232,10 +232,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -443,10 +443,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -587,10 +587,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -628,10 +628,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -665,10 +665,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -3481,10 +3481,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -3518,10 +3518,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -3559,10 +3559,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -3598,10 +3598,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -3653,10 +3653,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -3690,10 +3690,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -3727,10 +3727,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -3764,10 +3764,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -3801,10 +3801,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
@@ -3838,10 +3838,10 @@ export declare const publicClient: {
         };
         rpcUrls: {
             readonly default: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
             readonly public: {
-                readonly http: readonly ["http://35.183.100.90:8547/"];
+                readonly http: readonly ["https://sequencer.renegade.fi/"];
             };
         };
         sourceId?: number;
