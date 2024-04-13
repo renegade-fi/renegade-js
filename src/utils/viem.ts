@@ -32,10 +32,10 @@ export const stylusDevnetEc2 = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ["http://35.183.100.90:8547/"],
+      http: ["https://sequencer.renegade.fi/"],
     },
     public: {
-      http: ["http://35.183.100.90:8547/"],
+      http: ["https://sequencer.renegade.fi/"],
     },
   },
   blockExplorers: {
