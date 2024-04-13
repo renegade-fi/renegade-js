@@ -25,6 +25,7 @@ import {
   signWalletWithdraw,
   signWithdrawalTransfer,
 } from "./utils/sign";
+import { lookupWallet } from "./utils/viem";
 
 /**
  * A decorator that asserts that the Account has been synced, meaning that the
@@ -180,6 +181,7 @@ export default class Account {
     let wallet: Wallet | undefined;
     let taskId: TaskId;
 
+    // First, query the relayer to see if the Wallet is already managed.
     wallet = await this._queryRelayerForWallet();
     if (wallet) {
       // Query the relayer to see if this Account is already registered in relayer state.
@@ -189,24 +191,37 @@ export default class Account {
       return ["DONE" as TaskId, Promise.resolve()];
     }
 
-    taskId = await this._queryChainForWallet();
-
-    const taskPromise = taskWaiter
+    // Query the chain to see if the Wallet is already registered on-chain.
+    // TODO: Remove me once task history is implemented
+    const existsOnChain = await lookupWallet(
+      this.keychain.keyHierarchy.root.secretKey,
+    );
+    if (existsOnChain) {
+      taskId = await this._queryChainForWallet();
+      const taskPromise = taskWaiter
+        .awaitTaskCompletion(taskId)
+        .then(async () => {
+          wallet = await this._queryRelayerForWallet();
+          if (wallet) {
+            this._wallet = wallet;
+            await this._setupWebSocket();
+            this._isSynced = true;
+          } else {
+            throw new Error(
+              "Client side lookup wallet check should have failed",
+            );
+          }
+        });
+      return [taskId, taskPromise];
+    }
+    // Otherwise, create a new Wallet
+    taskId = await this._createNewWallet();
+    const taskPromise = new RenegadeWs(this._relayerWsUrl, this._verbose)
       .awaitTaskCompletion(taskId)
-      .then(async () => {
-        wallet = await this._queryRelayerForWallet();
-        if (wallet) {
-          this._wallet = wallet;
-          await this._setupWebSocket();
-          this._isSynced = true;
-        } else {
-          taskId = await this._createNewWallet();
-          await taskWaiter.awaitTaskCompletion(taskId);
-          await this._setupWebSocket();
-          this._isSynced = true;
-        }
+      .then(() => this._setupWebSocket())
+      .then(() => {
+        this._isSynced = true;
       });
-
     return [taskId, taskPromise];
   }
 
