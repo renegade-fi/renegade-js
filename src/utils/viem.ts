@@ -8,7 +8,7 @@ export async function lookupWallet(skRoot: string) {
   const blinderPublicShare = subtractFF(blinder, blinderPrivateShare);
 
   const logs = await publicClient.getLogs({
-    address: "0xc2c0c3398915a2d2e9c33c186abfef3192ee25e8",
+    address: "0xde1eef14801cd14045b645755a5682dd188256b8",
     event: parseAbiItem(
       "event WalletUpdated(uint256 indexed wallet_blinder_share)",
     ),
